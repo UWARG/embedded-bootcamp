@@ -46,6 +46,17 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define PWM1_Pin GPIO_PIN_6
+#define PWM1_GPIO_Port GPIOA
+#define ADC_INPUT_Pin GPIO_PIN_1
+#define ADC_INPUT_GPIO_Port GPIOB
+#define LED2_Pin GPIO_PIN_10
+#define LED2_GPIO_Port GPIOC
+#define LED1_Pin GPIO_PIN_11
+#define LED1_GPIO_Port GPIOC
+#define LED3_Pin GPIO_PIN_12
+#define LED3_GPIO_Port GPIOC
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
