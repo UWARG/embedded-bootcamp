@@ -26,12 +26,14 @@ int main(void)
   debug("Compiled on %s at %s", __DATE__, __TIME__);
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Start_IT(&htim16, TIM_CHANNEL_1);
+  while (1)
+  {
 
-  while(1){
-   HAL_ADC_Start(&hadc);
-  uint16_t a = HAL_ADC_GetValue(&hadc);
-  uint16_t compare = a * 3000 / 4096 + 3000;
-  __HAL_TIM_SET_COMPARE(&htim16,TIM_CHANNEL_1,compare);
+    uint16_t a = HAL_ADC_GetValue(&hadc);
+    uint16_t compare = a * 3000 / 4096 + 3000;
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compare);
   }
 }
   
