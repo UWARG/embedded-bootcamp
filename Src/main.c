@@ -46,6 +46,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "debug.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -84,7 +85,7 @@ int main(void)
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  SystemClock_Config();
+ SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
@@ -102,15 +103,36 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  HAL_ADC_Start(&hadc);
+
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+uint32_t v_in = 0;
+uint32_t PWM = 0;
+
+//uint32_t last_PWM = 0;
   while (1)
   {
-  /* USER CODE END WHILE */
+	  v_in = HAL_ADC_GetValue(&hadc);
+  
+//    v_in/100*100;
 
-  /* USER CODE BEGIN 3 */
+	//  debug("%d",v_in);
+
+  	PWM = 3000 + (v_in-1800)*3000/400;
+ //   PWM = (PWM + last_PWM) / 2;
+   // last_PWM = PWM;
+  //  debug("%d",PWM);
+
+    HAL_Delay(10);
+
+   __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, PWM);
+
+
 
   }
   /* USER CODE END 3 */
