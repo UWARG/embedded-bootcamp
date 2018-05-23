@@ -1,6 +1,6 @@
 #MicroXplorer Configuration settings - do not modify
 ADC.ClockPrescaler=ADC_CLOCK_ASYNC_DIV1
-ADC.ContinuousConvMode=DISABLE
+ADC.ContinuousConvMode=ENABLE
 ADC.DMAContinuousRequests=DISABLE
 ADC.DataAlign=ADC_DATAALIGN_RIGHT
 ADC.DiscontinuousConvMode=DISABLE
@@ -106,7 +106,7 @@ ProjectManager.BackupPrevious=false
 ProjectManager.CompilerOptimize=2
 ProjectManager.ComputerToolchain=false
 ProjectManager.CoupleFile=true
-ProjectManager.CustomerFirmwarePackage=C\:/Users/ianjf/STM32Cube/Repository/STM32Cube_FW_F0_V1.9.0
+ProjectManager.CustomerFirmwarePackage=
 ProjectManager.DefaultFWLocation=true
 ProjectManager.DeletePrevious=true
 ProjectManager.DeviceId=STM32F030RCTx
