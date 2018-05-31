@@ -119,10 +119,11 @@ int main(void)
   MX_TIM16_Init();
   //htim16.Init->period = 2;
   HAL_TIM_PWM_Init(&htim16);
-  HAL_TIM_PWM_Start(&htim16, 1); // channel?
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); // channel?
 
   //ADC_HandleTypeDef* adcHandle = hadc; // what
   HAL_ADC_Init(&hadc);
+  HAL_ADC_Start(&hadc);
   uint32_t inVal = 0;
   //TIM_HandleTypeDef* htim16;
   //HAL_TIM_Base_Init(htim16);
@@ -131,12 +132,19 @@ int main(void)
   while (1)
   {
     //htim16->Period = 1; // or something
-    inVal = HAL_ADC_GetValue(&hadc);
-    inVal /= 1024;
-    inVal *= 500;
-    inVal += 500;
+    inVal = HAL_ADC_GetValue(&hadc); // 0->1024
+    //double newVal = inVal;
+    debug("%u",inVal);
+    //newVal /= 1024.0;
+    inVal = inVal*50;
+    inVal = inVal/1024;
+    inVal = inVal+50;
+    //inVal = 100;
+    //newVal = 100;
+    //inVal = newVal; // want inVal from 50->100
+    //debug("%d",inVal);
     //htim16.Init.Period = inVal*1000;
-    __HAL_TIM_SET_COMPARE(&htim16,1,inVal);
+    __HAL_TIM_SET_COMPARE(&htim16,TIM_CHANNEL_1,inVal);
     //htim16.Period = 10; // or something
   /* USER CODE END WHILE */
 //zeropilot, safety, pwm.c - pwm code, for output
