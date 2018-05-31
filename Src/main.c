@@ -102,14 +102,54 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  
+  //INITIALIZATION
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
+ // MX_GPIO_Init();
+  //HAL_ADC_Init();
+  //GPIO_InitTypeDef GPIO_InitStruct;
+  //HAL_GPIO_INIT(GPIO_PIN_1, &GPIO_InitStruct);
+  //htim16->Prescaler = 960000;
+  //PWM1_GPIO_Port();
+  //MX_ADC_Init(); // already run earlier in file
+  //htim16->Init = true;
+  MX_TIM16_Init();
+  //htim16.Init->period = 2;
+  HAL_TIM_PWM_Init(&htim16);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); // channel?
+
+  //ADC_HandleTypeDef* adcHandle = hadc; // what
+  HAL_ADC_Init(&hadc);
+  HAL_ADC_Start(&hadc);
+  uint32_t inVal = 0;
+  //TIM_HandleTypeDef* htim16;
+  //HAL_TIM_Base_Init(htim16);
+  //HAL_ADC_MspInit()
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    //htim16->Period = 1; // or something
+    inVal = HAL_ADC_GetValue(&hadc); // 0->1024
+    //double newVal = inVal;
+    debug("%u",inVal);
+    //newVal /= 1024.0;
+    inVal = inVal*50;
+    inVal = inVal/1024;
+    inVal = inVal+50;
+    //inVal = 100;
+    //newVal = 100;
+    //inVal = newVal; // want inVal from 50->100
+    //debug("%d",inVal);
+    //htim16.Init.Period = inVal*1000;
+    __HAL_TIM_SET_COMPARE(&htim16,TIM_CHANNEL_1,inVal);
+    //htim16.Period = 10; // or something
   /* USER CODE END WHILE */
-
+//zeropilot, safety, pwm.c - pwm code, for output
+//input adc set up yourself, HAL_ADC_GetValue(), configure adc, conversion
+//chip stm32f030rc (or xx)  _hal_adc
   /* USER CODE BEGIN 3 */
 
   }
