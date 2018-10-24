@@ -71,7 +71,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint32_t ADCValue=0;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -99,19 +99,29 @@ int main(void)
   /* USER CODE BEGIN 2 */
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
+  HAL_TIM_Base_Start()
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_Base_Start(&htim16);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint16_t adcvalue = 0;
+  uint16_t pwmvalue = 0;
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+    adcvalue= HAL_ADC_GetValue(&hadc);
 
+    pwmvalue = (adcvalue * 3000)/(4096 + 3000));
+
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwmvalue);
   }
   /* USER CODE END 3 */
 
