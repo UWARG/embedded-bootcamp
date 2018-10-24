@@ -119,7 +119,7 @@ int main(void)
   /* USER CODE BEGIN 3 */
     adcvalue= HAL_ADC_GetValue(&hadc);
 
-    pwmvalue = (adcvalue * 3000)/(4096 + 3000));
+    pwmvalue = (uint16_t)(0.0244*adcvalue);
 
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwmvalue);
   }
