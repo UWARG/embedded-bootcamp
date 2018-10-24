@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2017 STMicroelectronics
+  * COPYRIGHT(c) 2018 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -60,11 +60,11 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-
+static void setPWM(TIM_HandleTypeDef, uint32_t, uint16_t, uint16_t);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
+uint32_t g_ADCValue;
 /* USER CODE END 0 */
 
 int main(void)
@@ -92,26 +92,43 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC_Init();
   MX_TIM16_Init();
   MX_USART1_UART_Init();
+  MX_ADC_Init();
 
   /* USER CODE BEGIN 2 */
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
+  HAL_TIM_Base_Start(&htim16);
+	HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
 
 
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  //HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	HAL_ADC_Start(&hadc);
+
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
+    
+		if(HAL_ADC_PollForConversion(&hadc, 100000) == HAL_OK){
+				//Get the adc value
+				g_ADCValue = HAL_ADC_GetValue(&hadc);
+		}
+		//we have a 12-bit ADC (?) so there are 4096 values (0 -> 4095)
+    //the servo takes pulses from 0ms to 2ms, in a period of 20ms
+    //therefore the values we put into CCR1 will be 0-100
+    //to squish the ADC range into the PWM range, multiply the ADC value by ~0.0244
+	  uint16_t duty = (uint16_t)(0.0244*g_ADCValue);
+    
+    //We now have a number between 0-100 which represents pulses of 0-2ms
+		htim16.Instance->CCR1 = duty;
+	  
   }
   /* USER CODE END 3 */
 
