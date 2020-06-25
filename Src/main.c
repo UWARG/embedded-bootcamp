@@ -99,7 +99,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
-
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Start(&htim16,TIM_CHANNEL_1);
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
@@ -108,6 +109,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    uint16_t adcOutput = 0;
+    adcOutput = HAL_ADC_GetValue(&hadc); //This will give a value corrosponding to 0-4095 and will be between 0-3.3v. It is a 12 bit long int.
+    uint16_t pwmPercentage = adcOutput/4095 * 100;
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwmPercentage);
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
