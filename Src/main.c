@@ -117,7 +117,7 @@ int main(void)
   {
     uint16_t adcOutput = 0;
     adcOutput = HAL_ADC_GetValue(&hadc); //This will give a value corrosponding to 0-4095 and will be between 0-3.3v. It is a 12 bit long int.
-    double adcPercentage = adcOutput/4095;
+    double adcPercentage = (double) adcOutput/4095;
     int compareValue = (adcPercentage * differenceDutyCycleMs + minDutyCycleMs)*arrPeriod/maxDutyCycleMs; //this value converts the ADC output into the compare value by taking into account the duty cycles.
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compareValue); //Compare means it will count up to this number in reference to the prescaler.
 
