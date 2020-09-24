@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 20:tt STMicroelectronics
+  * COPYRIGHT(c) 2017 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -119,7 +119,13 @@ int main(void)
   while (1)
   {
     adc_output = HAL_ADC_GetValue(&hadc); //Gets the converted value from data register of regular channel. (A value between 0 and 4095 representinng 0 to 3.3 V [assuming a 12-bit ADC is being used])
-    pwm_compare = adc_output * 3000 / 4095 + 3000; // Converts value to a range of 3000 to 6000
+    /*
+    
+      From my understanding, the __HAL_TIM_SET_COMPARE() function compares the pwm_compare value to the period of the TIM16. The value a = pwm_compare/TIM16.Period*100% is the duty period of the PWM.
+      Since we want 1ms to 2ms on-time, we are looking at a 5-10% duty cycle. Right now, the PWM period is 60000, thus we want the pwm_compare value to have a range of 3000 to 6000!
+
+    */
+    pwm_compare = adc_output * 3000 / 4095 + 3000; // Converts value to a range of 3000 (1 ms on-time) to 6000 (2 ms on-time)
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwm_compare); //sets the TIM Capture Compare Register value
 
   /* USER CODE END WHILE */
