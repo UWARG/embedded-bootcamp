@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2017 STMicroelectronics
+  * COPYRIGHT(c) 20:tt STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -43,6 +43,8 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdint.h> //allows us to specify integer bit size :))
+
 
 /* USER CODE BEGIN Includes */
 #include "debug.h"
@@ -100,14 +102,26 @@ int main(void)
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
 
-
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+  HAL_ADC_Start(&hadc); //Enables ADC and starts conversion of the regular channels.
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); //starts PWM signal generation. First argument is the pointer to the TIM handle and the second parameter is the channel used or the timer
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  uint16_t adc_output = 0;
+  uint16_t pwm_compare = 0;
+
   while (1)
   {
+    adc_output = HAL_ADC_GetValue(&hadc); //Gets the converted value from data register of regular channel. (A value between 0 and 4095 representinng 0 to 3.3 V [assuming a 12-bit ADC is being used])
+    pwm_compare = adc_output * 3000 / 4095 + 3000; // Converts value to a range of 3000 to 6000
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwm_compare); //sets the TIM Capture Compare Register value
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
