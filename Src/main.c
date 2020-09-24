@@ -113,8 +113,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint16_t adc_output = 0;
-  uint16_t pwm_compare = 0;
+  uint16_t adc_output = 0; //ADC gives a 16 bit output
+  uint16_t pwm_compare = 0; //we only need to provide a 16 bit input for the pwm
 
   while (1)
   {
