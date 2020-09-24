@@ -107,12 +107,19 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  const uint32_t PWM_FREQUENCY = 50;
+  const uint32_t PWM_STEPS = 100;
+  const uint32_t COUNTER_FREQUENCY = PWM_FREQUENCY* PWM_STEPS;
+  const uint32_t TIMER_FREQUENCY = 48e6;
+  const uint32_t PRESCALER = (TIMER_FREQUENCY/COUNTER_FREQUENCY) - 1;
+  const uint32_t PERIOD = 2*1000; //ms * 1000 to get us
   while (1)
   {
     uint32_t adcVal;
     adcVal = HAL_ADC_GetValue(&hadc); //value between 0 and 4095, inclusive because its a 12 bit adc -> 4096
-    //HAL_TIM_GenerateEvent
-    __HAL_TIM_SET_COMPARE()
+    htim16.Init.Prescaler = PRESCALER;
+    htim16.Init.Period = PERIOD;
+    //__HAL_TIM_SET_COMPARE()
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
