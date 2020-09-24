@@ -67,6 +67,11 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN 0 */
 
+struct bit_field  //this structure specifies the length in bits for the field adc_output
+{
+  unsigned adc_output: 12; // 12 bits
+};
+
 /* USER CODE END 0 */
 
 int main(void)
@@ -113,19 +118,23 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint16_t adc_output = 0; //ADC gives a 16 bit output
+  struct bit_field b; //defines bitfield which will contain the 12 bit adc_output
+  b.adc_output = 0; 
+
+  //int adc_output = 0; //ADC gives a 12 bit output 
+
   uint16_t pwm_compare = 0; //we only need to provide a 16 bit input for the pwm
 
   while (1)
   {
-    adc_output = HAL_ADC_GetValue(&hadc); //Gets the converted value from data register of regular channel. (A value between 0 and 4095 representinng 0 to 3.3 V [assuming a 12-bit ADC is being used])
+    b.adc_output = HAL_ADC_GetValue(&hadc); //Gets the converted value from data register of regular channel. (A value between 0 and 4095 representinng 0 to 3.3 V [assuming a 12-bit ADC is being used])
     /*
     
       From my understanding, the __HAL_TIM_SET_COMPARE() function compares the pwm_compare value to the period of the TIM16. The value a = pwm_compare/TIM16.Period*100% is the duty period of the PWM.
       Since we want 1ms to 2ms on-time, we are looking at a 5-10% duty cycle. Right now, the PWM period is 60000, thus we want the pwm_compare value to have a range of 3000 to 6000!
 
     */
-    pwm_compare = adc_output * 3000 / 4095 + 3000; // Converts value to a range of 3000 (1 ms on-time) to 6000 (2 ms on-time)
+    pwm_compare = b.adc_output * 3000 / 4095 + 3000; // Converts value to a range of 3000 (1 ms on-time) to 6000 (2 ms on-time)
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwm_compare); //sets the TIM Capture Compare Register value
 
   /* USER CODE END WHILE */
