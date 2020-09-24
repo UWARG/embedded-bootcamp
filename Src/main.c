@@ -101,6 +101,7 @@ int main(void)
   debug("Compiled on %s at %s", __DATE__, __TIME__);
 
 
+
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -108,6 +109,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    uint32_t adcVal;
+    adcVal = HAL_ADC_GetValue(&hadc); //value between 0 and 4095, inclusive because its a 12 bit adc -> 4096
+    //HAL_TIM_GenerateEvent
+    __HAL_TIM_SET_COMPARE()
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -116,6 +121,8 @@ int main(void)
   /* USER CODE END 3 */
 
 }
+
+
 
 /** System Clock Configuration
 */
