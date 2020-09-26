@@ -43,8 +43,8 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include <stdint.h> //allows us to specify integer bit size :))
-#include <math.h> //for the round() function
+#include <stdint.h>             // Allows us to specify integer bit size :))
+#include <math.h>               // For the round() function
 
 
 /* USER CODE BEGIN Includes */
@@ -105,7 +105,7 @@ int main(void)
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
 
-  HAL_ADC_Start(&hadc); //Enables ADC and starts conversion of the regular channels.
+  HAL_ADC_Start(&hadc);                      //Enables ADC and starts conversion of the regular channels.
   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); //starts PWM signal generation. First argument is the pointer to the TIM handle and the second parameter is the channel used or the timer
 
 
@@ -113,30 +113,23 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint16_t ADCOutput = 0; // stores converted value from data register
-  float PWMCompareDecimal = 0.0;
-  uint16_t PWMCompare = 0; //we only need to provide a 16 bit input for the pwm
+  uint16_t ADCOutput = 0;                    // Stores converted value from data register
+  uint16_t PWMCompare = 0;                   // We only need to provide a 16 bit input for the pwm
 
-  // sets peripheral values (constants)
-  const int MINIMUM_PWM_VALUE = 3000; //minimum value of the duty cycle (MIN_VALUE / 60000 * TIM16.Period)
-  const int PWM_COMPARE_VALUE_RANGE = 3000; //Used to determine the range of the duty cycle (RANGE / 60000 * TIM16.Period)
-  const int ADC_MAX_VALUE = 4095; // Max adc output possible 
+  // Sets peripheral values (constants)
+  const int MINIMUM_PWM_VALUE = 3000;        // Minimum value of the duty cycle (MIN_VALUE / 60000 * TIM16.Period)
+  const int PWM_COMPARE_VALUE_RANGE = 3000;  // Used to determine the range of the duty cycle (RANGE / 60000 * TIM16.Period)
+  const int ADC_MAX_VALUE = 4095;            // Max adc output possible 
 
   while (1)
   {
-    ADCOutput = HAL_ADC_GetValue(&hadc); //Gets the converted value from data register of regular channel. (A value between 0 and 4095 representinng 0 to 3.3 V [assuming a 12-bit ADC is being used])
-    /*
-    
-      From my understanding, the __HAL_TIM_SET_COMPARE() function compares the pwm_compare value to the period of the TIM16. The value a = pwm_compare/TIM16.Period*100% is the duty period of the PWM.
-      Since we want 1ms to 2ms on-time, we are looking at a 5-10% duty cycle. Right now, the PWM period is 60000, thus we want the pwm_compare value to have a range of 3000 to 6000!
+    ADCOutput = HAL_ADC_GetValue(&hadc);     //Gets the converted value from data register of regular channel. (A value between 0 and 4095 representinng 0 to 3.3 V [assuming a 12-bit ADC is being used])
 
-    */
+    // Converts value to a range of 3000 (1 ms on-time) to 6000 (2 ms on-time). Casts ints to float to prevent truncation. round() converts floats to int. 
+    PWMCompare = (uint16_t) round((float) ADCOutput*(float) PWM_COMPARE_VALUE_RANGE/(float) ADC_MAX_VALUE + (float) MINIMUM_PWM_VALUE); 
 
-    // Converts value to a range of 3000 (1 ms on-time) to 6000 (2 ms on-time) 
-    PWMCompareDecimal = round((float) ADCOutput * (float) PWM_COMPARE_VALUE_RANGE / (float) ADC_MAX_VALUE + (float) MINIMUM_PWM_VALUE); //calculates using float first so truncation doesn't result in the PWMCompare value being one less than it should be. 
-    PWMCompare = (uint16_t) PWMCompareDecimal; //converts float to uint16_t 
-
-    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, PWMCompare); //sets the TIM Capture Compare Register value
+    // Sets the TIM Capture Compare Register value
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, PWMCompare); 
 
   /* USER CODE END WHILE */
 

@@ -52,24 +52,21 @@ void MX_TIM16_Init(void)
   TIM_OC_InitTypeDef sConfigOC;
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
+  /* 
+     Prescaler Explanation:
+     - (For me) Prescaler definitoin: "an electronic counting circuit used to reduce a high frequency electrical signal to a lower frequency by integer division. The prescaler takes the basic timer clock frequency and divides it by some value before feeding it to the timer"
+     -  From docs, counter clock frequency = fCK_PSC/(PSC[15:0] + 1). Since we are using STM32f0, the chip will be clocked at 48 MHz (https://vivonomicon.com/2018/05/20/bare-metal-stm32-programming-part-5-timer-peripherals-and-the-system-clock/).
+     -  Now, if the chip runs at 48 MHz, if we set a Prescalar value of 15, we will have 3,000,000 MHz as the counter clock frequency. That means the TIM16 counter will restart every 21.8 ms. 
 
-  /* Comments for my own understanding 
-
-    Prescaler Explanation:
-    - (For me) Prescaler definitoin: "an electronic counting circuit used to reduce a high frequency electrical signal to a lower frequency by integer division. The prescaler takes the basic timer clock frequency and divides it by some value before feeding it to the timer"
-    -  From docs, counter clock frequency = fCK_PSC/(PSC[15:0] + 1). Since we are using STM32f0, the chip will be clocked at 48 MHz (https://vivonomicon.com/2018/05/20/bare-metal-stm32-programming-part-5-timer-peripherals-and-the-system-clock/).
-    -  Now, if the chip runs at 48 MHz, if we set a Prescalar value of 15, we will have 3,000,000 MHz as the counter clock frequency. That means the TIM16 counter will restart every 21.8 ms. 
-
-    Period Explanation:
-    - Timer is 16 bit, thus it can count up till 65,536. 
-    - We want frequency to be 50 Hz, so period must be 20 ms. So if TIM16 period = 60,000, we will have 50 Hz :))
-
-  */
+     Period Explanation:
+     - Timer is 16 bit, thus it can count up till 65,536. 
+     - We want frequency to be 50 Hz, so period must be 20 ms. So if TIM16 period = 60,000, we will have 50 Hz :))
+   */
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 15; //changed to 15
+  htim16.Init.Prescaler = 15;                                       // Changed to 15
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 60000; //changed to 60000
+  htim16.Init.Period = 60000;                                       // Changed to 60,000
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
