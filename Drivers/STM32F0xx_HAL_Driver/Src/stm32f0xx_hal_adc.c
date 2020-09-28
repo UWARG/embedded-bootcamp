@@ -161,7 +161,7 @@
         (++) ADC conversion by interruption: 
           (+++) Activate the ADC peripheral and start conversions
                 using function HAL_ADC_Start_IT()
-          (+++) Wait for ADrsC conveion completion by call of function
+          (+++) Wait for ADC conveion completion by call of function
                 HAL_ADC_ConvCpltCallback()
                 (this function must be implemented in user program)
           (+++) Retrieve conversion results 

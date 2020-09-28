@@ -107,19 +107,24 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  const uint32_t PWM_FREQUENCY = 50;
-  const uint32_t PWM_STEPS = 100;
+  const uint8_t PWM_FREQUENCY = 50;
+  const uint16_t PWM_STEPS = 100;
   const uint32_t COUNTER_FREQUENCY = PWM_FREQUENCY* PWM_STEPS;
   const uint32_t TIMER_FREQUENCY = 48e6;
   const uint32_t PRESCALER = (TIMER_FREQUENCY/COUNTER_FREQUENCY) - 1;
   const uint32_t PERIOD = 2*1000; //ms * 1000 to get us
+
+  const MAX_ADC_VAL = 4095;
   while (1)
   {
-    uint32_t adcVal;
+    uint_16_t adcVal;
     adcVal = HAL_ADC_GetValue(&hadc); //value between 0 and 4095, inclusive because its a 12 bit adc -> 4096
     htim16.Init.Prescaler = PRESCALER;
     htim16.Init.Period = PERIOD;
-    //__HAL_TIM_SET_COMPARE()
+    
+    uint32_t compare = (adcVal/MAX_ADC_VAL) * PERIOD;
+    HAL_TIM_PWM_Start_IT(&htim16, TIM_CHANNEL_1); // I have no clue what channel value so Im gonna assume 
+    // __HAL_TIM_SET_COMPARE(htim16, TIM_CHANNEL_1, compare)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
