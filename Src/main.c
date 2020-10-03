@@ -106,24 +106,24 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  const uint8_t PWM_FREQUENCY = 50;
-  const uint16_t PWM_STEPS = 100;
-  const uint32_t COUNTER_FREQUENCY = PWM_FREQUENCY* PWM_STEPS;
-  const uint32_t TIMER_FREQUENCY = 48e6;
-  const uint32_t PRESCALER = (TIMER_FREQUENCY/COUNTER_FREQUENCY) - 1;
-  const uint32_t PERIOD = 2*1000; //ms * 1000 to get us
+  // const uint8_t PWM_FREQUENCY = 50;
+  // const uint16_t PWM_STEPS = 100;
+  // const uint32_t COUNTER_FREQUENCY = PWM_FREQUENCY* PWM_STEPS;
+  // const uint32_t TIMER_FREQUENCY = 48e6;
+  // const uint32_t PRESCALER = (TIMER_FREQUENCY/COUNTER_FREQUENCY) - 1;
+  // const uint32_t PERIOD = 2*1000; //ms * 1000 to get us /* USER CODE BEGIN WHILE */
+ 
 
   const MAX_ADC_VAL = 4095;
   while (1)
   {
     uint_16_t adcVal;
     adcVal = HAL_ADC_GetValue(&hadc); //value between 0 and 4095, inclusive because its a 12 bit adc -> 4096
-    htim16.Init.Prescaler = PRESCALER;
-    htim16.Init.Period = PERIOD;
+    // htim16.Init.Prescaler = PRESCALER;
+    // htim16.Init.Period = PERIOD;
     
-    uint32_t compare = (adcVal/MAX_ADC_VAL) * PERIOD;
-    HAL_TIM_PWM_Start_IT(&htim16, TIM_CHANNEL_1); // I have no clue what channel value so Im gonna assume 
+    // uint32_t compare = (adcVal/MAX_ADC_VAL) * PERIOD;
+    HAL_TIM_PWM_Start_IT(&htim16, TIM_CHANNEL_1); // I have no clue what channel value so Im gonna assume (I think the channel is actually in htim16 )
     // __HAL_TIM_SET_COMPARE(htim16, TIM_CHANNEL_1, compare)
   /* USER CODE END WHILE */
 
