@@ -53,9 +53,9 @@ void MX_TIM16_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 15; //counter clock frequency gives period of 
+  htim16.Init.Prescaler = 15; //counter clock frequency gives period of 3Mhz
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0; //Max value to count up to. 65535 gives a period of 21.845 ms, 60000 gives 20 ms at the 3Mhz counter clock frequency.
+  htim16.Init.Period = 60000; //Max value to count up to. 65535 gives a period of 21.845 ms, 60000 gives 20 ms at the 3Mhz counter clock frequency.
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;

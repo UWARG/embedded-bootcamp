@@ -113,12 +113,18 @@ int main(void)
   // const uint32_t PRESCALER = (TIMER_FREQUENCY/COUNTER_FREQUENCY) - 1;
   // const uint32_t PERIOD = 2*1000; //ms * 1000 to get us /* USER CODE BEGIN WHILE */
  
+  const uint8_t MAX_ON_TIME = 2; //in ms
+  const uint8_t MIN_ON_TIME = 1; //in ms  
 
-  const MAX_ADC_VAL = 4095;
+  const uint8_t PERIOD_MS = 20;
+
   while (1)
   {
     uint_16_t adcVal;
     adcVal = HAL_ADC_GetValue(&hadc); //value between 0 and 4095, inclusive because its a 12 bit adc -> 4096
+    double inputPercentage = adcVal/4096.0;
+    //converts the percentage to ms, then from ms to ticks
+     uint_t compareVal = (inputPercentage * (MAX_ON_TIME-MIN_ON_TIME) + MIN_ON_TIME) / PERIOD_MS * htim16.Init.Period; 
     // htim16.Init.Prescaler = PRESCALER;
     // htim16.Init.Period = PERIOD;
     
