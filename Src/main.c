@@ -44,6 +44,8 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include "math.h"
+
 /* USER CODE BEGIN Includes */
 #include "debug.h"
 /* USER CODE END Includes */
@@ -103,6 +105,7 @@ int main(void)
   HAL_TIM_PWM_MspInit(&htim16);
 
   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+  HAL_ADC_Start(&hadc);
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
@@ -119,7 +122,7 @@ int main(void)
     adcVal = HAL_ADC_GetValue(&hadc); //value between 0 and 4095, inclusive because its a 12 bit adc -> 4096
     double inputPercentage = adcVal/4096.0;
     //converts the percentage to ms, then from ms to ticks
-    uint16_t compareVal = (inputPercentage * (MAX_ON_TIME-MIN_ON_TIME) + MIN_ON_TIME) / PERIOD_MS * htim16.Init.Period; 
+    uint16_t compareVal = round((inputPercentage * (MAX_ON_TIME-MIN_ON_TIME) + MIN_ON_TIME) / PERIOD_MS * htim16.Init.Period); 
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compareVal);
   /* USER CODE END WHILE */
 
