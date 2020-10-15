@@ -102,12 +102,31 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+  if(HAL_ADC_Start(&hadc) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+  if(HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    const int TIMEOUT_MILLIS = 1000000;
+    uint32_t adcValue;
+    if(HAL_ADC_PollForConversion(&hadc, TIMEOUT_MILLIS) == HAL_OK)
+    {
+      adcValue = HAL_ADC_GetValue(&hadc);
+    }
+    else
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
