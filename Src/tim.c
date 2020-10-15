@@ -52,10 +52,14 @@ void MX_TIM16_Init(void)
   TIM_OC_InitTypeDef sConfigOC;
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
+  //Set prescaler and period to achieve highest possible signal resolution given 48MHz input clock, 50Hz signal, and max period of 65535
+  uint32_t SERVO_PRESCALER = 14;
+  uint32_t SERVO_PERIOD = 63999;
+
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
+  htim16.Init.Prescaler = SERVO_PRESCALER;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0;
+  htim16.Init.Period = SERVO_PERIOD;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
