@@ -111,6 +111,9 @@ int main(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+  const uint32_t PWM_COMPARE_MIN = 3199; //1 millisecond duty cycle
+  const uint32_t PWM_COMPARE_MIN = 6399; //2 millisecond duty cycle
+  __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, PWM_COMPARE_MIN);
   /* USER CODE END 2 */
 
   /* Infinite loop */
