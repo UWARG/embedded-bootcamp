@@ -111,9 +111,9 @@ int main(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-  const uint32_t PWM_COMPARE_MIN = 3199; //1 millisecond duty cycle
-  const uint32_t PWM_COMPARE_MAX = 6399; //2 millisecond duty cycle
-  const uint32_t PWM_COMPARE_DIFF = PWM_COMPARE_MAX - PWM_COMPARE_MIN;
+  const uint16_t PWM_COMPARE_MIN = 3199; //1 millisecond duty cycle
+  const uint16_t PWM_COMPARE_MAX = 6399; //2 millisecond duty cycle
+  const uint16_t PWM_COMPARE_DIFF = PWM_COMPARE_MAX - PWM_COMPARE_MIN;
   __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, PWM_COMPARE_MIN);
   /* USER CODE END 2 */
 
@@ -121,8 +121,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    const int TIMEOUT_MILLIS = 1000000;
-    uint32_t adcValue;
+    const uint16_t TIMEOUT_MILLIS = 65535;
+    uint16_t adcValue;
     if(HAL_ADC_PollForConversion(&hadc, TIMEOUT_MILLIS) == HAL_OK)
     {
       adcValue = HAL_ADC_GetValue(&hadc);
@@ -132,9 +132,9 @@ int main(void)
       _Error_Handler(__FILE__, __LINE__);
     }
 
-    const uint32_t ADC_VAL_MAX = 4095; //For 12-bit ADC resolution
+    const uint16_t ADC_VAL_MAX = 4095; //For 12-bit ADC resolution
     //Map ADC value to the range of desired PWM compare register values
-    uint32_t pwmCompare = adcValue * PWM_COMPARE_DIFF / ADC_VAL_MAX + PWM_COMPARE_MIN; //Error of +0 -1, or +0ms -3.125E-4ms due to integer division
+    uint16_t pwmCompare = adcValue * PWM_COMPARE_DIFF / (float)ADC_VAL_MAX + PWM_COMPARE_MIN + 0.5f;
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwmCompare);
   /* USER CODE END WHILE */
 
