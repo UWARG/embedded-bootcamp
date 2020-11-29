@@ -96,6 +96,7 @@ int main(void)
   MX_TIM16_Init();
   MX_USART1_UART_Init();
 
+  HAL_ADC_Start(&hadc); //AVANI
   /* USER CODE BEGIN 2 */
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
@@ -106,13 +107,19 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  
+  uint32_t ADCReturnValue;
   while (1)
   {
   /* USER CODE END WHILE */
-
+    HAL_ADC_PollForConversion(&hadc, 20);  //AVANI
+    ADCReturnValue = HAL_ADC_GetValue(&hadc); //AVANI
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, ADCReturnValue*12000/4096); //AVANI
+   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); 
   /* USER CODE BEGIN 3 */
 
   }
+  HAL_ADC_Stop(&hadc);
   /* USER CODE END 3 */
 
 }
