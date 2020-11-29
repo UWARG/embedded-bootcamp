@@ -102,6 +102,11 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  
+  HAL_ADC_Start(&hadc); //Laye - starts ADC
+  uint32_t converted_val = 0; //variable for ADC converted val - Laye
+  uint32_t compare_val = 0; //variable for compare register - Laye
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,8 +117,16 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 
+  HAL_ADC_PollForConversion(&hadc, 20); //Laye - polls potentiometer for analog values 
+  converted_val = HAL_ADC_GetValue(&hadc); //Laye - return value of ADC 
+  compare_val = (converted_val/4096)*12000; // Laye - scaling 12 bit return value according to period of 12000
+  __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compare_val);  //Laye - setting compare register to change duty cycle
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); //Laye - starting PWM
+
   }
   /* USER CODE END 3 */
+
+ HAL_ADC_Stop(&hadc); //Laye - stopping ADC
 
 }
 
