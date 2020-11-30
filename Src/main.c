@@ -122,7 +122,7 @@ int main(void)
 
   HAL_ADC_PollForConversion(&hadc, 20); //Laye - polls potentiometer for analog values 
   converted_val = HAL_ADC_GetValue(&hadc); //Laye - return value of ADC 
-  temporary_val = (converted_val/4095.0)*600.0 + 600.0;
+  temporary_val = (converted_val/4095.0)*600.0 + 599.5;
   compare_val = temporary_val; 
   __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compare_val);  //Laye - setting compare register to change duty cycle
 
