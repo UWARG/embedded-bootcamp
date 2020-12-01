@@ -108,16 +108,19 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   
-  uint32_t ADCReturnValue;
+  uint16_t ADCReturnValue;
+  float tempValue;
+  uint16_t compareValue;
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
   while (1)
   {
   /* USER CODE END WHILE */
     HAL_ADC_PollForConversion(&hadc, 20);  //AVANI
     ADCReturnValue = HAL_ADC_GetValue(&hadc); //AVANI
-    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, ADCReturnValue*12000/4096); //AVANI
-   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); 
+    tempValue = ADCReturnValue*600/4095;
+    compareValue = tempValue;
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compareValue); //AVANI 
   /* USER CODE BEGIN 3 */
-
   }
   HAL_ADC_Stop(&hadc);
   /* USER CODE END 3 */
