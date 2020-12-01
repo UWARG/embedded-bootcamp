@@ -117,7 +117,7 @@ int main(void)
   /* USER CODE END WHILE */
     HAL_ADC_PollForConversion(&hadc, 20);  //AVANI
     ADCReturnValue = HAL_ADC_GetValue(&hadc); //AVANI
-    tempValue = ADCReturnValue*600/4095;
+    tempValue = (ADCReturnValue*600.0/4095.0)+599.5;
     compareValue = tempValue;
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compareValue); //AVANI 
   /* USER CODE BEGIN 3 */
