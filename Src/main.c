@@ -43,6 +43,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdlib.h>
 
 /* USER CODE BEGIN Includes */
 #include "debug.h"
@@ -81,6 +82,10 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); //Starts PWM on the CH1 pin
+
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -108,13 +113,15 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-  /* USER CODE END WHILE */
 
+  /* USER CODE END WHILE */
+    
   /* USER CODE BEGIN 3 */
+    uint16_t advValue = HAL_ADC_GetState(&hadc);
+    
 
   }
   /* USER CODE END 3 */
-
 }
 
 /** System Clock Configuration
@@ -140,6 +147,7 @@ void SystemClock_Config(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
