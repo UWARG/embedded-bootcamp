@@ -83,6 +83,7 @@ int main(void)
   /* USER CODE BEGIN Init */
 
   HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Init(&htim16);
   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1); //Starts PWM on the CH1 pin
 
 
@@ -117,7 +118,10 @@ int main(void)
   /* USER CODE END WHILE */
     
   /* USER CODE BEGIN 3 */
-    uint16_t advValue = HAL_ADC_GetState(&hadc);
+    uint16_t digValue = HAL_ADC_GetState(&hadc);
+    // __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, )
+
+ 
     
 
   }
