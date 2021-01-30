@@ -116,6 +116,7 @@ int main(void)
   const uint8_t TIMER_LOW = 1;
   const uint8_t TIMER_HIGH = 2;
   const uint8_t PERIOD = 20;
+  const uint8_t DUTY_CYCLE_CONVERSION_FACTOR = 4000;
 
 
 
@@ -127,17 +128,11 @@ int main(void)
   /* USER CODE BEGIN 3 */
     uint16_t adcValue = HAL_ADC_GetState(&hadc);
     float advValPercentage = adcValue/4096.0; // Converting the converted digital value into a percentage
-    float timerInMs = advValPercentage * (TIMER_HIGH - TIMER_LOW) + TIMER_LOW; // Converting the percentage to ticks
-    float valToCompare = timerInMs/(float) PERIOD * htim16.Init.Period;
 
+    float compareVal = (advValPercentage * (TIMER_HIGH - TIMER_LOW) + TIMER_LOW) * htim16.Init.Period / (float) TIMER_HIGH; // Scales the val percentage to a value between 2000 and 4000 ticks, in line with the duty cycle and set prescaler
 
-
-
-    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, valToCompare);
-
- 
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compareVal);
     
-
   }
   /* USER CODE END 3 */
 }
