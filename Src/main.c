@@ -112,13 +112,26 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  const uint8_t TIMER_LOW = 1;
+  const uint8_t TIMER_HIGH = 2;
+  const uint8_t PERIOD = 20;
+
+
+
   while (1)
   {
 
   /* USER CODE END WHILE */
     
   /* USER CODE BEGIN 3 */
-    uint16_t digValue = HAL_ADC_GetState(&hadc);
+    uint16_t adcValue = HAL_ADC_GetState(&hadc);
+    float advValPercentage = advValue/4096.0; // Converting the converted digital value into a percentage
+    float timerInMs = advValPercentage*(float) (TIMER_HIGH - TIMER_LOW) + TIMER_LOW; // Converting the percentage to ticks
+    
+
+
+
     // __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, )
 
  

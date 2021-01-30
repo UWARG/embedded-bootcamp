@@ -53,9 +53,9 @@ void MX_TIM16_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 1;
+  htim16.Init.Prescaler = 23; // A prescaler of 23 brings the frequency from 48 MHz to 2 MHz (since 48/(23+1) = 2
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 2;
+  htim16.Init.Period = 40000; // Using a prescaler of 23, when counting up to 65535, the time taken is 0.032765 s. To scale that down to 0.02 s (the desired period) it needs to be 40000 instead
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
