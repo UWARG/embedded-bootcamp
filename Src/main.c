@@ -126,13 +126,14 @@ int main(void)
     
   /* USER CODE BEGIN 3 */
     uint16_t adcValue = HAL_ADC_GetState(&hadc);
-    float advValPercentage = advValue/4096.0; // Converting the converted digital value into a percentage
-    float timerInMs = advValPercentage*(float) (TIMER_HIGH - TIMER_LOW) + TIMER_LOW; // Converting the percentage to ticks
-    
+    float advValPercentage = adcValue/4096.0; // Converting the converted digital value into a percentage
+    float timerInMs = advValPercentage * (TIMER_HIGH - TIMER_LOW) + TIMER_LOW; // Converting the percentage to ticks
+    float valToCompare = timerInMs/(float) PERIOD * htim16.Init.Period;
 
 
 
-    // __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, )
+
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, valToCompare);
 
  
     
