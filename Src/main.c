@@ -115,7 +115,6 @@ int main(void)
 
   const uint8_t TIMER_LOW = 1;
   const uint8_t TIMER_HIGH = 2;
-  const uint8_t PERIOD = 20;
 
   while (1)
   {
