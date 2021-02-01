@@ -47,7 +47,7 @@
   * @{
   */
 
-/*@addtogroup stm32f0xx
+/** @addtogroup stm32f0xx
   * @{
   */
     
