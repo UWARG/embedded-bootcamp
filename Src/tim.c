@@ -52,7 +52,7 @@ void MX_TIM16_Init(void)
   TIM_OC_InitTypeDef sConfigOC;
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
-  htim16.Instance -> CCR3=936.5; //setting the compare register
+  htim16.Instance = TIM16; //setting the compare register
   htim16.Init.Prescaler = 1024; //brings freq down to 46875, need it at 50. So Compare match register 936.5 (+1) to get interrupt freq = 50Hz
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim16.Init.Period = 20; //20ms for 50Hz Freq

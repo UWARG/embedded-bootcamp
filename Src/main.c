@@ -103,21 +103,34 @@ int main(void)
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
+  //Initialize ADC and TIM
+  HAL_ADC_Init(&hadc);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   //set servo PWM output relative to input voltage from potentiometer.
   //potentiometer voltage from 0-3.3V, PWM modulation from 1-2ms on-time at 50Hz (period = 20ms)
+  
+  int Ch1 = 0; //no need to constantly re-initialize a variable.
   while (1)
   {
-      int tim16 = __HAL_TIM_GET_COUNTER(&htim16);
-      //ADC conversion: 1023 and first 3.3 are from ADC, last 3.3 and +1 from conversion to On-time.
-      double OnTime = ((HAL_ADC_GetValue(&hadc) / (1023 / 3.3)) / 3.3) + 1; //1 being the 0 degree servo position, divide input by 3.3 to get percent, 
-      if (tim16 == OnTime) { //clock at time to go to off-cycle (with extra redundancy in case it misses)
+      Ch1 = 0;
+      //ADC conversion:
+      double OnTime = HAL_ADC_GetValue(&hadc); //RAW ADC input
+      OnTime = OnTime / (1023 / 3.3); //Converting raw to input voltage value for clarity (between 0V and 3.3V)
+      OnTime = (OnTime / 3.3) + 1; //Converting to On-time of the PWM by getting the decimal of input Voltage and adding 1ms 
+      while (Ch1 <= OnTime) {
+          TIM16->CCR1 = Ch1;
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+          Ch1 += 1;
+          HAL_Delay(1);
       }
-      if (tim16 == 0 || tim16 == 20) {//check for both max period and initial value
+      while (Ch1 > OnTime) {//check for both max period and initial value
+          TIM16->CCR1 = Ch1;
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+          Ch1 += 1;
+          HAL_Delay(1);
       }
   /* USER CODE END WHILE */
       
