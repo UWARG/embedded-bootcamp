@@ -111,8 +111,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   //set servo PWM output relative to input voltage from potentiometer.
   //potentiometer voltage from 0-3.3V, PWM modulation from 1-2ms on-time at 50Hz
-  int ADCconvert = 1023; //converting ADC to decimal
-  int PeriodToOnTime = 3000; //3000 to 1ms
+  double ADCconvert = 1023; //converting ADC to decimal
+  double PeriodToOnTime = 3000; //3000 to 1ms
   while (1)
   {
       //Updating timer parameters:
