@@ -110,27 +110,26 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   //set servo PWM output relative to input voltage from potentiometer.
-  //potentiometer voltage from 0-3.3V, PWM modulation from 1-2ms on-time at 50Hz (period = 20ms)
-  
+  //potentiometer voltage from 0-3.3V, PWM modulation from 1-2ms on-time at 50Hz
+  int ADCconvert = 1023; //converting ADC to decimal
   int Ch1 = 0; //no need to constantly re-initialize a variable.
   while (1)
   {
-      Ch1 = 0;
+      //Updating timer parameters:
       //ADC conversion:
       double OnTime = HAL_ADC_GetValue(&hadc); //RAW ADC input
-      OnTime = OnTime / (1023 / 3.3); //Converting raw to input voltage value for clarity (between 0V and 3.3V)
-      OnTime = (OnTime / 3.3) + 1; //Converting to On-time of the PWM by getting the decimal of input Voltage and adding 1ms 
-      while (Ch1 <= OnTime) {
-          TIM16->CCR1 = Ch1;
+      OnTime = OnTime / ADCconvert; //Converting raw to decimal of input range
+      OnTime++; //incrementing as minimum on time is 1ms
+      //duty Cycle is OnTIme/20. So ARR = 19 and CCR = OnTime
+      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, OnTime); //Use the OnTime value as the CCR value
+
+      //Managing PWM signal:
+      Ch1 = __HAL_TIM_GET_COUNTER(&htim16); //get timer value.
+      if (Ch1) { //as the channel value is high only in on part of duty cycle.
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
-          Ch1 += 1;
-          HAL_Delay(1);
       }
-      while (Ch1 > OnTime) {//check for both max period and initial value
-          TIM16->CCR1 = Ch1;
+      else {
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
-          Ch1 += 1;
-          HAL_Delay(1);
       }
   /* USER CODE END WHILE */
       
