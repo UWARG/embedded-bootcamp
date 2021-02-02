@@ -120,8 +120,8 @@ int main(void)
       double OnTime = HAL_ADC_GetValue(&hadc); //RAW ADC input
       OnTime = OnTime / ADCconvert; //Converting raw to decimal of input range
       OnTime++; //incrementing as minimum on time is 1ms
-      //duty Cycle is OnTIme/20. So ARR = 19 and CCR = OnTime
-      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, OnTime); //Use the OnTime value as the CCR value
+      //duty Cycle is OnTime/20. Since ARR = 64000 then CCR = OnTime*ARR/20 (20 being the wanted period)
+      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, OnTime*(3200)); //Use the OnTime value as the CCR value
 
       //Managing PWM signal:
       Ch1 = __HAL_TIM_GET_COUNTER(&htim16); //get timer value.
