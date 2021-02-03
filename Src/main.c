@@ -119,8 +119,8 @@ int main(void)
       //ADC conversion:
       double OnCycles = HAL_ADC_GetValue(&hadc); //RAW ADC input
       OnCycles /= (float) ADCMax; //Converting raw to decimal of input range
+      OnCycles *= ((float)SERVO_PWM_MAX - (float)SERVO_PWM_MIN); //Multiply by the duration
       OnCycles += SERVO_PWM_MIN; //incrementing as minimum on time is 1ms
-      OnCycles *= ((float) SERVO_PWM_MAX - (float) SERVO_PWM_MIN); //Multiply by the duration
       OnCycles *= (float) msToCycles; //converting the 1-2ms value to 3000-6000 actual cycles.
       __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, OnCycles);
 
