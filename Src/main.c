@@ -109,19 +109,20 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  //set servo PWM output relative to input voltage from potentiometer.
   //potentiometer voltage from 0-3.3V, PWM modulation from 1-2ms on-time at 50Hz
-  double ADCconvert = 1023; //converting ADC to decimal
-  double PeriodToOnTime = 3000; //3000 to 1ms
+  unsigned int ADCMax = 1023; //converting ADC to decimal
+  unsigned int msToCycles = 3000; //3000 to 1ms
+  unsigned int SERVO_PWM_MIN = 1; //value in ms
+  unsigned int SERVO_PWM_MAX = 2; //value in ms
   while (1)
   {
-      //Updating timer parameters:
       //ADC conversion:
-      double OnTime = HAL_ADC_GetValue(&hadc); //RAW ADC input
-      OnTime = OnTime / ADCconvert; //Converting raw to decimal of input range
-      OnTime++; //incrementing as minimum on time is 1ms
-      OnTime *= PeriodToOnTime; //converting the 1-2ms value to 3000-6000 actual cycles.
-      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, OnTime);
+      double OnCycles = HAL_ADC_GetValue(&hadc); //RAW ADC input
+      OnCycles /= (float) ADCMax; //Converting raw to decimal of input range
+      OnCycles += SERVO_PWM_MIN; //incrementing as minimum on time is 1ms
+      OnCycles *= (float) (SERVO_PWM_MAX - SERVO_PWM_MIN); //Multiply by the duration
+      OnCycles *= (float) msToCycles; //converting the 1-2ms value to 3000-6000 actual cycles.
+      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, OnCycles);
 
   /* USER CODE END WHILE */
       
