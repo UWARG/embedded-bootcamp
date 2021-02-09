@@ -67,6 +67,7 @@ void MX_TIM16_Init(void)
   if (HAL_TIM_PWM_Init(&htim16) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
+    
   }
 
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
