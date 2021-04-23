@@ -101,12 +101,17 @@ int main(void) {
 
 
     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+    HAL_ADC_MspInit(&hadc)
+    HAL_TIM_Base_MspPostInit(&htim16) // I think this is the right one to go first
+    HAL_TIM_Base_MspInit(&htim16)
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
 
     /* Note:
+     * input clock freq 48Mhz <- I have no clue what this means
      * Pot voltage 0-3.3V
      * pwm mod 1-2ms ot @50hz*/
     while (1) {
