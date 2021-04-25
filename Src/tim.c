@@ -80,15 +80,17 @@ meaning that prescaler = 48000000/3275050 = 14.656 =~ 15
      * 48000000/16 = 3 000 000 = counter freq
      * counter freq = pwm freq * pwm steps, pwm steps = counter freq / pwm freq
      * 3 000 000 / 50 = 60 000 = steps
-     * period = steps - 1 = 60 000 -1 = 59 999
+     * period = steps - 1 = 60 000 -1 = 59 999 ### I don't actually need to -1
      * -> not as high as it could be but my brain hurts from doing math.
      */
     htim16.Instance = TIM16;
 //  htim16.Init.Prescaler = 0;
     htim16.Init.Prescaler = 16;
     htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim16.Init.Period = 59 999; // want the most resolution we can?
-    // 6500 gives 6501 steps
+    htim16.Init.Period = 60 000; // want the most resolution we can?
+    // 60 000 / 3 000 000 = 0.02 -> 20ms ?
+    // is tim16 period 20ms or 2ms SEHAUSNTAEHUSAEHUTHEODUBCS
+    // update google has told me that 0.02 is 20 ms.
     htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     htim16.Init.RepetitionCounter = 0;
     htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;

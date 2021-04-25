@@ -103,8 +103,11 @@ int main(void) {
     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
 
     HAL_ADC_MspInit(&hadc)
+
+
     HAL_TIM_Base_MspPostInit(&htim16) // I think this is the right one to go first
-    HAL_TIM_Base_MspInit(&htim16)
+    // MSP POST should init the pot checker?
+    HAL_TIM_Base_MspInit(&htim16) // starts up clock timer
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -114,7 +117,39 @@ int main(void) {
      * input clock freq 48Mhz <- I have no clue what this means
      * Pot voltage 0-3.3V
      * pwm mod 1-2ms ot @50hz*/
+
+    unsigned int lowest = 1;
+    unsigned int highest = 2;
+    int cycleConst = 3000;
+
     while (1) {
+        double adc_val = HAL_ADC_GetValue(&hadc); // if I read the docs right this should be it
+        // this should max at 1024-1?
+        // needs to be turned into on_cycles for 2ms = 60 000 ticks?
+        // pwm @ 50hz so
+        // 2ms -> idek we'll just come up with numbers
+
+        float oncycles = adc_val / 1023; // basic conversion to decimal
+        //I don't actually know if this init works in c but we'll go with it
+
+        oncycles *= (highest-lowest); // this doesn't change here but in the future it could.
+        // (IDK I COPIED THIS FROM THE INTERNET)
+
+        oncycles *= cycleConst;
+
+        oncycles += lowest * cycleConst; // add 1ms bc that's the minimummmmm
+
+        // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_width); from google
+        // so
+
+        __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, oncycles)
+
+        /*
+         * x * 20ms = 1ms
+         * x = 1/20
+         * y / 60 000 = 1 / 20
+         * y = 60 000 / 20 = 3 000 ! !
+         */
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
