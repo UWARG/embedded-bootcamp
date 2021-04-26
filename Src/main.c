@@ -133,7 +133,7 @@ int main(void) {
         float oncycles = adc_val / 1023; // basic conversion to decimal
         //I don't actually know if this init works in c but we'll go with it
 
-        float compval = (oncycles * (highest-lowest) + lowest) * cycleConst
+        float compval = (oncycles * (highest-lowest) + lowest) * cycleConst;
 
         // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_width); from google
         // so
