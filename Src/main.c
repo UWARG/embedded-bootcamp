@@ -119,9 +119,10 @@ int main(void) {
      * pwm mod 1-2ms ot @50hz*/
 
     // should these be unsigned ? I feel like they all could be
-    const int lowest = 1;
-    const int highest = 2;
-    const int cycleConst = 3000;
+    const unsigned int lowest = 1;
+    const unsigned int highest = 2;
+    const unsigned int cycle_const = 3000;
+    const float adc_max = 4095.0;
 
     while (1) {
         uint16_t adc_val = HAL_ADC_GetValue(&hadc); // if I read the docs right this should be it
@@ -130,15 +131,15 @@ int main(void) {
         // pwm @ 50hz so
         // 2ms -> idek we'll just come up with numbers
 
-        float oncycles = adc_val / 1023; // basic conversion to decimal
+        float oncycles = ((adc_val / adc_max) * (highest-lowest) + lowest) * cycle_const; // basic conversion to decimal
         //I don't actually know if this init works in c but we'll go with it
 
-        float compval = (oncycles * (highest-lowest) + lowest) * cycleConst;
+//        float compval = (oncycles * (highest-lowest) + lowest) * cycleConst;
 
         // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_width); from google
         // so
 
-        __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compal);
+        __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, oncycles);
 
         /*
          * x * 20ms = 1ms
