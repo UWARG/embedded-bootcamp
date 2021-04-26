@@ -46,6 +46,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "debug.h"
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -102,12 +103,11 @@ int main(void) {
 
     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
 
-    HAL_ADC_MspInit(&hadc)
 
-
-    HAL_TIM_Base_MspPostInit(&htim16) // I think this is the right one to go first
-    // MSP POST should init the pot checker?
-    HAL_TIM_Base_MspInit(&htim16) // starts up clock timer
+    HAL_ADC_Start(&hadc);
+    HAL_TIM_PWM_Init(&htim16); //hopefully the right init this time
+    // is this init necesasry? ^^
+    HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -118,12 +118,13 @@ int main(void) {
      * Pot voltage 0-3.3V
      * pwm mod 1-2ms ot @50hz*/
 
-    unsigned int lowest = 1;
-    unsigned int highest = 2;
-    int cycleConst = 3000;
+    // should these be unsigned ? I feel like they all could be
+    const int lowest = 1;
+    const int highest = 2;
+    const int cycleConst = 3000;
 
     while (1) {
-        double adc_val = HAL_ADC_GetValue(&hadc); // if I read the docs right this should be it
+        uint16_t adc_val = HAL_ADC_GetValue(&hadc); // if I read the docs right this should be it
         // this should max at 1024-1?
         // needs to be turned into on_cycles for 2ms = 60 000 ticks?
         // pwm @ 50hz so
@@ -132,17 +133,12 @@ int main(void) {
         float oncycles = adc_val / 1023; // basic conversion to decimal
         //I don't actually know if this init works in c but we'll go with it
 
-        oncycles *= (highest-lowest); // this doesn't change here but in the future it could.
-        // (IDK I COPIED THIS FROM THE INTERNET)
-
-        oncycles *= cycleConst;
-
-        oncycles += lowest * cycleConst; // add 1ms bc that's the minimummmmm
+        float compval = (oncycles * (highest-lowest) + lowest) * cycleConst
 
         // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_width); from google
         // so
 
-        __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, oncycles)
+        __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, compal);
 
         /*
          * x * 20ms = 1ms
