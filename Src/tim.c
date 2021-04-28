@@ -87,7 +87,7 @@ meaning that prescaler = 48000000/3275050 = 14.656 =~ 15
 //  htim16.Init.Prescaler = 0;
     htim16.Init.Prescaler = 16;
     htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim16.Init.Period = 60 000; // want the most resolution we can?
+    htim16.Init.Period = 60000; // want the most resolution we can?
     // 60 000 / 3 000 000 = 0.02 -> 20ms ?
     // is tim16 period 20ms or 2ms SEHAUSNTAEHUSAEHUTHEODUBCS
     // update google has told me that 0.02 is 20 ms.
