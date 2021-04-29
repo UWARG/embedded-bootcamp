@@ -79,7 +79,11 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
+
   /* USER CODE BEGIN Init */
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Init(&htim16);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
 
   /* USER CODE END Init */
 
@@ -100,17 +104,38 @@ int main(void)
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
 
-
+  
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  //setting high, low and period values (in ms)
+  const uint8_t HIGH = 2;
+  const uint8_t LOW = 1;
+  const uint8_t PERIOD = 20;
+
+  const uint16_t TIMER_PERIOD = 60000;
+
   while (1)
   {
-  /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+    //adc values range form 0 to 4095 -use a 16bit int
+    uint16_t adcReading = HAL_ADC_GetValue(&hadc);
+
+    //turn this into a percentage (total being 4095)
+    float readingPercent = (float)(adcReading) / 4095.0;
+
+    //convert this percent to a ms value inbetween 1 and 2
+    //multiply this value by the timer period (60k) and the period (20ms)
+    //note that the period of timer is 60000 and the desired period is 20ms - each ms is 60000/20 = 3000
+    //e.g if adcReading is 4095, percent will be 1 (100%), this will make val 6000 (2ms -> 2x3000)
+    //essentially, this converts the adc reading inbetween 1 and 2 ms that is also related to the period of the timer 
+    float val = (readingPercent*(HIGH-LOW) + LOW)*TIMER_PERIOD / (float)(PERIOD);
+
+    //set this value to the compare value of the timer - changes the duty cycle
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, val);
 
   }
   /* USER CODE END 3 */

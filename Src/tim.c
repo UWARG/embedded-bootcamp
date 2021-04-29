@@ -53,12 +53,21 @@ void MX_TIM16_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
+  htim16.Init.Prescaler = 15;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0;
+
+  //if we find the frequency scaled down we get: 48MHz/(15+1) = 3MHz...
+  //since the timer counts up to 65535 we get a period of 0.021845
+  //we apply a ratio to get the period of the timer:
+  //period = 6535*0.02/0.02185 = 60000
+  //note that 0.02 comes from the desired frequency of 50Hz
+  htim16.Init.Period = 60000;
+
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
+
   if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -93,6 +102,8 @@ void MX_TIM16_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
+  
+
   HAL_TIM_MspPostInit(&htim16);
 
 }
@@ -108,7 +119,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     /* TIM16 clock enable */
     __HAL_RCC_TIM16_CLK_ENABLE();
   /* USER CODE BEGIN TIM16_MspInit 1 */
-
+    
   /* USER CODE END TIM16_MspInit 1 */
   }
 }
