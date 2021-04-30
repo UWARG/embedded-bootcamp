@@ -81,9 +81,6 @@ int main(void)
 
 
   /* USER CODE BEGIN Init */
-  HAL_ADC_Start(&hadc);
-  HAL_TIM_PWM_Init(&htim16);
-  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
 
   /* USER CODE END Init */
 
@@ -99,6 +96,10 @@ int main(void)
   MX_ADC_Init();
   MX_TIM16_Init();
   MX_USART1_UART_Init();
+
+  //startin adc and pwm
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
 
   /* USER CODE BEGIN 2 */
   debug("\n\nBootcamp starting up...");
@@ -132,7 +133,7 @@ int main(void)
     //note that the period of timer is 60000 and the desired period is 20ms - each ms is 60000/20 = 3000
     //e.g if adcReading is 4095, percent will be 1 (100%), this will make val 6000 (2ms -> 2x3000)
     //essentially, this converts the adc reading inbetween 1 and 2 ms that is also related to the period of the timer 
-    float val = (readingPercent*(HIGH-LOW) + LOW)*TIMER_PERIOD / (float)(PERIOD);
+    float val = (float)(readingPercent*(HIGH-LOW) + LOW)*TIMER_PERIOD / (float)(PERIOD);
 
     //set this value to the compare value of the timer - changes the duty cycle
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, val);
