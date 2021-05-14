@@ -71,7 +71,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -102,16 +102,49 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+  // Start ADC
+  HAL_ADC_Start(&hadc); 
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+
+  // Declaring variables
+  const int TIMER_PERIOD = 60000;
+  const int DESIRED_FREQUENCY = 50;
+  const int BASE_ON_TIME = 1;
+  uint16_t raw_value; // Use 16bit value since ADC is 12 bit (0-4095)
+  float offset;
+  float pulse;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    if(HAL_ADC_PollForConversion(hadc, 20) == HAL_OK) //20ms for 50Hz?
+    {
+      raw_value = HAL_ADC_GetValue(&hadc); 
+    }
+    // Not too sure what instructions mean...
+    // Taking a guess for now since I'm sure something will be off
+
+    // Assuming that ADC value changes on-time of PWM from 1-2ms
+
+    // raw_value will be a value between 0-4095
+    // I want a value (offset) that will be between 0-1
+    // This value (offset) will be added to a base value of 1
+    // This will give us a duty cycle / on-time from 1-2ms
+    // Take the percentage on-time and multiply by period
+    offset = (raw_value/4095);
+    pulse = ((float)(offset + BASE_ON_TIME) / DESIRED_FREQUENCY) * TIMER_PERIOD;
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pulse);
+
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
+    HAL_ADC_Stop(&hadc);
+    HAL_TIM_PWM_Stop(&htim16, TIM_CHANNEL_1);
   }
   /* USER CODE END 3 */
 

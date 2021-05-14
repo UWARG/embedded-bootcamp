@@ -53,9 +53,22 @@ void MX_TIM16_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
+
+  // Calculating Prescaler Value
+  // (PSC * overflow) >= period_cycles
+  // period_cycles = (Fclk / Fpwm) = (48Mhz / 50Hz)
+  // overflow = 0xFFFF
+  // prescaler >= ((48Mhz / 50 Hz) / (0xFFFF)) >= 14.65 ~= 15
+  htim16.Init.Prescaler = 15;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0;
+
+  // Calculating Period
+  // Fpwm = Fclk / ((ARR + 1) * (PSC + 1))
+  // Fpwm = 50Hz
+  // Fclk = 48MHz
+  // PSC = 15
+  // ARR = 48MHz/((50Hz) * (15 + 1)) - 1 = 60000
+  htim16.Init.Period = 60000;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
