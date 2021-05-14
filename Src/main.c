@@ -121,7 +121,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    if(HAL_ADC_PollForConversion(hadc, 20) == HAL_OK) //20ms for 50Hz?
+    if(HAL_ADC_PollForConversion(&hadc, 20) == HAL_OK) //20ms for 50Hz?
     {
       raw_value = HAL_ADC_GetValue(&hadc); 
     }
