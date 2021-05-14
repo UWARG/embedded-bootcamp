@@ -123,23 +123,21 @@ int main(void)
   {
     if(HAL_ADC_PollForConversion(&hadc, 20) == HAL_OK) //20ms for 50Hz?
     {
+      // Not too sure what instructions mean...
+      // Taking a guess for now since I'm sure something will be off
+
+      // Assuming that ADC value changes on-time of PWM from 1-2ms
+
+      // raw_value will be a value between 0-4095
+      // I want a value (offset) that will be between 0-1
+      // This value (offset) will be added to a base value of 1
+      // This will give us a duty cycle / on-time from 1-2ms
+      // Take the percentage on-time and multiply by period
       raw_value = HAL_ADC_GetValue(&hadc); 
+      offset = (raw_value/4095);
+      pulse = ((float)(offset + BASE_ON_TIME) / DESIRED_FREQUENCY) * TIMER_PERIOD;
+      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pulse);
     }
-    // Not too sure what instructions mean...
-    // Taking a guess for now since I'm sure something will be off
-
-    // Assuming that ADC value changes on-time of PWM from 1-2ms
-
-    // raw_value will be a value between 0-4095
-    // I want a value (offset) that will be between 0-1
-    // This value (offset) will be added to a base value of 1
-    // This will give us a duty cycle / on-time from 1-2ms
-    // Take the percentage on-time and multiply by period
-    offset = (raw_value/4095);
-    pulse = ((float)(offset + BASE_ON_TIME) / DESIRED_FREQUENCY) * TIMER_PERIOD;
-    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pulse);
-
-
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
