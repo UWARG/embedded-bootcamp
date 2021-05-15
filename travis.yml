@@ -1,0 +1,35 @@
+# travis build configuration for embedded-bootcamp
+
+# It instructs Travis to use the embedded compiler (arm-none-eabi) to compile the code on all 3 OSs.
+# travis-Ci only allows a merge if everything builds everywhere.
+# Author: Dhruv Rawat
+
+
+language: cpp
+sudo: false
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      script: make
+
+    - os: osx
+      compiler: clang
+      cache:
+        directories: 
+          - $HOME/gcc-arm-none-eabi-7-2017-q4-major
+      script: make
+    
+  - os: windows
+    before install:
+      - choco install make
+    install: 
+      - choco install gcc-arm-embedded
+    script: make
+
+        
+
+
+
+
