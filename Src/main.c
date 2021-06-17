@@ -45,6 +45,7 @@
 #include "gpio.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 /* USER CODE BEGIN Includes */
 #include "debug.h"
@@ -68,8 +69,9 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 /*MACROS*/
-#define ON_TIME_LOWER_LIMIT 1
-#define ON_TIME_UPPER_LIMIT 2
+#define ON_TIME_LOWER_LIMIT 1 //ms
+#define ON_TIME_UPPER_LIMIT 2 //ms
+#define ADC_RESOLUTION 12 //can be 6, 8, 10, 12 bits (12 bits in STM32)
 
 /* USER CODE END 0 */
 
@@ -125,16 +127,17 @@ int main(void)
   {
     /*start and wait for conversiono (wait 2000 ms max)*/
     if(HAL_OK == HAL_ADC_PollForConversion(&hadc, 2000)){
-      uint32_t raw_data = HAL_ADC_GetValue(&hadc); /*get converted digital value - we are assuming ADC will be properly configured to the potentiometer*/
+      float raw_data = HAL_ADC_GetValue(&hadc); /*get converted digital value - we are assuming ADC will be properly configured to the potentiometer*/
 
       /*Use digital value to determine duty cycle*/
       /*Total period is 20 ms*/
       /*Changing the pulse width (between 1ms to 2ms) will change the angle of the shaft of the "servo motor"*/
       /*change from 1.5 ms to 1ms will rotate from 0 degrees to -90 degrees. 1.5ms to 2 ms will rotate 0 degrees to 90 degrees*/
-      uint32_t on_time = ((raw_data/**/) * (ON_TIME_HIGHER_LIMIT - ON_TIME_LOWER_LIMIT)) + ON_TIME_LOWER_LIMIT;
-      //finish
+      float percentage = (raw_data/pow(2, ADC_RESOLUTION)); //percentage = ADC reading/Resolution of ADC - Resolution od ADC = 2^(# of bits)
+      float on_time = (percentage * (ON_TIME_HIGHER_LIMIT - ON_TIME_LOWER_LIMIT)) + ON_TIME_LOWER_LIMIT; //unit is ms
+      float pulse_width = (on_time/20) * 60000;
 
-      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, /*pulse width*/); 
+      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pulse_width); 
       /*PERSONAL NOTE
       "Compare" mode continually compares the value in the CCP register with the timer value, 
       and triggers an interrupt or a transition on the CCP pin when the two values match.
