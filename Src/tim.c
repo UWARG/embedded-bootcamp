@@ -53,7 +53,7 @@ void MX_TIM16_Init(void)
    *Input clock frequency is 48 MHz
    *
    *PWM frequency is 50 Hz
-   *On-time ranging between 1ms - 2ms
+   *On-time ranging between 1ms - 2ms (When the signal is high, we call this "on time")
    *Assuming period counter & width register are 16 bits wide or 65,536 counts
    */
 
@@ -61,9 +61,17 @@ void MX_TIM16_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0; /*divides clock frequency - when data value of Prescaler is 0, the prescaler will divide the clock frequency by 1*/
+  /*divides clock frequency - prescalar options of 1, 2, 4, 8, 16, 32, 64, or 128
+   *Since we are using 15 and autoreload register is disabled, the period counter frequency will be 48 MHz/((15+1)*(0+1)) = 3 MHz
+   */
+  htim16.Init.Prescaler = 15;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0;
+  /*period = 1/50Hz = 0.02 seconds
+   *3 MHz = (0.02/x)^-1
+   *x = 60000
+   * 0 < x < 65536
+   */
+  htim16.Init.Period = 60000;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
