@@ -43,6 +43,8 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 /* USER CODE BEGIN Includes */
 #include "debug.h"
@@ -96,6 +98,14 @@ int main(void)
   MX_TIM16_Init();
   MX_USART1_UART_Init();
 
+  /*enables ADC - it has already been initialized in MX_ADC_Init()*/
+  HAL_ADC_Start(&hadc);
+
+  /*starts PWM signal generation - alrealy initialized in MX_TIM16_Init()
+   *TIM_CHANNEL_1 was initialized and enabled in MX_TIM16_Init() as well
+   */
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+
   /* USER CODE BEGIN 2 */
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
@@ -106,8 +116,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  /*
+   *Convert Analog value to Digital using ADC
+   *Convert to PWM signal and output
+   */
+
   while (1)
   {
+
+    uint32_t raw_data = HAL_ADC_GetValue(&hadc); /*get converted digital value - we are assuming ADC will be properly configured to the potentiometer*/
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -206,6 +225,8 @@ void assert_failed(uint8_t* file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+  printf("Wrong parameters value: file %s on line %d\r\n", file, line);
   /* USER CODE END 6 */
 
 }

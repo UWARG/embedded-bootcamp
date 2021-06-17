@@ -49,11 +49,19 @@ TIM_HandleTypeDef htim16;
 /* TIM16 init function */
 void MX_TIM16_Init(void)
 {
+  /*NOTES
+   *Input clock frequency is 48 MHz
+   *
+   *PWM frequency is 50 Hz
+   *On-time ranging between 1ms - 2ms
+   *Assuming period counter & width register are 16 bits wide or 65,536 counts
+   */
+
   TIM_OC_InitTypeDef sConfigOC;
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
+  htim16.Init.Prescaler = 0; /*divides clock frequency - when data value of Prescaler is 0, the prescaler will divide the clock frequency by 1*/
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim16.Init.Period = 0;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
