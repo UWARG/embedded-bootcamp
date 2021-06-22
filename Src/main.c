@@ -102,17 +102,39 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+  // start ADC and TIM16
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+
+  const int TIM_PERIOD = 60000; //value for ARR register
+  const int FREQ_PERIOD = 20; //period per cycle in ms
+  const int START_TIME = 1; //min duty cycle period
+  const float DIVISOR = 4095.0; // ADC 12 bit (0-4095)
+  uint16_t value = 0; //stores converted ADC value
+  float pwm = 0; //sets value for CCRx for duty cycle
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // period = 1 / frequency = 1 / 50 = 0.020s = 20ms
+    if (HAL_ADC_PollForConversion(&hadc, FREQ_PERIOD) == HAL_OK) {  
+      value = HAL_ADC_GetValue(&hadc) / DIVISOR; //normalize from 0-4095 to 0-1
+      pwm = (value + START_TIME) / FREQ_PERIOD * TIM_PERIOD; //calculate fraction of ARR value to set HIGH
+      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwm); //compare CNT register with CCRx register 
+    }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 
   }
+
+  HAL_ADC_STOP(&hadc); //stop adc
+  HAL_TIM_PWM_Stop(&htim16, TIM_CHANNEL_1); //stop timer
   /* USER CODE END 3 */
 
 }

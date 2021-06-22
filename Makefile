@@ -22,7 +22,7 @@ TARGET = Bootcamp
 # debug build?
 DEBUG = 1
 # optimization
-OPT = -Og
+OPT = -O1
 
 
 #######################################
