@@ -107,11 +107,11 @@ int main(void)
   HAL_ADC_Start(&hadc);
   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
 
-  const int TIM_PERIOD = 60000; //value for ARR register
-  const int FREQ_PERIOD = 20; //period per cycle in ms
-  const int START_TIME = 1; //min duty cycle period
+  const float TIM_PERIOD = 60000; //value for ARR register
+  const float FREQ_PERIOD = 20; //period per cycle in ms
+  const float START_TIME = 1; //min duty cycle period
   const float DIVISOR = 4095.0; // ADC 12 bit (0-4095)
-  uint16_t value = 0; //stores converted ADC value
+  float value = 0; //stores converted ADC value
   float pwm = 0; //sets value for CCRx for duty cycle
 
 
@@ -133,8 +133,6 @@ int main(void)
 
   }
 
-  HAL_ADC_STOP(&hadc); //stop adc
-  HAL_TIM_PWM_Stop(&htim16, TIM_CHANNEL_1); //stop timer
   /* USER CODE END 3 */
 
 }
