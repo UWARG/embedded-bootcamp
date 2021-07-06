@@ -133,7 +133,7 @@ int main(void)
       /*Total period is 20 ms*/
       /*Changing the pulse width (between 1ms to 2ms) will change the angle of the shaft of the "servo motor"*/
       /*change from 1.5 ms to 1ms will rotate from 0 degrees to -90 degrees. 1.5ms to 2 ms will rotate 0 degrees to 90 degrees*/
-      float percentage = (raw_data/pow(2, ADC_RESOLUTION)); //percentage = ADC reading/Resolution of ADC - Resolution od ADC = 2^(# of bits)
+      float percentage = (raw_data/(pow(2, ADC_RESOLUTION)-1)); //percentage = ADC reading/Resolution of ADC - Resolution od ADC = 2^(# of bits) - ADC_RESOLUTION = 12
       float on_time = (percentage * (ON_TIME_UPPER_LIMIT - ON_TIME_LOWER_LIMIT)) + ON_TIME_LOWER_LIMIT; //unit is ms
       float pulse_width = (on_time/20) * 60000;
 
