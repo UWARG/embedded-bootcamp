@@ -72,6 +72,12 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+    // Variables. 
+    unsigned short potentiometerValue;
+    unsigned short digitalValue;
+    float maxAnalog = 4095;
+    unsigned short maxPulseWidth = 6553, minPulseWidth = 3277; 
+
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -102,6 +108,11 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+  // Starting pwm and adc. 
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+  HAL_ADC_Start(&hadc);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,6 +122,15 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+
+            // Reading analog signal. 
+      potentiometerValue = HAL_ADC_GetValue(&hadc);
+
+      // Mapping to a digital value for pwm. 
+      digitalValue = potentiometerValue / maxAnalog * (maxPulseWidth - minPulseWidth);
+
+      // Set pulse width. 
+      __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, digitalValue);
 
   }
   /* USER CODE END 3 */
