@@ -49,7 +49,8 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
-
+ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -102,19 +103,30 @@ int main(void)
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+
+  HAL_TIM_PWM_START(&htim16, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // Read value from potentiometer
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    raw = HAL_ADC_GetValue(&hadc1);
+
+    while (CH1_DC < htim16.Period){
+      TIM16 -> CCR1 = CH1_dc;
+      CH1_DC += 70;
+      HAL_Delay(1);
+    }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 
   }
   /* USER CODE END 3 */
-
 }
 
 /** System Clock Configuration

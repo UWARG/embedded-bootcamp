@@ -63,7 +63,7 @@ void MX_TIM16_Init(void)
   int modulus = pow(2,16)-1;
   int counter_input_frequency = modulus / 0.02; //Frequency = Count/s 
   htim16.Init.Prescaler = (48 * 1000000) / counter_input_frequency; //Prescaler = Clock Frequency / Counter Frequency
-  htim16.Init.Period = pow(2,16)-1; //Number of times the timer counts before resetting to 0. 
+  htim16.Init.Period =(pow(2,16)-1)/2; //Number of times the timer counts before resetting to 0. 
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
