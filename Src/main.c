@@ -116,10 +116,8 @@ int main(void)
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
     raw = HAL_ADC_GetValue(&hadc1);
 
-    while (CH1_DC < htim16.Period){
-      TIM16 -> CCR1 = CH1_dc;
-      CH1_DC += 70;
-      HAL_Delay(1);
+    CH1_DC = raw;
+    HAL_Delay(1);
     }
   /* USER CODE END WHILE */
 
