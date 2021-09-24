@@ -59,11 +59,15 @@ void MX_TIM16_Init(void)
 
   /* We want the final PWM frequency to be 50Hz, so we want a PWM period of 1/50Hz = 0.02 seconds
     To have the most precise PWM measurement, we will count from 0 to 2^16 -1 (the modulus). 
-   */
-  int modulus = pow(2,16)-1;
-  int counter_input_frequency = modulus / 0.02; //Frequency = Count/s 
-  htim16.Init.Prescaler = (48 * 1000000) / counter_input_frequency; //Prescaler = Clock Frequency / Counter Frequency
-  htim16.Init.Period =(pow(2,16)-1)/2; //Number of times the timer counts before resetting to 0. 
+   
+  modulus = 65535; 
+  counter_input_frequency = modulus / 0.02 = 3276750;
+  prescaler = 48000000 / 3276750 = 14.64 ~ 15
+  periodCount = modulus = 65535;
+  */
+
+  htim16.Init.Prescaler = 15; 
+  htim16.Init.Period = 65535; 
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
