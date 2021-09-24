@@ -57,7 +57,7 @@ void MX_TIM16_Init(void)
   // 16bit timer is 65535 counts. Desired period is 20ms. Clock frequency is 48MHz
   // With a prescaler of 32 the period would be 65535/(48M/32) = 43.69ms.
   // With the period being set to (65535)/2, the period would be 43.69/2 = 21.845ms
-  htim16.Init.Prescaler = 16;
+  htim16.Init.Prescaler = 32;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim16.Init.Period = (65535)/2;   
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
