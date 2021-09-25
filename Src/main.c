@@ -50,7 +50,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-DMA_HandleTypeDef hdma_adc1;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -72,7 +71,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  double servo_pulse;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -114,10 +113,11 @@ int main(void)
     // Read value from potentiometer
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-    raw = HAL_ADC_GetValue(&hadc1);
+    potentiometer_value = HAL_ADC_GetValue(&hadc1);
 
-    CH1_DC = raw;
-    HAL_Delay(1);
+    servo_pulse = potentiometer_value / 4096 * 65535; //Scale the potentiometer value to the right pulse value to send to the motor
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, servo_pulse);
+    HAL_Delay(10); //Add delay between each loop
     }
   /* USER CODE END WHILE */
 
