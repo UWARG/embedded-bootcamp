@@ -115,7 +115,7 @@ int main(void)
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
     potentiometer_value = HAL_ADC_GetValue(&hadc1);
 
-    servo_pulse = potentiometer_value / 4096 * 65535; //Scale the potentiometer value to the right pulse value to send to the motor
+    servo_pulse = potentiometer_value / 4095 * 65535; //Scale the potentiometer value to the right pulse value to send to the motor
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, servo_pulse);
     HAL_Delay(10); //Add delay between each loop
     }
