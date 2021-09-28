@@ -62,12 +62,12 @@ void MX_TIM16_Init(void)
    
   modulus = 65535; 
   counter_input_frequency = modulus / 0.02 = 3276750;
-  prescaler = 48000000 / 3276750 = 14.64 ~ 15
-  periodCount = modulus = 65535;
+  prescaler = 48000000 / 3276750 = 14.64 ~ 15;
+  periodCount = 50 / 3 000000 *  modulus = 65535;
   */
 
   htim16.Init.Prescaler = 15; 
-  htim16.Init.Period = 65535; 
+  htim16.Init.Period = 60000; 
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
