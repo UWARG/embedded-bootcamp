@@ -72,6 +72,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
   double servo_pulse;
+  double servo_percentage;
+  int HIGH = 2;
+  int LOW = 1;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -100,7 +103,6 @@ int main(void)
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
 
-
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
 
   HAL_TIM_PWM_START(&htim16, TIM_CHANNEL_1);
@@ -113,9 +115,10 @@ int main(void)
     // Read value from potentiometer
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-    potentiometer_value = HAL_ADC_GetValue(&hadc1);
 
-    servo_pulse = ((potentiometer_value / 4095) * (2-1) + 1) / 0.2 * 60000; //Scale the potentiometer value to the right pulse value to send to the motor
+    potentiometer_value = HAL_ADC_GetValue(&hadc1);
+    servo_percentage = (potentiometer_value / 4095); 
+    servo_pulse = (servo_percentage * (HIGH-LOW) + LOW) / 20 * 60000; //Scale the potentiometer value to the right pulse value to send to the motor
 
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, servo_pulse);
     HAL_Delay(10); //Add delay between each loop
