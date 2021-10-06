@@ -71,12 +71,12 @@ void SystemClock_Config(void);
 int main(void)
 {
 
-  uint32_t ADCValue = 0;
+  uint16_t ADCValue = 0;
   // Period * freq / 1000ms = cycles/ms
   // 60000 * 50 / 1000 = 3000
-  static const uint16_t Pulse_Range = 3000; //1ms max pulse on-time
-  static const uint16_t Pulse_Delay = 3000; //1ms pulse start time
-  static const uint16_t ADC_Resolution = 4095; //ADC has 12bit resolution
+  const uint16_t Pulse_Range = 3000; //1ms max pulse on-time
+  const uint16_t Pulse_Delay = 3000; //1ms pulse start time
+  const uint16_t ADC_Resolution = 4095; //ADC has 12bit resolution
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
