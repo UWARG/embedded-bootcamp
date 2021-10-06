@@ -52,10 +52,15 @@ void MX_TIM16_Init(void)
   TIM_OC_InitTypeDef sConfigOC;
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
+  // Clock is 48MHz
+  // TIM max counter (max period) is 0xFFFFU(65535), to get to a 50Hz period the clock needs to be prescaled, and period set
+  // (clock / (prescale + 1)) * 1/period = 50
+  // (48000000 / (15 + 1)) * 1/60000 = 50
+  
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
+  htim16.Init.Prescaler = 15;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0;
+  htim16.Init.Period = 60000;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
