@@ -70,6 +70,12 @@ void SystemClock_Config(void);
 int main(void)
 {
 
+  uint32_t ADCValue = 0;
+  // Period * freq / 1000ms = cycles/ms
+  // 60000 * 50 / 1000 = 3000
+  static const uint16_t Pulse_Range = 3000; //1ms max pulse on-time
+  static const uint16_t Pulse_Delay = 3000; //1ms pulse start time
+  static const uint16_t ADC_Resolution = 4095; //ADC has 12bit resolution
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -104,12 +110,19 @@ int main(void)
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
+  HAL_ADC_Start(&hadc);
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
   /* USER CODE END WHILE */
 
+  ADCValue = HAL_ADC_GetValue(&hadc);
+  __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, 
+    ADCValue * Pulse_Range / ADC_Resolution + Pulse_Delay
+  );
   /* USER CODE BEGIN 3 */
 
   }
