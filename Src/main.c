@@ -46,6 +46,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "debug.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -121,7 +122,7 @@ int main(void)
 
   ADCValue = HAL_ADC_GetValue(&hadc);
   __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, 
-    ADCValue * Pulse_Range / ADC_Resolution + Pulse_Delay
+    (uint32_t)round((float) ADCValue * Pulse_Range / ADC_Resolution + Pulse_Delay)
   );
   /* USER CODE BEGIN 3 */
 
