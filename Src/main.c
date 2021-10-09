@@ -73,10 +73,10 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
     // Variables. 
-    unsigned short potentiometerValue;
-    unsigned short digitalValue;
+    uint16_t potentiometerValue = 0;
+    uint16_t digitalValue = 0;
     float maxAnalog = 4095;
-    unsigned short maxPulseWidth = 6553, minPulseWidth = 3277; 
+    uint16_t maxPulseWidth = 6400, minPulseWidth = 3200; 
 
   /* USER CODE END 1 */
 
@@ -127,7 +127,7 @@ int main(void)
       potentiometerValue = HAL_ADC_GetValue(&hadc);
 
       // Mapping to a digital value for pwm. 
-      digitalValue = potentiometerValue / maxAnalog * (maxPulseWidth - minPulseWidth);
+      digitalValue = (potentiometerValue / maxAnalog * (maxPulseWidth - minPulseWidth)) + minPulseWidth;
 
       // Set pulse width. 
       __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, digitalValue);
