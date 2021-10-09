@@ -75,7 +75,7 @@ int main(void)
     // Variables. 
     uint16_t potentiometerValue = 0;
     uint16_t digitalValue = 0;
-    float maxAnalog = 4095;
+    float maxAnalog = 4095; 
     uint16_t maxPulseWidth = 6400, minPulseWidth = 3200; 
 
   /* USER CODE END 1 */
