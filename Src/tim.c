@@ -53,9 +53,17 @@ void MX_TIM16_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
+  //Clock cycles waited before incrementing
+  htim16.Init.Prescaler = 15;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0;
+  //Ideal frequency is 50Hz
+  //Input clock is 48MHz
+  //TCNT - Counter Register = 48MHz/(15 + 1) = 3MHz
+  //Since counter counts to 65535 each inturupt siganal will take 1/((3x10^6) / 65535) = 0.021845s
+  //Ideal period = 1/50 * 65535 = 1310.7s/signal
+  //Since the system is 0.021845s the ideal period needs to be scalled to that
+  //Therefore Period = 1310.7/0.021845 = 60000s
+  htim16.Init.Period = 60000;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;

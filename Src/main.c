@@ -49,7 +49,7 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
-
+ADC_HandleTypeDef hadc1;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -70,6 +70,11 @@ void SystemClock_Config(void);
 int main(void)
 {
 
+  int adcValue;
+  double adcPercentage;
+  double pwmValue;
+  int HIGH = 2;
+  int LOW = 1;
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -100,6 +105,10 @@ int main(void)
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
 
+  //Starts PWM
+  //htim16 defined in tim.c
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
@@ -108,7 +117,26 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    //Starts the ADC
+    HAL_ADC_Start(&hadc);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+
+    // Will range from 0 - 4095
+    adcValue = HAL_ADC_GetValue(&hadc);
+
+    adcPercentage = adcValue/4059.0;
+
+    //Needs to be a value between 1 and 2ms so the it will be the percentage + 1 (50% is really 1.5ms)
+    //That value needs to then be scalled by the timer period and desired period = 60000/20 = 3000
+    pwmValue = (adcPercentage*(HIGH - LOW) + LOW) * 3000.0;
+
+    __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwmValue);
+
+
+
+
   /* USER CODE END WHILE */
+
 
   /* USER CODE BEGIN 3 */
 
