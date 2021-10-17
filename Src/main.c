@@ -118,11 +118,11 @@ int main(void)
   while (1)
   {
     //Starts the ADC
-    HAL_ADC_Start(&hadc);
+    HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
     // Will range from 0 - 4095
-    adcValue = HAL_ADC_GetValue(&hadc);
+    adcValue = HAL_ADC_GetValue(&hadc1);
 
     adcPercentage = adcValue/4059.0;
 
