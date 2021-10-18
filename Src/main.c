@@ -72,7 +72,7 @@ int main(void)
 
   uint16_t adcValue;
   float adcPercentage;
-  float pwmValue;
+  uint32_t pwmValue;
   const uint8_t HIGH = 2;
   const uint8_t LOW = 1;
   const uint16_t SCALE = 3000;
@@ -129,7 +129,7 @@ int main(void)
 
     //Needs to be a value between 1 and 2ms so the it will be the percentage + 1 (50% is really 1.5ms)
     //That value needs to then be scalled by the timer period and desired period = 60000/20 = 3000
-    pwmValue = (float)(adcPercentage*(HIGH - LOW) + LOW) * SCALE;
+    pwmValue = (adcPercentage*(HIGH - LOW) + LOW) * SCALE;
 
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwmValue);
 
