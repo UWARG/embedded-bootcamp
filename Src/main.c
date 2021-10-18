@@ -49,7 +49,7 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
-ADC_HandleTypeDef hadc1;
+// ADC_HandleTypeDef hadc1; Not needed since hadc is already initialized
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -70,11 +70,14 @@ void SystemClock_Config(void);
 int main(void)
 {
 
-  int adcValue;
-  double adcPercentage;
-  double pwmValue;
-  int HIGH = 2;
-  int LOW = 1;
+  uint16_t adcValue;
+  float adcPercentage;
+  float pwmValue;
+  const uint8_t HIGH = 2;
+  const uint8_t LOW = 1;
+  const uint16_t SCALE = 3000;
+  const uint16_t MAXADC = 4095;
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -108,6 +111,8 @@ int main(void)
   //Starts PWM
   //htim16 defined in tim.c
   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+  //Starts the ADC
+  HAL_ADC_Start(&hadc);
 
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
@@ -117,18 +122,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    //Starts the ADC
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-
     // Will range from 0 - 4095
-    adcValue = HAL_ADC_GetValue(&hadc1);
+    adcValue = HAL_ADC_GetValue(&hadc);
 
-    adcPercentage = adcValue/4059.0;
+    adcPercentage = (float)adcValue/MAXADC;
 
     //Needs to be a value between 1 and 2ms so the it will be the percentage + 1 (50% is really 1.5ms)
     //That value needs to then be scalled by the timer period and desired period = 60000/20 = 3000
-    pwmValue = (adcPercentage*(HIGH - LOW) + LOW) * 3000.0;
+    pwmValue = (float)(adcPercentage*(HIGH - LOW) + LOW) * SCALE;
 
     __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, pwmValue);
 
