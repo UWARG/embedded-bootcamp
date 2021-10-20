@@ -70,10 +70,10 @@ void SystemClock_Config(void);
 int main(void)
 {
 
-  uint16_t adcValue;
-  float adcPercentage;
+  uint16_t adcValue = 0;
+  float adcPercentage = 0;
   const float ROUNDVAL = 0.5;
-  uint32_t pwmValue;
+  uint32_t pwmValue = 0;
   const uint8_t HIGH = 2;
   const uint8_t LOW = 1;
   const uint16_t SCALE = 3000;
