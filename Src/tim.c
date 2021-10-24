@@ -53,9 +53,15 @@ void MX_TIM16_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
 
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
+  htim16.Init.Prescaler = 15;
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 0;
+  //Ideal frequency is 50Hz and Input clock is 48MHz
+  //frequency scaled down is 48MHz/(15+1)=3MHz
+  //since the timer counts up to 65535 the period is 65535/(3MHz)=0.021845
+  //the ideal period is 65535/50=1310.7
+  //scale the timer to the ideal period:
+  //period=ideal period/timer period = 1310.7/0.021845 = 60,000s
+  htim16.Init.Period = 60000;
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
