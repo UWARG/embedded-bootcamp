@@ -100,17 +100,40 @@ int main(void)
   debug("\n\nBootcamp starting up...");
   debug("Compiled on %s at %s", __DATE__, __TIME__);
 
+  //Starts ADC
+  HAL_ADC_Start(&hadc);
+  //Starts PWM
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+
 
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  const uint8_t HIGH=2;
+  const uint8_t LOW=1;
+  const uint16_t ADCMAX_VALUE=4095;
+  const uint16_t SCALE_VALUE=3000;
+
+
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+  //adc value can range from 0 to 4095 so use a 16 bit int
+  uint16_t adcReading = HAL_ADC_GetValue(&hadc);
+  
+  float adcReadingPercent = (float)(adcReading)/ ADCMAX_VALUE;
+
+  //need to convert the percent to a ms value between 1 and 2
+  //multiply the value by the timer period divided by the period
+  // scale = 60000/20=3000
+  float value=(float)(adcReadingPercent*(HIGH-LOW)*SCALE_VALUE);
+
+  __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, value);
 
   }
   /* USER CODE END 3 */
