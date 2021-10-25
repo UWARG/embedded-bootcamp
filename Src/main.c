@@ -112,10 +112,10 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  const uint8_t HIGH=2;
-  const uint8_t LOW=1;
-  const uint16_t ADCMAX_VALUE=4095;
-  const uint16_t SCALE_VALUE=3000;
+  const uint8_t END_TIME=2; //represents the maximum on-time range (2ms)
+  const uint8_t START_TIME=1; //represents the minimum on-time range (1ms)
+  const uint16_t ADCMAX_VALUE=4095; //Maximum ADC Value
+  const uint16_t SCALE_VALUE=3000; //ontime CCR value for 1ms
 
 
   while (1)
@@ -131,7 +131,7 @@ int main(void)
   //need to convert the percent to a ms value between 1 and 2
   //multiply the value by the timer period divided by the period
   // scale = 60000/20=3000
-  float value=(float)(adcReadingPercent*(HIGH-LOW)*SCALE_VALUE);
+  float value=(float)((adcReadingPercent*(END_TIME-START_TIME)+START_TIME)*SCALE_VALUE);
 
   __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, value);
 
