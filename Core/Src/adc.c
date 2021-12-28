@@ -6,11 +6,11 @@
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
+  * USER CODE END. Other portions of this file, whether
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2018 STMicroelectronics
+  * COPYRIGHT(c) 2021 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -53,7 +53,7 @@ void MX_ADC_Init(void)
 {
   ADC_ChannelConfTypeDef sConfig;
 
-    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
+    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
     */
   hadc.Instance = ADC1;
   hadc.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
@@ -74,7 +74,7 @@ void MX_ADC_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configure for the selected ADC regular channel to be converted. 
+    /**Configure for the selected ADC regular channel to be converted.
     */
   sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
@@ -97,9 +97,9 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC1_MspInit 0 */
     /* ADC1 clock enable */
     __HAL_RCC_ADC1_CLK_ENABLE();
-  
-    /**ADC GPIO Configuration    
-    PB1     ------> ADC_IN9 
+
+    /**ADC GPIO Configuration
+    PB1     ------> ADC_IN9
     */
     GPIO_InitStruct.Pin = ADC_INPUT_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
@@ -125,9 +125,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_ADC1_CLK_DISABLE();
-  
-    /**ADC GPIO Configuration    
-    PB1     ------> ADC_IN9 
+
+    /**ADC GPIO Configuration
+    PB1     ------> ADC_IN9
     */
     HAL_GPIO_DeInit(ADC_INPUT_GPIO_Port, ADC_INPUT_Pin);
 
@@ -137,7 +137,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 
   /* USER CODE END ADC1_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 
