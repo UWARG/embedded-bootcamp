@@ -93,24 +93,18 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC_Init();
-  MX_TIM16_Init();
   MX_USART1_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
 
   /* USER CODE BEGIN 2 */
 
-  //start pwm
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
   //define buffers and variables
-  uint8_t spi_recieve_buf[10];
-  uint8_t spi_transmit_buf[10];
-  uint16_t TRANSMIT_RECIEVE_SIZE = 3;
+  uint8_t spi_recieve_buf[3];
+  uint8_t spi_transmit_buf[3];
   uint16_t adc_val = 0x0000;
 
-  uint16_t MAX_ADC_VAL = 4095;
+  uint16_t MAX_ADC_VAL = 1023;
   uint16_t MIN_COMPARE_VAL = 3000; // 60000 * 0.05 = 3000... NOTE: 60000 is the period AND 3000 is also the difference between the max and min compare val: 6000 - 3000 = 3000
 
   double compare_val = 0.0;
@@ -123,6 +117,9 @@ int main(void)
   //ensure the CS line starts high
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
+  //start pwm
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,7 +127,7 @@ int main(void)
   while (1)
   {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //CS low
-	  HAL_SPI_TransmitReceive(&hspi1, &spi_transmit_buf, &spi_recieve_buf, TRANSMIT_RECIEVE_SIZE, 1000); //sending the start and config bits as well as receiving the conversion
+	  HAL_SPI_TransmitReceive(&hspi1, &spi_transmit_buf, &spi_recieve_buf, sizeof(spi_transmit_buf), 1000); //sending the start and config bits as well as receiving the conversion
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //CS back to high
 
 	  /*according to the timing diagram, the conversion should be in index 1 and 2 of the buffer

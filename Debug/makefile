@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := Bootcamp
+BUILD_ARTIFACT_NAME := embedded-bootcamp
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Bootcamp.elf \
+embedded-bootcamp.elf \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Bootcamp.list \
+embedded-bootcamp.list \
 
 OBJCOPY_BIN += \
-Bootcamp.bin \
+embedded-bootcamp.bin \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: Bootcamp.elf secondary-outputs
+main-build: embedded-bootcamp.elf secondary-outputs
 
 # Tool invocations
-Bootcamp.elf: $(OBJS) $(USER_OBJS) C:\Users\Chris\STM32CubeIDE\workspace_1.8.0\Bootcamp\STM32F030RCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Bootcamp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\Chris\STM32CubeIDE\workspace_1.8.0\Bootcamp\STM32F030RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Bootcamp.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+embedded-bootcamp.elf: $(OBJS) $(USER_OBJS) C:\Users\Chris\Desktop\WARG\embedded-bootcamp\STM32F030RCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "embedded-bootcamp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\Chris\Desktop\WARG\embedded-bootcamp\STM32F030RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="embedded-bootcamp.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,19 +70,19 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Bootcamp.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Bootcamp.list"
+embedded-bootcamp.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "embedded-bootcamp.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Bootcamp.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "Bootcamp.bin"
+embedded-bootcamp.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "embedded-bootcamp.bin"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) Bootcamp.bin Bootcamp.elf Bootcamp.list default.size.stdout
+	-$(RM) default.size.stdout embedded-bootcamp.bin embedded-bootcamp.elf embedded-bootcamp.list
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
