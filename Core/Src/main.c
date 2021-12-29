@@ -127,7 +127,7 @@ int main(void)
   while (1)
   {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //CS low
-	  HAL_SPI_TransmitReceive(&hspi1, &spi_transmit_buf, &spi_recieve_buf, sizeof(spi_transmit_buf), 1000); //sending the start and config bits as well as receiving the conversion
+	  HAL_SPI_TransmitReceive(&hspi1, spi_transmit_buf, spi_recieve_buf, sizeof(spi_transmit_buf), 1000); //sending the start and config bits as well as receiving the conversion
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //CS back to high
 
 	  /*according to the timing diagram, the conversion should be in index 1 and 2 of the buffer
