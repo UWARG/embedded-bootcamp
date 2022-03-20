@@ -23,7 +23,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include <stdlib.h>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -101,14 +101,10 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_SPI_TransmitReceive_IT(&hspi1, &tx_buf, rx_buf, sizeof(uint8_t));
-	  *rx_buf = (uint8_t)(65535/20) + *rx_buf/20; //scales ADC digital value to be between 5-10% of 65535
-	  *rx_buf = *rx_buf & 65528; // since max value of scaled ADC value has 13 bits, we can keep most significant 10 bits
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, *rx_buf); //set compare register
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-  HAL_TIM_PWM_DeInit(&htim1);
 }
 
 /**
