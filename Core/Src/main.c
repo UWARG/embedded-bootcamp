@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,7 +19,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
+#include "gpio.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -65,6 +68,13 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	uint8_t spi_rx_buf[3]; //receive buffer
+	uint8_t spi_tx_buf[3]; //transmit buffer
+	uint16_t adc_val = 0x0000;
+	uint16_t MAX_ADC_VAL = 1023; //equals 2^10 - 1, shouldn't this be higher than MIN_COMPARE_VAL?
+	uint16_t MIN_COMPARE_VAL = 3276; //0.05 * 65535
+	double compare_val;
+
 
   /* USER CODE END 1 */
 
@@ -87,17 +97,26 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  /* USER CODE BEGIN 2 */
+  MX_SPI1_Init();
+  MX_TIM1_Init();
 
+  /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Init(&htim1); //start PWM
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_SPI_TransmitRecieve_IT(&hspi1, &spi_tx_buf, &spi_rx_buf, sizeof(spi_tx_buf));
+	  adc_val = ((uint16_t)(spi_recieve_buf[1])) << 8 | ((uint16_t) spi_recieve_buf[2]); //keep 10 MSB
+	  compare_val = ((double)adc_val / MAX_ADC_VAL) * MIN_COMPARE_VAL + MIN_COMPARE_VAL; //scale ADC to between 5-10% of 65535
+	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANEL_1, compare_val); //set compare register
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_TIM_PWM_DeInit(&htim1);
   }
   /* USER CODE END 3 */
 }
