@@ -46,7 +46,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+static const uint8_t ACTIVATE_ADC_VALUE = 1;
+static const uint16_t MAX_TIMER_VALUE = 64000;
+static const uint16_t MAX_ADC_VALUE = 1024;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,8 +69,8 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  uint8_t *rx_buf = malloc(2);
-  uint8_t tx_buf = 1; //transmitted to ADC to initiate read from analog source
+  uint8_t rx_buf[2] = {0};
+  uint8_t tx_buf = ACTIVATE_ADC_VALUE; //transmitted to ADC to initiate read from analog source
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -93,7 +95,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Init(&htim1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -101,10 +103,12 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_SPI_TransmitReceive_IT(&hspi1, &tx_buf, rx_buf, sizeof(uint8_t));
-	  *rx_buf = (uint8_t)(65535/20) + *rx_buf/20; //scales ADC digital value to be between 5-10% of 65535
-	  *rx_buf = *rx_buf & 65528; // since max value of scaled ADC value has 13 bits, we can keep most significant 10 bits
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, *rx_buf); //set compare register
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive_IT(&hspi1, &tx_buf, rx_buf, sizeof(rx_buf));
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  *rx_buf = (uint8_t)(0.05 * MAX_TIMER_VALUE) + 0.05 * (*rx_buf) * (MAX_ADC_VALUE/MAX_TIMER_VALUE); //scales ADC digital value to be between 5-10% of 65535
+	  uint16_t max_timer_val_for_high_output = *rx_buf;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, max_timer_val_for_high_output); //set compare register
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
