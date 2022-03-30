@@ -92,9 +92,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
-  MX_ADC_Init();
   /* USER CODE BEGIN 2 */
-  HAL_ADC_Start(&hadc);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
