@@ -101,14 +101,14 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint8_t START = 1;
-  uint8_t END = 2;
-  uint16_t MAX_ADC = 1023; // 1023 is the max value that can be stored by a 10 bit value
+  static const uint8_t START = 1;
+  static const uint8_t END = 2;
+  static const uint16_t MAX_ADC = 1023; // 1023 is the max value that can be stored by a 10 bit value
 
   uint16_t adc_value;
   uint16_t compare_value;
   float adc_percent;
-  uint16_t scale_value = 3000; // Scaling the 60000 to the period of 20ms: 60000/20=3000
+  static const uint16_t SCALE_VALUE = 3000; // Scaling the 60000 to the period of 20ms: 60000/20=3000
 
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 
@@ -119,7 +119,7 @@ int main(void)
 
 	  adc_percent = (float)MAX_ADC/adc_value;
 
-	  compare_value = adc_percent*(END-START)*scale_value+START;
+	  compare_value = adc_percent*(END-START)*SCALE_VALUE+START;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
 
