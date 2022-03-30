@@ -54,6 +54,6 @@ dkms.conf
 .mxproject
 build/
 .dep/
-Core/Inc
-Drivers
-Debug
+Core/Inc/
+Drivers/
+Debug/
