@@ -46,9 +46,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static const uint8_t ACTIVATE_ADC_VALUE = 1;
-static const uint16_t MAX_TIMER_VALUE = 64000;
-static const uint16_t MAX_ADC_VALUE = 1024;
+static const uint32_t ACTIVATE_ADC_VALUE = 6144; // Transmitted data to ADC: 000000001 10000000 00000000 => select single ended, channel 0
+static const uint32_t MAX_TIMER_VALUE = 64000;
+static const uint16_t MAX_ADC_VALUE = 1023;
+static const uint16_t KEEP_10_LSB = 1023;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,8 +70,10 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  uint8_t rx_buf[2] = {0};
-  uint8_t tx_buf = ACTIVATE_ADC_VALUE; //transmitted to ADC to initiate read from analog source
+  uint8_t rx_buf[3] = {0};
+  uint8_t tx_buf[3];
+  *tx_buf = ACTIVATE_ADC_VALUE; //transmitted to ADC to initiate read from analog source
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -104,10 +107,10 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive_IT(&hspi1, &tx_buf, rx_buf, sizeof(rx_buf));
+	  HAL_SPI_TransmitReceive_IT(&hspi1, tx_buf, rx_buf, sizeof(rx_buf));
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	  *rx_buf = (uint8_t)(0.05 * MAX_TIMER_VALUE) + 0.05 * (*rx_buf) * (MAX_ADC_VALUE/MAX_TIMER_VALUE); //scales ADC digital value to be between 5-10% of 65535
-	  uint16_t max_timer_val_for_high_output = *rx_buf;
+	  uint16_t scaled_ADC_val = ((*rx_buf) & KEEP_10_LSB) * (MAX_TIMER_VALUE/MAX_ADC_VALUE); // drop 6 MSB and scales adc value to be out of 64000 instead of 1023
+	  uint16_t max_timer_val_for_high_output = (uint8_t)(0.05 * MAX_TIMER_VALUE) + 0.05 * scaled_ADC_val; //scales ADC digital value again to be between 5-10% of 65535
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, max_timer_val_for_high_output); //set compare register
     /* USER CODE BEGIN 3 */
   }
