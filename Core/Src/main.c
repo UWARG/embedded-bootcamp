@@ -46,7 +46,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static const uint32_t ACTIVATE_ADC_VALUE = 6144; // Transmitted data to ADC: 000000001 10000000 00000000 => select single ended, channel 0
+
 static const uint32_t MAX_TIMER_VALUE = 64000;
 static const uint16_t MAX_ADC_VALUE = 1023;
 static const uint16_t KEEP_10_LSB = 1023;
@@ -71,8 +71,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
   uint8_t rx_buf[3] = {0};
-  uint8_t tx_buf[3];
-  *tx_buf = ACTIVATE_ADC_VALUE; //transmitted to ADC to initiate read from analog source
+  uint8_t tx_buf[3] = {1, 128, 0}; //Transmitted data to ADC: 000000001 10000000 00000000 => select single ended, channel 0
 
   /* USER CODE END 1 */
 
@@ -98,6 +97,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
@@ -115,7 +115,6 @@ int main(void)
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-  HAL_TIM_PWM_DeInit(&htim1);
 }
 
 /**
