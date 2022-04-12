@@ -106,6 +106,7 @@ int main(void)
   static const uint16_t MAX_ADC = 1023; // 1023 is the max value that can be stored by a 10 bit value
 
   uint16_t adc_value = 0x0000;
+  uint16_t adc_mask = 0x3FF; // Mask: 0b0000001111111111
   uint16_t compare_value;
   static const uint16_t SCALE_VALUE = 3000; // Scaling the 60000 to the period of 20ms: 60000/20=3000
 
@@ -119,9 +120,9 @@ int main(void)
 
 	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 
-	  adc_value = ((uint16_t) spi_rx_buffer[1] << 8) | (uint16_t) spi_rx_buffer[2];
+	  adc_value = (((uint16_t) spi_rx_buffer[1] << 8) | (uint16_t) spi_rx_buffer[2]) & adc_mask;
 
-	  compare_value = ((double)adc_value/MAX_ADC)*(END-START)*SCALE_VALUE+START;
+	  compare_value = (((double)adc_value/MAX_ADC)*(END-START)+START)*SCALE_VALUE;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
 
