@@ -57,7 +57,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t spi_tx_buffer[3];
+uint8_t spi_rx_buffer[3];
 /* USER CODE END 0 */
 
 /**
@@ -67,7 +68,9 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	spi_tx_buffer[0] = 0x01; // Start Bit
+	spi_tx_buffer[1] = 0x80; // Receive Bits
+	spi_tx_buffer[2] = 0x00; // Bits to Ignore/Don't Care Bits
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -102,9 +105,8 @@ int main(void)
   static const uint8_t END = 2;
   static const uint16_t MAX_ADC = 1023; // 1023 is the max value that can be stored by a 10 bit value
 
-  float adc_value;
+  uint16_t adc_value = 0x0000;
   uint16_t compare_value;
-  uint16_t adc_percent;
   static const uint16_t SCALE_VALUE = 3000; // Scaling the 60000 to the period of 20ms: 60000/20=3000
 
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
@@ -113,13 +115,13 @@ int main(void)
   {
 	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
-	  adc_percent = HAL_ADC_GetValue(&hadc);
+	  HAL_SPI_TransmitReceive(&hspi1, spi_tx_buffer, spi_rx_buffer, sizeof(spi_tx_buffer), 1000);
 
 	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 
-	  adc_value = (float)MAX_ADC/adc_percent;
+	  adc_value = ((uint16_t) spi_rx_buffer[1] << 8) | (uint16_t) spi_rx_buffer[2];
 
-	  compare_value = adc_value*(END-START)*SCALE_VALUE+START;
+	  compare_value = ((double)adc_value/MAX_ADC)*(END-START)*SCALE_VALUE+START;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
 
