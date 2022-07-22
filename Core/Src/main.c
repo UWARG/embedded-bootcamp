@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -65,6 +67,18 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	const static uint16_t COUNTER_PERIOD = 64000;
+	const static uint16_t ADC_MAX = 1023; // represents 00000011 11111111 (to mask unwanted values)
+											// also the maximum value from ADC
+
+	uint16_t value_in = 0;
+	double on_counts;
+
+	uint8_t transmit_bytes[3];
+	uint8_t recieve_bytes[3];
+
+	transmit_bytes[0] = 1; // sets the first byte in the transmitted data to 00000001
+	transmit_bytes[1] = 176; // sets the second byte in the transmitted data to 10110000
 
   /* USER CODE END 1 */
 
@@ -87,14 +101,27 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //starts the PWN signal generation
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // sets the chip select line
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // clears the chip select line
+
+	  HAL_SPI_TransmitReceive_IT(&hspi1, &transmit_bytes, &recieve_bytes, sizeof(transmit_bytes));
+
+	  value_in = (((uint16_t) recieve_bytes[1] << 8 | (uint16_t) recieve_bytes[2]) & ADC_MAX);
+	  on_counts = COUNTER_PERIOD * 0.05 + ((double)value_in / ADC_MAX) * (COUNTER_PERIOD * 0.05);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, on_counts);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
