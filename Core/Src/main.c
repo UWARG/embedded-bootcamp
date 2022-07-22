@@ -84,8 +84,8 @@ int main(void)
 	uint8_t receive_bytes[3]; // initializes receive buffer
 
 	// sets control bits to match single_ended CH0 configuration on the ADC
-	transmit_bytes[0] = 1; // sets the first byte to 00000001
-	transmit_bytes[1] = 128; // sets the second byte to 10000000
+	transmit_bytes[0] = 0x1; // sets the first byte to 00000001
+	transmit_bytes[1] = 0x80; // sets the second byte to 10000000
 
   /* USER CODE END 1 */
 
@@ -115,19 +115,24 @@ int main(void)
   //starts the PWN signal generation
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
+  // sets the chip select line to high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // sets the chip select line and then resets it to begin communicating
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  // sets the chip select line to low to begin communicating
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // transmits data to ADC and stores the received bytes in recieve_bytes
-	  HAL_SPI_TransmitReceive_IT(&hspi1, &transmit_bytes,
-			  &receive_bytes, sizeof(transmit_bytes));
+	  HAL_SPI_TransmitReceive(&hspi1, &transmit_bytes,
+			  &receive_bytes, sizeof(transmit_bytes), 500);
+
+	  // sets the chip select line back to high after communication is done
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  // isolates the 10 wanted bits received from the ADC into one variable
 	  value_in = ((uint16_t) receive_bytes[1] << 8);
