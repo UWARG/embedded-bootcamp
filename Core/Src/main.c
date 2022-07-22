@@ -69,7 +69,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 	const static uint16_t COUNTER_PERIOD = 64000;
 	const static uint16_t ADC_MAX = 1023; // represents 00000011 11111111 (to mask unwanted values)
-											// also the maximum value from ADC
+	// also the maximum value from ADC (10 bits so 2^10 - 1 is the maximum value)
 
 	uint16_t value_in = 0;
 	double on_counts;
