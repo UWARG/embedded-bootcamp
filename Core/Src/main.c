@@ -67,18 +67,25 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	const static uint16_t COUNTER_PERIOD = 64000;
-	const static uint16_t ADC_MAX = 1023; // represents 00000011 11111111 (to mask unwanted values)
-	// also the maximum value from ADC (10 bits so 2^10 - 1 is the maximum value)
+	const static uint16_t COUNTER_PERIOD = 64000; //TIM1 Counter period
+	const static uint16_t ADC_MAX = 1023; // represents 00000011 11111111
+	// also the max value from ADC (10 bits so 2^10 - 1 is the maximum value)
 
-	uint16_t value_in = 0;
-	double on_counts;
+	// the minimum counter period to achieve the minimum 5% duty cycle
+	const static uint16_t MIN_COUNTER_PERIOD = COUNTER_PERIOD * 0.05;
 
-	uint8_t transmit_bytes[3];
-	uint8_t recieve_bytes[3];
+	// available counter period to do 5%-10% duty cycle based on the ADC
+	const static uint16_t AVAILABLE_COUNTER_PERIOD = MIN_COUNTER_PERIOD;
 
-	transmit_bytes[0] = 1; // sets the first byte in the transmitted data to 00000001
-	transmit_bytes[1] = 128; // sets the second byte in the transmitted data to 10000000
+	uint16_t value_in = 0; // value to store the ADC output
+	double on_counts; // value to store the number of on counts
+
+	uint8_t transmit_bytes[3]; // initializes transmission buffer
+	uint8_t receive_bytes[3]; // initializes receive buffer
+
+	// sets control bits to match single_ended CH0 configuration on the ADC
+	transmit_bytes[0] = 1; // sets the first byte to 00000001
+	transmit_bytes[1] = 128; // sets the second byte to 10000000
 
   /* USER CODE END 1 */
 
@@ -104,23 +111,38 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //starts the PWN signal generation
+
+  //starts the PWN signal generation
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // sets the chip select line
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // clears the chip select line
+	  // sets the chip select line and then resets it to begin communicating
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-	  HAL_SPI_TransmitReceive_IT(&hspi1, &transmit_bytes, &recieve_bytes, sizeof(transmit_bytes));
+	  // transmits data to ADC and stores the received bytes in recieve_bytes
+	  HAL_SPI_TransmitReceive_IT(&hspi1, &transmit_bytes,
+			  &receive_bytes, sizeof(transmit_bytes));
 
-	  value_in = (((uint16_t) recieve_bytes[1] << 8 | (uint16_t) recieve_bytes[2]) & ADC_MAX);
-	  on_counts = COUNTER_PERIOD * 0.05 + ((double)value_in / ADC_MAX) * (COUNTER_PERIOD * 0.05);
+	  // isolates the 10 wanted bits received from the ADC into one variable
+	  value_in = ((uint16_t) receive_bytes[1] << 8);
+	  value_in = (value_in | (uint16_t) receive_bytes[2]);
+	  value_in = (value_in & ADC_MAX);
 
+	  // calculates the number of on counts based on the ADC output
+	  on_counts = ((double)value_in / ADC_MAX);
+	  on_counts *= AVAILABLE_COUNTER_PERIOD;
+	  on_counts += MIN_COUNTER_PERIOD;
+
+	  // change the timer output on TIM1 to match the wanted PWM duty cycle
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, on_counts);
 
+	  // delay to ensure the MCU doesn't overload the ADC
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
