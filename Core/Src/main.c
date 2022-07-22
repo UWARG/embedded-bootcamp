@@ -78,7 +78,7 @@ int main(void)
 	uint8_t recieve_bytes[3];
 
 	transmit_bytes[0] = 1; // sets the first byte in the transmitted data to 00000001
-	transmit_bytes[1] = 176; // sets the second byte in the transmitted data to 10110000
+	transmit_bytes[1] = 128; // sets the second byte in the transmitted data to 10000000
 
   /* USER CODE END 1 */
 
