@@ -19,8 +19,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -44,6 +47,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+	uint8_t transmit_data[3] = {0x1, 0x80, 0}; // Start Bit, Control Bits for selecting CH0, Don't care bits
+	uint32_t timeout_length = 250; // Timeout length in ms. If nothing is reported by then, skip.
+	uint8_t receive_data[3]; // Place to put the received data.
+
+	uint16_t adc_data; // This is the final place where ADC output will be put.
+
 
 /* USER CODE END PV */
 
@@ -87,7 +96,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, SET); // Sets the Chip Select as High (Default state)
 
   /* USER CODE END 2 */
 
@@ -95,6 +108,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, RESET); // Chip Select is set to  low starting the SPI communication.
+	  HAL_SPI_TransmitReceive(&hspi1, &transmit_data, &receive_data, sizeof(receive_data), timeout_length); // Send transmit data and listen for 250ms to receive some data.
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, SET); // Chip Select is set to high to indicate the end of the SPI communication.
+
+	  // Nothing is in the first byte of received data.
+
+	  adc_data = ((uint16_t) receive_data[1] << 8) | (uint16_t) receive_data[2]; // Bit shifts the leading 8 bits by 8bits, then ORs it with the remaining 2 bits in the second index
+	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	 // Connects the seperated data.
+
+	  // Now ADC output can be processed
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +147,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +203,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
