@@ -52,6 +52,11 @@ uint32_t timeout_length = 250; // Timeout length in ms. If nothing is reported b
 uint8_t receive_data[3]; // Place to put the received data.
 uint16_t adc_data; // This is the final place where ADC output will be put.
 
+const int ADC_MAX = 1023; // Maximum value 10 bits can hold. 2^10 - 1 = max int for 10 bits.
+const int COUNTER_MAX = 60000; // Maximum value of the Timer at CH1.
+
+const float DUTY_CYCLE_MIN = 0.05; // 5% is the minimum duty cycle.
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -98,6 +103,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, SET); // Sets the Chip Select as High (Default state)
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // Start PWM for channel 1
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,8 +118,12 @@ int main(void)
 
 	  adc_data = ((uint16_t) receive_data[1] << 8) | (uint16_t) receive_data[2]; // Bit shifts the leading 8 bits by 8bits, then ORs it with the remaining 2 bits in the second index
 	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	 // Connects the separated data.
-
 	  // Now ADC output can be processed
+
+	  float duty_cycle = (float)(COUNTER_MAX * DUTY_CYCLE_MIN) + (float)(adc_data/ADC_MAX) * (COUNTER_MAX * DUTY_CYCLE_MIN); // First portion guarantees minimum duty cycle of DUTY_CYCLE_MIN * 100.
+	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	 // Adds extra percentage depending on the ADC value up to DUTY_CYCLE_MIN * 200
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle); // Sets compare register to duty cycle so that anything under this value will result in a HIGH signal.
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
