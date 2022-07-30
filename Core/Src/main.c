@@ -48,7 +48,7 @@
 /* USER CODE BEGIN PV */
 
 uint8_t transmit_data[3] = {0x1, 0x80, 0}; // Start Bit, Control Bits for selecting CH0, Don't care bits
-uint32_t timeout_length = 250; // Timeout length in ms. If nothing is reported by then, skip.
+const uint32_t TIMEOUT_LENGTH = 250; // Timeout length in ms. If nothing is reported by then, skip.
 uint8_t receive_data[3]; // Place to put the received data.
 uint16_t adc_data; // This is the final place where ADC output will be put.
 
@@ -111,7 +111,7 @@ int main(void)
   while (1)
   {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, RESET); // Chip Select is set to  low starting the SPI communication.
-	  HAL_SPI_TransmitReceive(&hspi1, &transmit_data, &receive_data, sizeof(receive_data), timeout_length); // Send transmit data and listen for 250ms to receive some data.
+	  HAL_SPI_TransmitReceive(&hspi1, &transmit_data, &receive_data, sizeof(receive_data), TIMEOUT_LENGTH); // Send transmit data and listen for 250ms to receive some data.
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, SET); // Chip Select is set to high to indicate the end of the SPI communication.
 
 	  // Nothing is in the first byte of received data.
@@ -120,10 +120,10 @@ int main(void)
 	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	 // Connects the separated data.
 	  // Now ADC output can be processed
 
-	  float duty_cycle = (float)(COUNTER_MAX * DUTY_CYCLE_MIN) + (float)(adc_data/ADC_MAX) * (COUNTER_MAX * DUTY_CYCLE_MIN); // First portion guarantees minimum duty cycle of DUTY_CYCLE_MIN * 100.
+	  float compare_value = (float)(COUNTER_MAX * DUTY_CYCLE_MIN) + (float)(adc_data/ADC_MAX) * (COUNTER_MAX * DUTY_CYCLE_MIN); // First portion guarantees minimum duty cycle of DUTY_CYCLE_MIN * 100.
 	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	 // Adds extra percentage depending on the ADC value up to DUTY_CYCLE_MIN * 200
 
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle); // Sets compare register to duty cycle so that anything under this value will result in a HIGH signal.
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value); // Sets compare register to duty cycle so that anything under this value will result in a HIGH signal.
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
