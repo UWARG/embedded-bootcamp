@@ -93,16 +93,36 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  // Initialize HSPI
-  SPI_HandleTypeDef *hspi = malloc(sizeof(struct SPI_HandleTypeDef));
-  HAL_SPI_INIT(hspi);
-  HAL_TIM_SET_COMPARE = _HAL_TIM_SET_COMPARE(hspi, TIM_CHANNEL_1);
+
+  // Initialize SPI1
+  SPI_HandleTypeDef hspi1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE; // Uncertain, Motorola mode -> Ti mode off?
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  HAL_SPI_Init(&hspi1);
+
+  //Initialize TIM1
+  TIM_HandleTypeDef htim1;
+  htim1.Init.Prescaler = 14;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 64000;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1; // No division?
+  htim1.Init.RepetitionCounter = 0;
+  HAL_TIM_Base_Init(&htim1);
 
 
-  uint8_t pTxData = 0;
-  uint8_t pRxData = 0;
-  uint16_t size = 8;
+  uint16_t size = 2;
+  uint8_t pTxData[2]; //Data frame size of 8 bits?
+  uint8_t pRxData[2];
   uint32_t timeout = 0;
+  uint32_t onCount = 0;
 
 
   /* USER CODE END 2 */
@@ -111,9 +131,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_SPI_TransmitReceive(&hspi, &pTxData, &pRxData, size, timeout);
+	  HAL_SPI_TransmitReceive(&hspi1, pTxData, pRxData, size, timeout);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
 
-	  printf("%d %d", pTxData, pRxData);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
