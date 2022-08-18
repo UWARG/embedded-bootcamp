@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -16,9 +16,12 @@
   *
   ******************************************************************************
   */
+#include <stdio.h>
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,7 +90,20 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  // Initialize HSPI
+  SPI_HandleTypeDef *hspi = malloc(sizeof(struct SPI_HandleTypeDef));
+  HAL_SPI_INIT(hspi);
+  HAL_TIM_SET_COMPARE = _HAL_TIM_SET_COMPARE(hspi, TIM_CHANNEL_1);
+
+
+  uint8_t pTxData = 0;
+  uint8_t pRxData = 0;
+  uint16_t size = 8;
+  uint32_t timeout = 0;
+
 
   /* USER CODE END 2 */
 
@@ -95,6 +111,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_SPI_TransmitReceive(&hspi, &pTxData, &pRxData, size, timeout);
+
+	  printf("%d %d", pTxData, pRxData);
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
