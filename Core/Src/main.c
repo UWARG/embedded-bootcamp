@@ -119,10 +119,9 @@ int main(void)
 
 
   uint16_t size = 2;
-  uint8_t pTxData[2]; //Data frame size of 8 bits?
   uint8_t pRxData[2];
   uint32_t timeout = 0;
-  uint32_t onCount = 0;
+  uint8_t onCount = 0;
 
 
   /* USER CODE END 2 */
@@ -131,8 +130,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_SPI_TransmitReceive(&hspi1, pTxData, pRxData, size, timeout);
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
+	  while (onCount < htim1.Init.Period) {
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
+		  HAL_SPI_TransmitReceive(&hspi1, &onCount, pRxData, size, timeout);
+		  onCount += 32; // I have no idea what to set this number
+		  HAL_Delay(10);
+	  }
+	  while(onCount > 0) {
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
+		  HAL_SPI_TransmitReceive(&hspi1, &onCount, pRxData, size, timeout);
+		  onCount -= 32;
+		  HAL_Delay(10);
+	  }
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
