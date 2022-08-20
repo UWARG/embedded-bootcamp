@@ -48,6 +48,9 @@
 
 /* USER CODE BEGIN PV */
 
+const double WARG_MAX_DUTY_CYCLE = 0.1;
+const double WARG_MIN_DUTY_CYCLE = 0.05;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -117,11 +120,12 @@ int main(void)
   htim1.Init.RepetitionCounter = 0;
   HAL_TIM_Base_Init(&htim1);
 
-
   uint16_t size = 2;
+  uint8_t pTxData[2];
   uint8_t pRxData[2];
   uint32_t timeout = 0;
-  uint8_t onCount = 0;
+  uint32_t onCount;
+  uint32_t adcData;
 
 
   /* USER CODE END 2 */
@@ -130,18 +134,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  while (onCount < htim1.Init.Period) {
-		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
-		  HAL_SPI_TransmitReceive(&hspi1, &onCount, pRxData, size, timeout);
-		  onCount += 32; // I have no idea what to set this number
-		  HAL_Delay(10);
-	  }
-	  while(onCount > 0) {
-		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
-		  HAL_SPI_TransmitReceive(&hspi1, &onCount, pRxData, size, timeout);
-		  onCount -= 32;
-		  HAL_Delay(10);
-	  }
+
+	  HAL_SPI_TransmitReceive(&hspi1, pTxData, pRxData, size, timeout);
+	  adcData = ((pRxData[1] << 8)| pRxData[0]) >> 6; // shift off last 6 garbage bits
+	  onCount = (adcData / 64000 * WARG_MAX_DUTY_CYCLE) + WARG_MIN_DUTY_CYCLE;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
+
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
