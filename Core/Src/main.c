@@ -50,6 +50,8 @@
 
 const double WARG_MAX_DUTY_CYCLE = 0.1;
 const double WARG_MIN_DUTY_CYCLE = 0.05;
+const uint32_t WARG_ADC_MAX_VALUE = 1023;
+const uint32_t WARG_TIM1_PWM_CHANNEL = 1;
 
 /* USER CODE END PV */
 
@@ -99,6 +101,7 @@ int main(void)
 
   // Initialize SPI1
   SPI_HandleTypeDef hspi1;
+  HAL_SPI_Init(&hspi1);
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
@@ -109,43 +112,56 @@ int main(void)
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE; // Uncertain, Motorola mode -> Ti mode off?
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  HAL_SPI_Init(&hspi1);
 
   //Initialize TIM1
   TIM_HandleTypeDef htim1;
+  HAL_TIM_PWM_Init(&htim1);
   htim1.Init.Prescaler = 14;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 64000;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1; // No division?
   htim1.Init.RepetitionCounter = 0;
-  HAL_TIM_Base_Init(&htim1);
+  TIM_OC_InitTypeDef octim1;
+  octim1.OCMode = TIM_OCMODE_PWM1;
+  octim1.Pulse = 0;
+  octim1.OCPolarity = TIM_OCPOLARITY_HIGH;
+  octim1.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  octim1.OCFastMode = TIM_OCFAST_DISABLE;
+  octim1.OCIdleState = TIM_OCIDLESTATE_RESET;
+  HAL_TIM_PWM_ConfigChannel(&htim1, &octim1, WARG_TIM1_PWM_CHANNEL);
 
   uint16_t size = 2;
-  uint8_t pTxData[2];
+  uint8_t pTxData[2] = {0, 1 << 3}; // select ch0 for ADC
   uint8_t pRxData[2];
   uint32_t timeout = 0;
   uint32_t onCount;
   uint32_t adcData;
 
 
+  HAL_TIM_PWM_Start(&htim1, WARG_TIM1_PWM_CHANNEL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  HAL_GPIO_WritePin(GPIOB, 8, GPIO_PIN_RESET); // Do I use this for PB8? Set LOW to read ADC
 	  HAL_SPI_TransmitReceive(&hspi1, pTxData, pRxData, size, timeout);
+	  HAL_GPIO_WritePin(GPIOB, 8, GPIO_PIN_SET); // Must pull high between conversations
 	  adcData = ((pRxData[1] << 8)| pRxData[0]) >> 6; // shift off last 6 garbage bits
-	  onCount = (adcData / 64000 * WARG_MAX_DUTY_CYCLE) + WARG_MIN_DUTY_CYCLE;
+	  onCount = htim1.Init.Period *
+			  (adcData / WARG_ADC_MAX_VALUE * (WARG_MAX_DUTY_CYCLE - WARG_MIN_DUTY_CYCLE) +
+					  WARG_MIN_DUTY_CYCLE);
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
-
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+  HAL_TIM_PWM_Stop(&htim1, WARG_TIM1_PWM_CHANNEL);
+  HAL_SPI_DeInit(&hspi1);
+  HAL_TIM_PWM_DeInit(&htim1);
   /* USER CODE END 3 */
 }
 
