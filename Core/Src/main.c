@@ -16,7 +16,6 @@
   *
   ******************************************************************************
   */
-#include <stdio.h>
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -51,7 +50,11 @@
 const double WARG_MAX_DUTY_CYCLE = 0.1;
 const double WARG_MIN_DUTY_CYCLE = 0.05;
 const uint32_t WARG_ADC_MAX_VALUE = 1023;
+const uint32_t WARG_TIM1_COUNTER_PERIOD = 64000;
+const uint32_t WARG_TIM1_PRESCALER = 14;
 const uint32_t WARG_TIM1_PWM_CHANNEL = 1;
+const uint32_t WARG_ADC_SELECT = 0b1000;
+const uint32_t WARG_GPIO_PIN = 8;
 
 /* USER CODE END PV */
 
@@ -110,15 +113,15 @@ int main(void)
   hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE; // Uncertain, Motorola mode -> Ti mode off?
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
 
   //Initialize TIM1
   TIM_HandleTypeDef htim1;
   HAL_TIM_PWM_Init(&htim1);
-  htim1.Init.Prescaler = 14;
+  htim1.Init.Prescaler = WARG_TIM1_PRESCALER;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 64000;
+  htim1.Init.Period = WARG_TIM1_COUNTER_PERIOD;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1; // No division?
   htim1.Init.RepetitionCounter = 0;
   TIM_OC_InitTypeDef octim1;
@@ -131,7 +134,7 @@ int main(void)
   HAL_TIM_PWM_ConfigChannel(&htim1, &octim1, WARG_TIM1_PWM_CHANNEL);
 
   uint16_t size = 2;
-  uint8_t pTxData[2] = {0, 1 << 3}; // select ch0 for ADC
+  uint8_t pTxData[2] = {WARG_ADC_SELECT, 0}; // select ch0, single for ADC
   uint8_t pRxData[2];
   uint32_t timeout = 0;
   uint32_t onCount;
@@ -139,19 +142,24 @@ int main(void)
 
 
   HAL_TIM_PWM_Start(&htim1, WARG_TIM1_PWM_CHANNEL);
+  HAL_GPIO_WritePin(GPIOB, WARG_GPIO_PIN, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_GPIO_WritePin(GPIOB, 8, GPIO_PIN_RESET); // Do I use this for PB8? Set LOW to read ADC
+	  // Set CS line low to begin transmission with ADC
+	  HAL_GPIO_WritePin(GPIOB, WARG_GPIO_PIN, GPIO_PIN_RESET);
 	  HAL_SPI_TransmitReceive(&hspi1, pTxData, pRxData, size, timeout);
-	  HAL_GPIO_WritePin(GPIOB, 8, GPIO_PIN_SET); // Must pull high between conversations
-	  adcData = ((pRxData[1] << 8)| pRxData[0]) >> 6; // shift off last 6 garbage bits
-	  onCount = htim1.Init.Period *
-			  (adcData / WARG_ADC_MAX_VALUE * (WARG_MAX_DUTY_CYCLE - WARG_MIN_DUTY_CYCLE) +
-					  WARG_MIN_DUTY_CYCLE);
+	  // Pull CS line high between conversations
+	  HAL_GPIO_WritePin(GPIOB, WARG_GPIO_PIN, GPIO_PIN_SET);
+	  // Format data from ADC, shift off last 6 garbage bits
+	  adcData = ((pRxData[1] << 8)| pRxData[0]) >> 6;
+	  onCount = htim1.Init.Period * (adcData / WARG_ADC_MAX_VALUE *
+			  (WARG_MAX_DUTY_CYCLE - WARG_MIN_DUTY_CYCLE) +
+			  WARG_MIN_DUTY_CYCLE);
+	  // Set compare register for TIM1
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCount);
 
 	  HAL_Delay(10);
