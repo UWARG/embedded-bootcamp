@@ -47,6 +47,16 @@
 
 /* USER CODE BEGIN PV */
 
+//okay, so we know, from the schematic, that CH0 of the ADC is connected to the potentiometer.
+//connected to CH0 so single-ended (i.e. comparing the signal to ground input)
+//and the chip select is connected to PB8. use write pin to set it to low
+//going to define the needed variables here
+	uint8_t pTxData[3] = {0b1, 0b1000, 0b0} ;
+	uint8_t pRxData[3];
+	uint16_t Size = {sizeof(pTxData)};
+	uint32_t Timeout;
+	uint16_t ADC_Conversion = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,6 +109,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //Setting chip select to 0 to begin communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  //Transmitting and receiving data from ADC
+	  HAL_SPI_TransmitReceive(&hspi1, &pTxData, &pRxData, Size, Timeout);
+
+	  //Setting chip select to 1 to end communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  ADC_Conversion =
+
+
+	  __HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, ADC_Conversion);
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
