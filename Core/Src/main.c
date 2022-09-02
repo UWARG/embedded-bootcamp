@@ -47,15 +47,15 @@
 
 /* USER CODE BEGIN PV */
 
-//okay, so we know, from the schematic, that CH0 of the ADC is connected to the potentiometer.
-//connected to CH0 so single-ended (i.e. comparing the signal to ground input)
-//and the chip select is connected to PB8. use write pin to set it to low
-//going to define the needed variables here
-	uint8_t pTxData[3] = {0b1, 0b1000, 0b0} ;
-	uint8_t pRxData[3];
-	uint16_t Size = {sizeof(pTxData)};
-	uint32_t Timeout;
+	uint8_t Transmit_Data[3] = {0x1, 0x8, 0x0};
+	uint8_t Receive_Data[3] = 0;
+	uint16_t Size = {sizeof(Transmit_Data)};
+	uint32_t Timeout = 500;
 	uint16_t ADC_Conversion = 0;
+	double	 compare_data = 0;
+	uint16_t ADC_MAX = 0x3FF;
+	float	 MIN_DUTY_CYCLE = 0.05;
+	int 	 COUNTER_PERIOD = 60000;
 
 /* USER CODE END PV */
 
@@ -113,15 +113,17 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  //Transmitting and receiving data from ADC
-	  HAL_SPI_TransmitReceive(&hspi1, &pTxData, &pRxData, Size, Timeout);
+	  HAL_SPI_TransmitReceive(&hspi1, &Transmit_Data, &Receive_Data, Size, Timeout);
 
 	  //Setting chip select to 1 to end communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  ADC_Conversion =
+	  //Obtaining the 10 useful received bits
+	  ADC_Conversion = ((uint16_t) Receive_Data[1] << 8 | (uint16_t) Receive_Data[2]);
 
+	  compare_data = (ADC_Conversion/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
 
-	  __HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, ADC_Conversion);
+	  __HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, compare_data);
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
