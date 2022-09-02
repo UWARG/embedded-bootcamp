@@ -60,8 +60,8 @@ all: main-build
 main-build: 2021-Firmware-Bootcamp-Fork.elf secondary-outputs
 
 # Tool invocations
-2021-Firmware-Bootcamp-Fork.elf 2021-Firmware-Bootcamp-Fork.map: $(OBJS) $(USER_OBJS) C:\Users\Bestp\STM32CubeIDE\workspace_1.10.1\2021-Firmware-Bootcamp-Fork\STM32F072RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "2021-Firmware-Bootcamp-Fork.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\Bestp\STM32CubeIDE\workspace_1.10.1\2021-Firmware-Bootcamp-Fork\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="2021-Firmware-Bootcamp-Fork.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+2021-Firmware-Bootcamp-Fork.elf 2021-Firmware-Bootcamp-Fork.map: $(OBJS) $(USER_OBJS) C:\Users\Bestp\Documents\GitHub\embedded-bootcamp-Fork\STM32F072RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "2021-Firmware-Bootcamp-Fork.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\Bestp\Documents\GitHub\embedded-bootcamp-Fork\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="2021-Firmware-Bootcamp-Fork.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
