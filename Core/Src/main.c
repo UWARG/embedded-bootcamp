@@ -106,7 +106,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //setting the PB4 port (I think that's the GPIO port?) low
 
 	  HAL_SPI_TransmitReceive(&hspi1, T_buffer, R_buffer, 8, 500);
-	  adc_value[1] = (T_buffer[2] & 0x03) + T_buffer[3]; // masking with 0x03 (0000 0011) only extracts the last two digit.
+	  adc_value[1] = (R_buffer[2] & 0x03) + R_buffer[3]; // masking with 0x03 (0000 0011) only extracts the last two digit.
 	  //Adding together should output 0000 00nn nnnn nnnn, which equals to nn nnnn nnnn... I assume?
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //setting the PB4 port high (Reference: CS line from the diagram in ADC datasheet)

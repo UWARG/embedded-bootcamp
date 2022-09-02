@@ -484,17 +484,17 @@ int main(void)
  8000394:	f000 fde4 	bl	8000f60 <HAL_GPIO_WritePin>
 
 	  HAL_SPI_TransmitReceive(&hspi1, T_buffer, R_buffer, 8, 500);
- 8000398:	2308      	movs	r3, #8
- 800039a:	18fa      	adds	r2, r7, r3
- 800039c:	240c      	movs	r4, #12
- 800039e:	1939      	adds	r1, r7, r4
+ 8000398:	2408      	movs	r4, #8
+ 800039a:	193a      	adds	r2, r7, r4
+ 800039c:	230c      	movs	r3, #12
+ 800039e:	18f9      	adds	r1, r7, r3
  80003a0:	4812      	ldr	r0, [pc, #72]	; (80003ec <main+0xa4>)
  80003a2:	23fa      	movs	r3, #250	; 0xfa
  80003a4:	005b      	lsls	r3, r3, #1
  80003a6:	9300      	str	r3, [sp, #0]
  80003a8:	2308      	movs	r3, #8
  80003aa:	f001 fcad 	bl	8001d08 <HAL_SPI_TransmitReceive>
-	  adc_value[1] = (T_buffer[2] & 0x03) + T_buffer[3]; // masking with 0x03 (0000 0011) only extracts the last two digit.
+	  adc_value[1] = (R_buffer[2] & 0x03) + R_buffer[3]; // masking with 0x03 (0000 0011) only extracts the last two digit.
  80003ae:	0021      	movs	r1, r4
  80003b0:	187b      	adds	r3, r7, r1
  80003b2:	789b      	ldrb	r3, [r3, #2]
@@ -509,7 +509,7 @@ int main(void)
  80003c4:	b29a      	uxth	r2, r3
  80003c6:	1d3b      	adds	r3, r7, #4
  80003c8:	805a      	strh	r2, [r3, #2]
-	  //Adding together should be 0000 00nn nnnn nnnn, which equals to nn nnnn nnnn... I assume?
+	  //Adding together should output 0000 00nn nnnn nnnn, which equals to nn nnnn nnnn... I assume?
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //setting the PB4 port high (Reference: CS line from the diagram in ADC datasheet)
  80003ca:	2380      	movs	r3, #128	; 0x80
