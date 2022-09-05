@@ -47,15 +47,15 @@
 
 /* USER CODE BEGIN PV */
 
-	uint8_t Transmit_Data[3] = {0x1, 0x8, 0x0};
-	uint8_t Receive_Data[3] = 0;
-	uint16_t Size = {sizeof(Transmit_Data)};
-	uint32_t Timeout = 500;
-	uint16_t ADC_Conversion = 0;
-	double	 compare_data = 0;
-	uint16_t ADC_MAX = 0x3FF;
-	float	 MIN_DUTY_CYCLE = 0.05;
-	int 	 COUNTER_PERIOD = 60000;
+	uint8_t transmit_data[3] = {0x1, 0x8, 0x0};
+	uint8_t receive_data[3] = 0;
+	uint16_t size = {sizeof(transmit_data)};
+	uint32_t timeout = 500;
+	uint16_t adc_conversion = 0;
+	float compare_data = 0;
+	uint16_t adc_max = 0x3FF;
+	float min_duty_cycle = 0.05;
+	int counter_period = 60000;
 
 /* USER CODE END PV */
 
@@ -113,18 +113,21 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  //Transmitting and receiving data from ADC
-	  HAL_SPI_TransmitReceive(&hspi1, &Transmit_Data, &Receive_Data, Size, Timeout);
+	  HAL_SPI_TransmitReceive(&hspi1, &transmit_data, &receive_data, size, timeout);
 
 	  //Setting chip select to 1 to end communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  //Obtaining the 10 useful received bits
-	  ADC_Conversion = ((uint16_t) Receive_Data[1] << 8 | (uint16_t) Receive_Data[2]);
+	  adc_conversion = ((uint16_t) receive_data[1] << 8 | (uint16_t) receive_data[2]);
 
-	  compare_data = (ADC_Conversion/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
+	  //Converting ADC to counts
+	  compare_data = (adc_conversion/adc_max)*(counter_period)*(min_duty_cycle) + (counter_period)*(min_duty_cycle);
 
-	  __HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, compare_data);
+	  //Setting compare register
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_data);
 
+	  //Delay call
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
