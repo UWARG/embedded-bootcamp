@@ -53,7 +53,7 @@ const uint32_t WARG_ADC_MAX_VALUE = 1023;
 const uint32_t WARG_TIM1_COUNTER_PERIOD = 64000;
 const uint32_t WARG_TIM1_PRESCALER = 14;
 const uint32_t WARG_TIM1_PWM_CHANNEL = 1;
-const uint32_t WARG_ADC_SELECT = 0b1000;
+const uint32_t WARG_ADC_SELECT = 0x8;
 const uint32_t WARG_GPIO_PIN = 8;
 
 /* USER CODE END PV */
@@ -133,10 +133,9 @@ int main(void)
   octim1.OCIdleState = TIM_OCIDLESTATE_RESET;
   HAL_TIM_PWM_ConfigChannel(&htim1, &octim1, WARG_TIM1_PWM_CHANNEL);
 
-  uint16_t size = 2;
-  uint8_t pTxData[2] = {WARG_ADC_SELECT, 0}; // select ch0, single for ADC
-  uint8_t pRxData[2];
-  uint32_t timeout = 0;
+  const uint16_t size = 3;
+  uint8_t pTxData[3] = {WARG_ADC_SELECT, 0, 0}; // select ch0, single for ADC
+  uint8_t pRxData[3];
   uint32_t onCount;
   uint32_t adcData;
 
@@ -151,11 +150,13 @@ int main(void)
   {
 	  // Set CS line low to begin transmission with ADC
 	  HAL_GPIO_WritePin(GPIOB, WARG_GPIO_PIN, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, pTxData, pRxData, size, timeout);
+	  HAL_SPI_TransmitReceive(&hspi1, pTxData, pRxData, size,
+			  HAL_MAX_DELAY);
 	  // Pull CS line high between conversations
 	  HAL_GPIO_WritePin(GPIOB, WARG_GPIO_PIN, GPIO_PIN_SET);
 	  // Format data from ADC, shift off last 6 garbage bits
-	  adcData = ((pRxData[1] << 8)| pRxData[0]) >> 6;
+	  adcData = (pRxData[2] << 16 | (pRxData[1] << 8) | pRxData[0]) &
+			  WARG_ADC_MAX_VALUE;
 	  onCount = htim1.Init.Period * (adcData / WARG_ADC_MAX_VALUE *
 			  (WARG_MAX_DUTY_CYCLE - WARG_MIN_DUTY_CYCLE) +
 			  WARG_MIN_DUTY_CYCLE);
