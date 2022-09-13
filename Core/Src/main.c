@@ -79,7 +79,7 @@ int main(void)
 
   uint8_t T_buffer [3] = {0x01, 0x80, 0};
   uint8_t R_buffer [3] = {0};
-  uint16_t adc_value [1] = {0};
+  uint16_t adc_value = {0};
 
   /* USER CODE END Init */
 
@@ -106,12 +106,14 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //setting the PB4 port (I think that's the GPIO port?) low
 
 	  HAL_SPI_TransmitReceive(&hspi1, T_buffer, R_buffer, 8, 500);
-	  adc_value[1] = (R_buffer[2] & 0x03) + R_buffer[3]; // masking with 0x03 (0000 0011) only extracts the last two digit.
-	  //Adding together should output 0000 00nn nnnn nnnn, which equals to nn nnnn nnnn... I assume?
+	  adc_value = (R_buffer[1] << 8) | R_buffer[2];
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //setting the PB4 port high (Reference: CS line from the diagram in ADC datasheet)
 
 	  HAL_Delay(10); //prevents overload
+
+	  //TIM1->CCR1 = whatever number; //CRR/ARR = duty cycle 100000 / 2000 =
+	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
     /* USER CODE END WHILE */
 
