@@ -47,6 +47,22 @@
 
 /* USER CODE BEGIN PV */
 
+// Timer Variables
+const uint16_t 		 COUNTER_PERIOD = 65535;
+const uint16_t              ADC_MAX = 1023;
+const double         MAX_DUTY_CYCLE = 0.10;
+	  uint32_t 		  Compare_Value = 0;
+
+// SPI Variables
+const uint8_t 		SPI_TRANSMIT[3] = {0x1, 0x80, 0x0};
+      uint8_t 	    SPI_Recieve[10] = {0};
+const uint32_t 	 		SPI_TIMEOUT = 0;
+const uint16_t    SPI_TRANSMIT_SIZE = sizeof(SPI_TRANSMIT);
+const uint16_t     SPI_RECIEVE_SIZE = sizeof(SPI_Recieve);
+
+// ADC Variables
+	  uint16_t 			  ADC_Input = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,14 +109,44 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Start the PWM timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  // Pull CS Pin high to ensure no communication happens
+  HAL_GPIO_WritePin(SPI1_CSB_GPIO_Port, SPI1_CSB_Pin, GPIO_PIN_SET);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
 
+	  // Pull CS Pin low to start SPI communication
+	  HAL_GPIO_WritePin(SPI1_CSB_GPIO_Port, SPI1_CSB_Pin, GPIO_PIN_RESET);
+
+	  // Transmit SPI data
+	  HAL_SPI_Transmit(&hspi1, SPI_TRANSMIT, SPI_TRANSMIT_SIZE, SPI_TIMEOUT);
+
+	  // Recieve SPI data
+	  HAL_SPI_Receive(&hspi1, SPI_Recieve, SPI_RECIEVE_SIZE, SPI_TIMEOUT);
+
+	  // Pull CS Pin high to stop SPI communication
+	  HAL_GPIO_WritePin(SPI1_CSB_GPIO_Port, SPI1_CSB_Pin, GPIO_PIN_SET);
+
+	  // Store received ADC value
+	  ADC_Input = ((uint16_t)SPI_Recieve[1] << 8) | (uint16_t)(SPI_Recieve[2]);
+
+	  // Calculate capture compare value
+	  Compare_Value = (uint32_t)((double)(ADC_Input * COUNTER_PERIOD / ADC_MAX) * MAX_DUTY_CYCLE);
+
+	  // Update capture compare value
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, Compare_Value);
+
+	 // Delay to prevent freezing
 	  HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -128,6 +174,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -183,5 +230,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
