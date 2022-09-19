@@ -53,7 +53,7 @@ const uint32_t WARG_ADC_MAX_VALUE = 1023;
 const uint32_t WARG_TIM1_COUNTER_PERIOD = 64000;
 const uint32_t WARG_TIM1_PRESCALER = 14;
 const uint32_t WARG_TIM1_PWM_CHANNEL = 1;
-const uint32_t WARG_ADC_SELECT = 0x8;
+const uint32_t WARG_ADC_SELECT = 0x80;
 const uint32_t WARG_GPIO_PIN = 8;
 
 /* USER CODE END PV */
@@ -134,7 +134,7 @@ int main(void)
   HAL_TIM_PWM_ConfigChannel(&htim1, &octim1, WARG_TIM1_PWM_CHANNEL);
 
   const uint16_t size = 3;
-  uint8_t pTxData[3] = {WARG_ADC_SELECT, 0, 0}; // select ch0, single for ADC
+  uint8_t pTxData[3] = {1, WARG_ADC_SELECT, 0}; // select ch0, single for ADC
   uint8_t pRxData[3];
   uint32_t onCount;
   uint32_t adcData;
@@ -155,7 +155,7 @@ int main(void)
 	  // Pull CS line high between conversations
 	  HAL_GPIO_WritePin(GPIOB, WARG_GPIO_PIN, GPIO_PIN_SET);
 	  // Format data from ADC, shift off last 6 garbage bits
-	  adcData = (pRxData[2] << 16 | (pRxData[1] << 8) | pRxData[0]) &
+	  adcData = (uint16_t)((pRxData[1] << 8) | (pRxData[2])) &
 			  WARG_ADC_MAX_VALUE;
 	  onCount = htim1.Init.Period * (adcData / WARG_ADC_MAX_VALUE *
 			  (WARG_MAX_DUTY_CYCLE - WARG_MIN_DUTY_CYCLE) +
