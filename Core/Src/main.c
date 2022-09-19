@@ -51,14 +51,16 @@
 const uint16_t 		 COUNTER_PERIOD = 65535;
 const uint16_t              ADC_MAX = 1023;
 const double         MAX_DUTY_CYCLE = 0.10;
-	  uint32_t 		  Compare_Value = 0;
+	  double 		  Compare_Value = 0.0;
+const double        MIN_COMPARE_VAL = 65535 * 0.05;
 
 // SPI Variables
-const uint8_t 		SPI_TRANSMIT[3] = {0x1, 0x80, 0x0};
-      uint8_t 	    SPI_Recieve[10] = {0};
-const uint32_t 	 		SPI_TIMEOUT = 0;
+      uint8_t 		SPI_TRANSMIT[3] = {0x1, 0x80, 0x0};
+      uint8_t 	     SPI_Recieve[3] = {0};
+const uint32_t 	 		SPI_TIMEOUT = 250;
 const uint16_t    SPI_TRANSMIT_SIZE = sizeof(SPI_TRANSMIT);
 const uint16_t     SPI_RECIEVE_SIZE = sizeof(SPI_Recieve);
+const uint16_t SPI_RECIEVE_BIT_MASK = 0x3FF;
 
 // ADC Variables
 	  uint16_t 			  ADC_Input = 0;
@@ -107,10 +109,12 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   // Start the PWM timer
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 
   // Pull CS Pin high to ensure no communication happens
   HAL_GPIO_WritePin(SPI1_CSB_GPIO_Port, SPI1_CSB_Pin, GPIO_PIN_SET);
@@ -122,24 +126,23 @@ int main(void)
 
   while (1)
   {
-
 	  // Pull CS Pin low to start SPI communication
 	  HAL_GPIO_WritePin(SPI1_CSB_GPIO_Port, SPI1_CSB_Pin, GPIO_PIN_RESET);
 
 	  // Transmit SPI data
 	  HAL_SPI_Transmit(&hspi1, SPI_TRANSMIT, SPI_TRANSMIT_SIZE, SPI_TIMEOUT);
 
-	  // Recieve SPI data
+	  // Receive SPI data
 	  HAL_SPI_Receive(&hspi1, SPI_Recieve, SPI_RECIEVE_SIZE, SPI_TIMEOUT);
 
 	  // Pull CS Pin high to stop SPI communication
 	  HAL_GPIO_WritePin(SPI1_CSB_GPIO_Port, SPI1_CSB_Pin, GPIO_PIN_SET);
 
 	  // Store received ADC value
-	  ADC_Input = ((uint16_t)SPI_Recieve[1] << 8) | (uint16_t)(SPI_Recieve[2]);
+	  ADC_Input = ((SPI_Recieve[1] << 8) + (SPI_Recieve[2])) * SPI_RECIEVE_BIT_MASK;
 
 	  // Calculate capture compare value
-	  Compare_Value = (uint32_t)((double)(ADC_Input * COUNTER_PERIOD / ADC_MAX) * MAX_DUTY_CYCLE);
+	  Compare_Value = ((double)ADC_Input / ADC_MAX) * MIN_COMPARE_VAL + MIN_COMPARE_VAL;
 
 	  // Update capture compare value
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, Compare_Value);
