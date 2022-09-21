@@ -106,7 +106,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //setting the PB4 port (I think that's the GPIO port?) low
 
 	  HAL_SPI_TransmitReceive(&hspi1, T_buffer, R_buffer, 3, 500);
-	  adc_value = ((R_buffer[1] << 8) | R_buffer[2]) && 0x3FF;
+	  adc_value = ((R_buffer[1] << 8) | R_buffer[2]) & 0x3FF; //Sorry ECE 150 engraved the && operator in my head
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //setting the PB4 port high (Reference: CS line from the diagram in ADC datasheet)
 
