@@ -47,6 +47,14 @@
 
 /* USER CODE BEGIN PV */
 
+const uint8_t MCP3000_START_BIT = 0b00000001;
+const uint8_t MCP3004_CH0 = 0b10000000;
+const uint16_t MCP3004_MAX_VALUE = 0b0000001111111111;
+
+const uint16_t PWM_COUNTER_PERIOD = 64000;
+const float PWM_MIN_DUTY_CYCLE = 0.05;
+const float PWM_MAX_DUTY_CYCLE = 0.10;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,13 +101,34 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Set chip select high
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); 
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	HAL_Delay(10);
+    HAL_Delay(10);
+
+    // Get the value from the MCP3004 ADC on channel 0
+    uint8_t spi_tx_data[3] = {MCP3000_START_BIT, MCP3004_CH0, 0x00};
+    uint8_t spi_rx_data[3] = {0};
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+    HAL_SPI_TransmitReceive(&hspi1, spi_tx_data, spi_rx_data, 3, 100);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+
+    // The most significant 2 bits are in the second byte, the rest is in the third byte
+    uint16_t adcValue = ((spi_rx_data[1] & 0b00000011) << 8) | spi_rx_data[2];
+    
+    // Calculate the duty cycle
+    float dutyCycle = (float)adcValue / MCP3004_MAX_VALUE;
+    dutyCycle = (dutyCycle * (PWM_MAX_DUTY_CYCLE - PWM_MIN_DUTY_CYCLE)) + PWM_MIN_DUTY_CYCLE;
+    uint16_t pwmCounterValue = (uint16_t)(dutyCycle * PWM_COUNTER_PERIOD);
+    // use __HAL_TIM_SET_COMPARE to set the duty cycle
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmCounterValue);
 
     /* USER CODE END WHILE */
 
