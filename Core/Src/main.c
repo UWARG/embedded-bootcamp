@@ -124,11 +124,10 @@ int main(void)
     uint16_t adcValue = ((spi_rx_data[1] & 0b00000011) << 8) | spi_rx_data[2];
     
     // Calculate the duty cycle
-    float dutyCycle = (float)adcValue / MCP3004_MAX_VALUE;
-    dutyCycle = (dutyCycle * (PWM_MAX_DUTY_CYCLE - PWM_MIN_DUTY_CYCLE)) + PWM_MIN_DUTY_CYCLE;
-    uint16_t pwmCounterValue = (uint16_t)(dutyCycle * PWM_COUNTER_PERIOD);
-    // use __HAL_TIM_SET_COMPARE to set the duty cycle
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmCounterValue);
+    float power = (float) adcValue / MCP3004_MAX_VALUE; // [0, 1]
+    float dutyCycle = power * (PWM_MAX_DUTY_CYCLE - PWM_MIN_DUTY_CYCLE) + PWM_MIN_DUTY_CYCLE; // [PWM_MIN_DUTY_CYCLE, PWM_MAX_DUTY_CYCLE]
+    uint16_t compare = (uint16_t)(dutyCycle * PWM_COUNTER_PERIOD); // [0, PWM_COUNTER_PERIOD]
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare);
 
     /* USER CODE END WHILE */
 
