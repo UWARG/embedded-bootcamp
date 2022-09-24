@@ -47,9 +47,9 @@
 
 /* USER CODE BEGIN PV */
 
-const uint8_t MCP3000_START_BIT = 0b00000001;
-const uint8_t MCP3004_CH0 = 0b10000000;
-const uint16_t MCP3004_MAX_VALUE = 0b0000001111111111;
+const uint8_t MCP3000_START_BIT = 0x01;
+const uint8_t MCP3004_CH0 = 0x80;
+const uint16_t MCP3004_MAX_VALUE = 0x03FF;
 
 const uint16_t PWM_COUNTER_PERIOD = 64000;
 const float PWM_MIN_DUTY_CYCLE = 0.05;
