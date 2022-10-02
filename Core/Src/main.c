@@ -19,12 +19,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,6 +37,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define MAX_ADC_VALUE 1024
+#define MIN_DUTY_CYCLE_COUNT 100 /* 5% of timer period */
+#define MAX_DUTY_CYCLE_COUNT 200 /* 10% of timer period */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -65,7 +73,12 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  uint8_t start_byte = 1;
+  uint8_t spi_recv_buf[2] = {0};
+  uint16_t adc_value = 0;
 
+  float pwm_scale = 0.0f;
+  uint32_t pwm_offset = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,7 +100,16 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  /* set CS to be high by default */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  /* start timer */
+  TIM1->CCR1 = MIN_DUTY_CYCLE_COUNT;
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,6 +117,28 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	/* 1. Read potentiometer value from ADC */
+    /* pull CS to low */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    /* send start byte to ADC */
+    HAL_SPI_Transmit(&hspi1, &start_byte, 1, 100);
+    /* receive 2 bytes from ADC */
+    HAL_SPI_Receive(&hspi1, spi_recv_buf, 2, 100);
+    /* pull CS back to high */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    /* store result from ADC in a 16-bit number */
+    adc_value = (spi_recv_buf[0] << 8) + spi_recv_buf[1];
+    /* clear the 6 MSB as they're don't-cares */
+    adc_value &= 0x03FF;
+
+	/* 2. Calculate motor PWM output */
+    pwm_scale = (float)adc_value / MAX_ADC_VALUE;
+    pwm_offset = (uint32_t)((MAX_DUTY_CYCLE_COUNT - MIN_DUTY_CYCLE_COUNT) * pwm_scale);
+    TIM1->CCR1 = MIN_DUTY_CYCLE_COUNT + pwm_offset;
+
+    /* Delay 10ms to avoid overloading ADC */
+    HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +166,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +222,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
