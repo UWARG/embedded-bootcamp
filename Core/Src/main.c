@@ -38,6 +38,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+#define SEND_BUF_SIZE 3
+#define RECV_BUF_SIZE 3
 #define MAX_ADC_VALUE 1024
 #define MIN_DUTY_CYCLE_COUNT 100 /* 5% of timer period */
 #define MAX_DUTY_CYCLE_COUNT 200 /* 10% of timer period */
@@ -73,8 +75,9 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  uint8_t start_byte = 1;
-  uint8_t spi_recv_buf[2] = {0};
+  /* bytes to send: start byte, 10000000 (select CH0), don't-care byte */
+  uint8_t spi_send_buf[SEND_BUF_SIZE] = {0x01, 0x80, 0x00};
+  uint8_t spi_recv_buf[RECV_BUF_SIZE] = {0};
   uint16_t adc_value = 0;
 
   float pwm_scale = 0.0f;
@@ -108,7 +111,7 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   /* start timer */
-  TIM1->CCR1 = MIN_DUTY_CYCLE_COUNT;
+  __HAL_TIM_SET_COMPARE(&htim1, MIN_DUTY_CYCLE_COUNT, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
@@ -120,21 +123,21 @@ int main(void)
 	/* 1. Read potentiometer value from ADC */
     /* pull CS to low */
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-    /* send start byte to ADC */
-    HAL_SPI_Transmit(&hspi1, &start_byte, 1, 100);
-    /* receive 2 bytes from ADC */
-    HAL_SPI_Receive(&hspi1, spi_recv_buf, 2, 100);
+    /* send bytes to ADC */
+    HAL_SPI_Transmit(&hspi1, spi_send_buf, SEND_BUF_SIZE, 100);
+    /* receive bytes from ADC */
+    HAL_SPI_Receive(&hspi1, spi_recv_buf, RECV_BUF_SIZE, 100);
     /* pull CS back to high */
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
     /* store result from ADC in a 16-bit number */
-    adc_value = (spi_recv_buf[0] << 8) + spi_recv_buf[1];
+    adc_value = (spi_recv_buf[1] << 8) + spi_recv_buf[2];
     /* clear the 6 MSB as they're don't-cares */
     adc_value &= 0x03FF;
 
 	/* 2. Calculate motor PWM output */
     pwm_scale = (float)adc_value / MAX_ADC_VALUE;
     pwm_offset = (uint32_t)((MAX_DUTY_CYCLE_COUNT - MIN_DUTY_CYCLE_COUNT) * pwm_scale);
-    TIM1->CCR1 = MIN_DUTY_CYCLE_COUNT + pwm_offset;
+    __HAL_TIM_SET_COMPARE(&htim1, MIN_DUTY_CYCLE_COUNT + pwm_offset, TIM_CHANNEL_1);
 
     /* Delay 10ms to avoid overloading ADC */
     HAL_Delay(10);
