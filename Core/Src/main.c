@@ -131,10 +131,10 @@ int main(void)
 	// One SPI communication cycle with MCP3004 ADC
 	HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	HAL_SPI_TransmitRecieve(&hspi1, spi_output_buffer, spi_input_buffer, 3, 100);
-	HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	//Extract 10 bit data in spi_input_buffer to spi_input_value
-	spi_input_value = ((uint16_t)spi_input_buffer[1] << 8) + (uint16_t)spi_input_buffer[2];
+	spi_input_value = (((uint16_t)spi_input_buffer[1]) << 8) + (uint16_t)spi_input_buffer[2];
 
 
 	//prevent overloading of MCP3004 ADC
