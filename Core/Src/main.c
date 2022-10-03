@@ -19,11 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -45,6 +48,11 @@
 
 /* USER CODE BEGIN PV */
 
+SPI_HandleTypeDef hspi1;
+
+UART_HandleTypeDef huart2;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,6 +63,9 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+const uint8_t MCP3004_START = 0b00000001;
+const uint8_t MCP3004_SINGLEENDED_CH0 = 0b10000000; // 2nd MSB and 4 LSBs are don't cares
 
 /* USER CODE END 0 */
 
@@ -75,6 +86,15 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  char uart_buffer[50];
+  int uart_buffer_length;
+
+  uint8_t spi_input_buffer[3]; //3 bytes from MCP3004 ADC
+  uin16_t spi_input_value;
+
+  uint8_t spi_output_buffer[3] = {MCP3004_START, MCP3004_SINGLEENDED_CH0, 0b00000000};
+
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,7 +107,19 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+
+
+  // Enable Chip Select on default
+  HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+
+  // Serial terminal test
+  uart_buffer_length = sprintf(uart_buffer, "Serial terminal test\r\n");
+  HAL_UART_Transmit(&huart2, (uint8_t *)uart_buffer, uart_buffer_length, 100);
+
+
 
   /* USER CODE END 2 */
 
@@ -95,9 +127,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+
+	// One SPI communication cycle with MCP3004 ADC
+	HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_SPI_TransmitRecieve(&hspi1, spi_output_buffer, spi_input_buffer, 3, 100);
+	HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	//Extract 10 bit data in spi_input_buffer to spi_input_value
+	spi_input_value = ((uint16_t)spi_input_buffer[1] << 8) + (uint16_t)spi_input_buffer[2];
+
+
+	//prevent overloading of MCP3004 ADC
+	HAL_Delay(10);
+
+	/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +169,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +225,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
