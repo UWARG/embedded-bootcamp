@@ -153,7 +153,9 @@ int main(void)
 	//set the PWM compare register value for 5-10% duty cycle depending on MSP3004 ADC
 	//	additional '-1' since "period - 1" = counts
 	pwm_compare_register_counts = (((5*pwm_counter_counts*spi_input_value)/100)/1023)
-									+ ((pwm_counter_counts*5)/100) - 1;
+									+ ((pwm_counter_counts*5)/100)
+									- 1;
+
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_compare_register_counts);
 
 	//prevent overloading of MCP3004 ADC
