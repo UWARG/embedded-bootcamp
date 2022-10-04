@@ -98,8 +98,8 @@ int main(void)
   uin16_t spi_input_value;
   uint8_t spi_output_buffer[3] = {MCP3004_START, MCP3004_SINGLEENDED_CH0, 0b00000000};
 
-  uint16_t pwm_register_compare_count;
-  uint16_t pwm_counter_period = (uint16_t) htim1.Init.Period; //PWM counter period currently 60000 counts, can cast as uint16_t
+  uint16_t pwm_compare_register_counts;
+  uint16_t pwm_counter_counts = ((uint16_t) htim1.Init.Period) + 1; // PWM counter period "60000 - 1" => 60000 counts. uint32_t cast as uint16_t
 
   /* USER CODE END Init */
 
@@ -151,9 +151,10 @@ int main(void)
 			          + (uint16_t) spi_input_buffer[2];
 
 	//set the PWM compare register value for 5-10% duty cycle depending on MSP3004 ADC
-	pwm_register_compare_count = (((5*pwm_counter_period*spi_input_value)/100)/1023)
-									+ ((pwm_counter_period*5)/100);
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_register_compare_count);
+	//	additional '-1' since "period - 1" = counts
+	pwm_compare_register_counts = (((5*pwm_counter_counts*spi_input_value)/100)/1023)
+									+ ((pwm_counter_counts*5)/100) - 1;
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_compare_register_counts);
 
 	//prevent overloading of MCP3004 ADC
 	HAL_Delay(10);
