@@ -19,7 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -49,8 +51,9 @@
 /* USER CODE BEGIN PV */
 
 SPI_HandleTypeDef hspi1;
-
 UART_HandleTypeDef huart2;
+TIM_HandleTypeDef htim1;
+
 
 
 /* USER CODE END PV */
@@ -86,14 +89,17 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  //allocate memory for private variables
+
   char uart_buffer[50];
   int uart_buffer_length;
 
   uint8_t spi_input_buffer[3]; //3 bytes from MCP3004 ADC
   uin16_t spi_input_value;
-
   uint8_t spi_output_buffer[3] = {MCP3004_START, MCP3004_SINGLEENDED_CH0, 0b00000000};
 
+  uint16_t pwm_register_compare_count;
+  uint16_t pwm_counter_period = (uint16_t) htim1.Init.Period; //PWM counter period currently 60000 counts, can cast as uint16_t
 
   /* USER CODE END Init */
 
@@ -106,9 +112,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
 
 
   // Enable Chip Select on default
@@ -117,7 +126,11 @@ int main(void)
 
   // Serial terminal test
   uart_buffer_length = sprintf(uart_buffer, "Serial terminal test\r\n");
-  HAL_UART_Transmit(&huart2, (uint8_t *)uart_buffer, uart_buffer_length, 100);
+  HAL_UART_Transmit(&huart2, (uint8_t *) uart_buffer, uart_buffer_length, 100);
+
+
+  //Start the timer for PWM
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
 
 
@@ -134,13 +147,18 @@ int main(void)
 	HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	//Extract 10 bit data in spi_input_buffer to spi_input_value
-	spi_input_value = (((uint16_t)spi_input_buffer[1]) << 8) + (uint16_t)spi_input_buffer[2];
+	spi_input_value = (((uint16_t)(spi_input_buffer[1] & 0b00000011)) << 8)
+			          + (uint16_t) spi_input_buffer[2];
 
+	//set the PWM compare register value for 5-10% duty cycle depending on MSP3004 ADC
+	pwm_register_compare_count = (((5*pwm_counter_period*spi_input_value)/100)/1023)
+									+ ((pwm_counter_period*5)/100);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_register_compare_count);
 
 	//prevent overloading of MCP3004 ADC
 	HAL_Delay(10);
 
-	/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
