@@ -100,7 +100,6 @@ int main(void)
 
   uint16_t pwm_compare_register_counts;
   const uint16_t PWM_COUNTER_COUNTS = ((uint16_t) htim1.Init.Period) + 1; // PWM counter period "60000 - 1" => 60000 counts. uint32_t cast as uint16_t
-  const uint16_t PWM_COUNTS_
 
   /* USER CODE END Init */
 
