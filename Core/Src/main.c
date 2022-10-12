@@ -67,8 +67,8 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-const uint8_t MCP3004_START = 0b00000001;
-const uint8_t MCP3004_SINGLEENDED_CH0 = 0b10000000; // 2nd MSB and 4 LSBs are don't cares
+const uint8_t MCP3004_START = 0x01;
+const uint8_t MCP3004_SINGLEENDED_CH0 = 0x80; // 2nd binary MSB and 4 binary LSBs are don't cares
 
 /* USER CODE END 0 */
 
@@ -96,10 +96,11 @@ int main(void)
 
   uint8_t spi_input_buffer[3]; //3 bytes from MCP3004 ADC
   uin16_t spi_input_value;
-  uint8_t spi_output_buffer[3] = {MCP3004_START, MCP3004_SINGLEENDED_CH0, 0b00000000};
+  uint8_t spi_output_buffer[3] = {MCP3004_START, MCP3004_SINGLEENDED_CH0, 0x00};
 
   uint16_t pwm_compare_register_counts;
-  uint16_t pwm_counter_counts = ((uint16_t) htim1.Init.Period) + 1; // PWM counter period "60000 - 1" => 60000 counts. uint32_t cast as uint16_t
+  const uint16_t PWM_COUNTER_COUNTS = ((uint16_t) htim1.Init.Period) + 1; // PWM counter period "60000 - 1" => 60000 counts. uint32_t cast as uint16_t
+  const uint16_t PWM_COUNTS_
 
   /* USER CODE END Init */
 
@@ -147,14 +148,14 @@ int main(void)
 	HAL_GPIOWritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	//Extract 10 bit data in spi_input_buffer to spi_input_value
-	spi_input_value = (((uint16_t)(spi_input_buffer[1] & 0b00000011)) << 8)
-			          + (uint16_t) spi_input_buffer[2];
+	spi_input_value = (((uint16_t)(spi_input_buffer[1] & 0x03)) << 8)
+			          | (uint16_t) spi_input_buffer[2];
 
 	//set the PWM compare register value for 5-10% duty cycle depending on MSP3004 ADC
+	//  register value for 5% of PWM_COUNTER_COUNTS set when spi_input_value = 0
+	//  register value increases for up to an additional 5% when spi_input_value > 0, until max spi_input_value (0x3FF) is reached.
 	//	additional '-1' since "period - 1" = counts
-	pwm_compare_register_counts = (((5*pwm_counter_counts*spi_input_value)/100)/1023)
-									+ ((pwm_counter_counts*5)/100)
-									- 1;
+	pwm_compare_register_counts = PWM_COUNTER_COUNTS*(1 + spi_input_value/0x3FF)*5/100 - 1;
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_compare_register_counts);
 
