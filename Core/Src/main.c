@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,6 +89,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +99,29 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // send low to CS pin to start reading from ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // get data from ADC
+	  uint8_t transmit_data[3] = {0x01, 0x80, 0x00};
+	  uint8_t recieve_data[3];
+	  uint16_t size = 6;
+	  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, transmit_data, recieve_data, size, HAL_TIMEOUT);
+
+	  // send high to CS pin to stop reading from ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  if (status == HAL_OK){
+		  // Get info from recieve_data and convert the 2 8-bit values into the final 16-bit value for count
+		  uint16_t value_from_adc = (recieve_data[1] << 8) | recieve_data[2];
+		  // Do AND comparison with 0x07FF to get the 10-bit count value
+		  uint16_t adc_count = 0x07FF;
+		  adc_count &= value_from_adc;
+
+		  // Set the compare register to the adc_count value computed previously
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_count);
+	  }
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
