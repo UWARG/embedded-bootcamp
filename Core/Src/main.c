@@ -92,7 +92,9 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  const uint8_t TRANSMIT_DATA[3] = {0x01, 0x80, 0x00};
+  const uint16_t TR_SIZE = 3;
+  const uint16_t COUNTER_SPEED = 3200;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,10 +105,8 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // get data from ADC
-	  uint8_t transmit_data[3] = {0x01, 0x80, 0x00};
 	  uint8_t recieve_data[3];
-	  uint16_t size = 6;
-	  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, transmit_data, recieve_data, size, HAL_TIMEOUT);
+	  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, TRANSMIT_DATA, recieve_data, TR_SIZE, HAL_TIMEOUT);
 
 	  // send high to CS pin to stop reading from ADC
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -118,8 +118,12 @@ int main(void)
 		  uint16_t adc_count = 0x07FF;
 		  adc_count &= value_from_adc;
 
+		  // Counter speed set for TIM1 is 3200 counts / ms, we need to go from 1-2ms so from 3200-6400 counts
+		  // ADC value from 0-1023, therefore 0->3200 and 1023->6400
+		  double compare_val = (adc_count / 1023) * COUNTER_SPEED + COUNTER_SPEED;
+
 		  // Set the compare register to the adc_count value computed previously
-		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_count);
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
 	  }
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
