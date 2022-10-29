@@ -99,13 +99,14 @@ int main(void)
   /* USER CODE END 2 */
    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
    HAL_Timer_Start(&htim1);
+   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 	  uint16_t adc_value= 0;
-	  uint16_t data_buffer_tr[3] = {0x01, 0x80, 0x00};
-	  uint16_t data_buffer_rec[3] = {};
+	  uint8_t data_buffer_tr[3] = {0x01, 0x80, 0x00};
+	  uint8_t data_buffer_rec[3] = {0};
 
 	  //To read the value, I pull CS down
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
