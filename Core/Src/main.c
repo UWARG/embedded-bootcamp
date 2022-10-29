@@ -64,8 +64,8 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
-unsigned int const MAX_ADC_VALUE = 1024;
-unsigned int MAX_COUNTS_PWM = 60000;
+uint16_t const MAX_ADC_VALUE = 1024;
+uint16_t const MAX_COUNTS_PWM = 60000;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -104,19 +104,19 @@ int main(void)
   while (1)
   {
 	  uint16_t adc_value= 0;
-	  uint16_t data_buffer_tr[] = {0x01, 0x00, 0x00};
-	  uint16_t data_buffer_rec[] = {};
+	  uint16_t data_buffer_tr[3] = {0x01, 0x80, 0x00};
+	  uint16_t data_buffer_rec[3] = {};
 
 	  //To read the value, I pull CS down
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  assert(HAL_SPI_TransmitReceive_IT(&hspi1, data_buffer_tr , data_buffer_rec, 10)==HAL_OK);
+	  HAL_SPI_TransmitReceive(&hspi1, data_buffer_tr , data_buffer_rec, 3, 10);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  adc_value = data_buffer_rec[0];
+	  adc_value = *((u16int_t*) &data_buffer_rec[1]);
 	  adc_value = adc_value << 6;
 
 	  double cycle_value = adc_value/MAX_ADC_VALUE;
-	  double percent_cycle = 0.05 + cycle_value;
+	  double percent_cycle = 0.05* (1+ cycle_value);
 	  uint16_t ticks_req =  MAX_COUNTS_PWM * percent_cycle;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4 ,ticks_req);
 
