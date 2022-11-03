@@ -64,8 +64,6 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
-uint16_t const maxadc = 1024;
-uint16_t const maxpwm = 0xFFFF;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -100,29 +98,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-
-
   {
-
-	  uint8_t trans[3]={0x01,0b1000000,0x01};
-	  uint8_t recv[3]={0};
-	  uint16_t size = 3;
-	  uint32_t timeout = 10000;
-
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, trans , recv, size, timeout);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-
-	  uint16_t adc = (uint16_t) &recv[1];
-
-	  adc = adc>>6; // as the useful data is from 6th bit onwards
-
-
-	  uint16_t noofcounts = adc/maxadc;
-	  uint16_t pwmcount =  maxpwm *noofcounts;
-	  uint16_t pwm = pwmcount*0.07; //between 5-10%
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4 ,pwm);
-
 
 	  HAL_Delay(10);
 

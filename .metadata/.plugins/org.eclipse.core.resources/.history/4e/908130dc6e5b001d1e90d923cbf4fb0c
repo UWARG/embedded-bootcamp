@@ -104,16 +104,16 @@ int main(void)
 
   {
 
-	  uint8_t trans[3]={0x01,0b1000000,0x01};
+	  uint8_t trans[3]={0x01,0x1000000,0x01};
 	  uint8_t recv[3]={0};
 	  uint16_t size = 3;
 	  uint32_t timeout = 10000;
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, trans , recv, size, timeout);
+	  HAL_SPI_TransmitReceive(&hspi1, data_buffer_tr , data_buffer_rec, size, timeout);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  uint16_t adc = (uint16_t) &recv[1];
+	  adc = (uint16_t) &data_buffer_rec[1];
 
 	  adc = adc>>6; // as the useful data is from 6th bit onwards
 
