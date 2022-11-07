@@ -100,27 +100,27 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
+
+
   {
 
-	  uint8_t const TRANS[3] = {0x01,0x40,0x01};
-	  uint8_t recv[3] = {0};
-	  uint16_t const SIZE = 3;
-	  uint32_t const TIMEOUT = 10000;
+	  uint8_t trans[3]={0x01,0b1000000,0x01};
+	  uint8_t recv[3]={0};
+	  uint16_t size = 3;
+	  uint32_t timeout = 10000;
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, TRANS , recv, SIZE, TIMEOUT);
+	  HAL_SPI_TransmitReceive(&hspi1, trans , recv, size, timeout);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  uint16_t adc = (uint16_t) recv[1];
+	  uint16_t adc = (uint16_t) &recv[1];
 
-	  adc = adc<<14; // push recv[1] B9 and B8 bits to 15th and 16th bit removing all other unnecessary bits
-	  adc = adc>>7; //push B9 and B8 to 8th and 9th position
-	  adc = adc + (uint16_t) recv[2]; // add the bits from recv 2 as they are only 8 bits they should stitch with recv last 2 bits
+	  adc = adc>>6; // as the useful data is from 6th bit onwards
 
 
-	  float cyclecounts = adc/MAXADC;
-	  float pwmcount =  MAXPWM *cyclecounts;
-	  uint16_t pwm = (uint16_t) pwmcount*0.07; //between 5-10%
+	  uint16_t noofcounts = adc/MAXADC;
+	  uint16_t pwmcount =  MAXPWM *noofcounts;
+	  uint16_t pwm = pwmcount*0.07; //between 5-10%
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4 ,pwm);
 
 
