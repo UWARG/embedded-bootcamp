@@ -3974,3 +3974,16 @@ Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/usg11
 
 !ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2022-11-06 22:36:10.862
 !MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2022-11-08 20:55:22.836 -----------------------------------------------
+eclipse.buildId=Version 1.10.1
+java.version=11.0.14.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_SG
+Framework arguments:  -keyring /Users/usg1103/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/usg1103/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2022-11-08 20:58:36.129
+!MESSAGE Log4j initialized with config file /Users/usg1103/Library/CloudStorage/OneDrive-UniversityofWaterloo/UWARG/firmware-bootcampt/embedded-bootcamp/.metadata/.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2022-11-08 20:58:43.558
+!MESSAGE Started RMI Server, listening on port 41337
