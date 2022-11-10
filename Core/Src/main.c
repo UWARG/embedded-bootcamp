@@ -113,7 +113,7 @@ int main(void)
 	  HAL_SPI_TransmitReceive(&hspi1, data_buffer_tr , data_buffer_rec, 3, 10);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  adc_value = *((u16int_t*) &data_buffer_rec[1]);
+	  adc_value = *((u16int_t*) &data_buffer_rec[1]); //Interpret the memory space starting at data_buffer_rec[1] as a 16-bit integer. 
 	  adc_value = adc_value << 6;
 
 	  double cycle_value = adc_value/MAX_ADC_VALUE;
