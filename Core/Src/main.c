@@ -98,7 +98,6 @@ int main(void)
 
   /* USER CODE END 2 */
    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-   HAL_Timer_Start(&htim1);
    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -113,10 +112,9 @@ int main(void)
 	  HAL_SPI_TransmitReceive(&hspi1, data_buffer_tr , data_buffer_rec, 3, 10);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  adc_value = *((u16int_t*) &data_buffer_rec[1]); //Interpret the memory space starting at data_buffer_rec[1] as a 16-bit integer. 
-	  adc_value = adc_value << 6;
+	  adc_value = ((u16int_t) &data_buffer_rec[1]); //Interpret the memory space starting at data_buffer_rec[1] as a 16-bit integer. 
 
-	  double cycle_value = adc_value/MAX_ADC_VALUE;
+	  double cycle_value = (double) adc_value/MAX_ADC_VALUE;
 	  double percent_cycle = 0.05* (1+ cycle_value);
 	  uint16_t ticks_req =  MAX_COUNTS_PWM * percent_cycle;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4 ,ticks_req);
