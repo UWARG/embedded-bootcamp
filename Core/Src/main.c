@@ -104,7 +104,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint16_t adc_value= 0;
+	  uint16_t adc_value = 0;
 	  uint8_t data_buffer_tr[3] = {0x01, 0x80, 0x00};
 	  uint8_t data_buffer_rec[3] = {0};
 
