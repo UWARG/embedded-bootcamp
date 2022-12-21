@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -66,6 +68,9 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+  uint8_t tx_data[3] = {0x1, 0x80, 0x0}, rx_data[3];
+  uint16_t foo;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,7 +92,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // send high to Chip Select ping
+  HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  // start PWM signal generation
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,7 +108,29 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	// send low to Chip Select pin to start reading
+	HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	// receive data from ADC
+	 hal_status = HAL_SPI_TransmiteReceive(&hspi1, tx_data, rx_data, 3, 100);
+
+	// send high to Chip Select pin to stop reading
+	HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	 if (hal_status == HAL_OK){
+
+		// convert ADC value into number of counts for timer counter
+		foo = (((uint16_t) (rx_data[1] & 3)<<8) | rx_data[2]) * 3.125 + 3200;
+
+		// change timer output
+		HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, foo);
+	 }
+
+	HAL_Delay(10);
     /* USER CODE END WHILE */
+
+
 
     /* USER CODE BEGIN 3 */
   }
@@ -163,7 +198,7 @@ void Error_Handler(void)
 
 #ifdef  USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
+  * @brief  Reports the name of the s	ource file and the source line number
   *         where the assert_param error has occurred.
   * @param  file: pointer to the source file name
   * @param  line: assert_param error line source number
