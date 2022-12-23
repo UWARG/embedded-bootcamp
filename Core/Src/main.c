@@ -129,7 +129,9 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  // get 10 bits of data
-	  adc = (((uint16_t) receive_data[1] << 8 | (uint16_t) receive_data[2]) & 0x03FF);
+	  adc = ((uint16_t) receive_data[1] << 8 | (uint16_t) receive_data[2]);
+	  // bit masking
+	  adc = adc &  & 0x03FF;
 
 	  // convert adc to counts
 	  compare_data = (adc/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
