@@ -55,7 +55,7 @@ static const uint32_t TIMEOUT = 500;
 // 0x01: start bit
 // 0x80: 1000 0000 -> Single Channel, Single Ended CH0
 // 0x00: Additional clock required to for sample and hold
-static const uint8_t transmit_data[NUM_BYTES_DATA] = {0x01, 0x80, 0x00};
+static const uint8_t TRANSMIT_DATA[NUM_BYTES_DATA] = {0x01, 0x80, 0x00};
 
 uint8_t receive_data[NUM_BYTES_DATA];
 uint16_t size = (sizeof(receive_data));
@@ -123,7 +123,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // receive data from ADC
-	  HAL_SPI_TransmitReceive(&hspi1, transmit_data, receive_data, size, TIMEOUT);
+	  HAL_SPI_TransmitReceive(&hspi1, TRANSMIT_DATA, receive_data, size, TIMEOUT);
 
 	  // chip select = 1 to end communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
