@@ -40,21 +40,22 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define COUNTER_PERIOD (60000)
-#define MIN_DUTY_CYCLE (0.05)
-#define ADC_MAX (0x3FF)
-#define TIMEOUT (500)
 #define NUM_BYTES_DATA (3)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+const uint16_t COUNTER_PERIOD = 60000;
+const float MIN_DUTY_CYCLE = 0.05;
+const uint16_t ADC_MAX = 0x3FF;
+const uint32_t TIMEOUT = 500;
+
 uint8_t receive_data[NUM_BYTES_DATA];
 uint16_t size = (sizeof(receive_data));
 uint16_t adc = 0;
 float compare_data = 0;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -112,7 +113,7 @@ int main(void)
 
 	  // receive data from ADC
 	  // since spi is set to master, this function will call transmitreceive function anyways
-	  HAL_SPI_Receive(&hspi1, &receive_data, size, TIMEOUT);
+	  HAL_SPI_Receive(&hspi1, receive_data, size, TIMEOUT);
 
 	  // chip select = 1 to end communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -121,7 +122,7 @@ int main(void)
 	  adc = ((uint16_t) receive_data[1] << 8 | (uint16_t) receive_data[2]);
 
 	  // convert adc to counts
-	  compare_data = (adc/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PREIOD)*(MIN_DUTY_CYCLE);
+	  compare_data = (adc/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
 
 	  // compare register
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_data);
