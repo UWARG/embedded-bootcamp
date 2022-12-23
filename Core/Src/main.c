@@ -47,10 +47,15 @@
 
 /* USER CODE BEGIN PV */
 
-const uint16_t COUNTER_PERIOD = 60000;
-const float MIN_DUTY_CYCLE = 0.05;
-const uint16_t ADC_MAX = 0x3FF;
-const uint32_t TIMEOUT = 500;
+static const uint16_t COUNTER_PERIOD = 60000;
+static const float MIN_DUTY_CYCLE = 0.05;
+static const uint16_t ADC_MAX = 0x3FF;
+static const uint32_t TIMEOUT = 500;
+// needs specification to send:
+// 0x01: start bit
+// 0x80: 1000 0000 -> Single Channel, Single Ended CH0
+// 0x00: Additional clock required to for sample and hold
+static const uint8_t transmit_data[NUM_BYTES_DATA] = {0x01, 0x80, 0x00};
 
 uint8_t receive_data[NUM_BYTES_DATA];
 uint16_t size = (sizeof(receive_data));
@@ -102,6 +107,12 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // initialize with chip select = 1
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  // start timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,14 +123,13 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // receive data from ADC
-	  // since spi mode is master, this function will also transmit dummy data to start clock
-	  HAL_SPI_Receive(&hspi1, receive_data, size, TIMEOUT);
+	  HAL_SPI_TransmitReceive(&hspi1, transmit_data, receive_data, size, TIMEOUT);
 
 	  // chip select = 1 to end communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  // get 10 bits of data
-	  adc = ((uint16_t) receive_data[1] << 8 | (uint16_t) receive_data[2]);
+	  adc = (((uint16_t) receive_data[1] << 8 | (uint16_t) receive_data[2]) & 0x03FF);
 
 	  // convert adc to counts
 	  compare_data = (adc/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
