@@ -123,7 +123,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // receive data from ADC
-	  HAL_SPI_TransmitReceive(&hspi1, TRANSMIT_DATA, receive_data, size, TIMEOUT);
+	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*) TRANSMIT_DATA, receive_data, size, TIMEOUT);
 
 	  // chip select = 1 to end communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -131,7 +131,7 @@ int main(void)
 	  // get 10 bits of data
 	  adc = ((uint16_t) receive_data[1] << 8 | (uint16_t) receive_data[2]);
 	  // bit masking
-	  adc = adc &  & 0x03FF;
+	  adc = adc & 0x03FF;
 
 	  // convert adc to counts
 	  compare_data = (adc/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
