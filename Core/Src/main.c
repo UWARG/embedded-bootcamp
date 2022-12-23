@@ -112,7 +112,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // receive data from ADC
-	  // since spi is set to master, this function will call transmitreceive function anyways
+	  // since spi mode is master, this function will also transmit dummy data to start clock
 	  HAL_SPI_Receive(&hspi1, receive_data, size, TIMEOUT);
 
 	  // chip select = 1 to end communication
