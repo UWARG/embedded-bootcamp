@@ -68,8 +68,13 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  uint8_t tx_data[3] = {0x1, 0x80, 0x0}, rx_data[3];
-  uint16_t foo;
+  const uint8_t TX_DATA[3] = {0x1, 0x80, 0x0};
+  const uint8_t SIZE = 3;
+  const uint8_t TIMEOUT = 100;
+  const uint16_t FIVE_PERCENT_DUTY_TIME = 3200;
+  const float ADC_CONVERT = 3.125;
+  uint8_t rx_data[3];
+  uint16_t counts;
 
   /* USER CODE END 1 */
 
@@ -113,7 +118,7 @@ int main(void)
 	HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	// receive data from ADC
-	 hal_status = HAL_SPI_TransmiteReceive(&hspi1, tx_data, rx_data, 3, 100);
+	 hal_status = HAL_SPI_TransmiteReceive(&hspi1, TX_DATA, rx_data, SIZE, TIMEOUT);
 
 	// send high to Chip Select pin to stop reading
 	HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -121,10 +126,10 @@ int main(void)
 	 if (hal_status == HAL_OK){
 
 		// convert ADC value into number of counts for timer counter
-		foo = (((uint16_t) (rx_data[1] & 3)<<8) | rx_data[2]) * 3.125 + 3200;
+		counts = (((uint16_t) (rx_data[1] & 3)<<8) | rx_data[2]) * ADC_CONVERT + FIVE_PERCENT_DUTY_TIME;
 
 		// change timer output
-		HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, foo);
+		HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
 	 }
 
 	HAL_Delay(10);
