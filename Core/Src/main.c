@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,8 +19,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -87,7 +90,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+//  Start the timer
+  HAL_TIM_Base_Start (&htim1);
 
   /* USER CODE END 2 */
 
@@ -95,6 +103,26 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+
+	  uint8_t transmit_data[10];
+	  uint8_t receive_data[10];
+
+//	  Start bit
+	  transmit_data[0] = 1;
+//	  Single-ended, CH0
+	  transmit_data[1] = 0b10000000;
+//	  Doesn't matter
+	  transmit_data[2] = 0;
+//	  transmit and receive
+	  HAL_SPI_TransmitReceive(&hspi1, &transmit_data, &receive_data, 3, 1000);
+
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+
+
+
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
