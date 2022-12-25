@@ -102,7 +102,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // send high to Chip Select ping
-  HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   // start PWM signal generation
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -115,13 +115,13 @@ int main(void)
   {
 
 	// send low to Chip Select pin to start reading
-	HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	// receive data from ADC
-	 hal_status = HAL_SPI_TransmiteReceive(&hspi1, TX_DATA, rx_data, SIZE, TIMEOUT);
+	hal_status = HAL_SPI_TransmiteReceive(&hspi1, TX_DATA, rx_data, SIZE, TIMEOUT);
 
 	// send high to Chip Select pin to stop reading
-	HAL_GPIO_WritePine(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	 if (hal_status == HAL_OK){
 
