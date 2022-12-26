@@ -23,7 +23,6 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -93,6 +92,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+//  Set CS line to ON
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 //  Start the timer
   HAL_TIM_Base_Start (&htim1);
@@ -101,8 +101,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1) {
+//	  Toggle CS line
 	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
 
 	  uint8_t transmit_data[10];
@@ -117,9 +117,23 @@ int main(void)
 //	  transmit and receive
 	  HAL_SPI_TransmitReceive(&hspi1, &transmit_data, &receive_data, 3, 1000);
 
+//	  Toggle CS line
 	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
 
+//	  Concatenate the last two bytes
+	  uint16_t combined = receive_data[1] << 8 | receive_data[2];
+//	  Keep the last 10 bits
+	  uint16_t adc_output = 0x03FF & combined; // 0x0000 0011 1111 1111 (only need last 10 bits)
 
+//	  Take ADC output between 0-1024 and converts to counts between 3200 and 6400 (5-10%)
+	  int counts_per_cycle = adc_output * 3.125 + 3200;
+
+//	  convert to PWM
+	  TIM_OC_InitTypeDef htim_oc_init;
+	  htim_oc_init.OCMode = TIM_OCMODE_PWM1;
+	  htim_oc_init.Pulse = (uint32_t) counts_per_cycle;
+
+	  HAL_TIM_PWM_ConfigChannel(&htim1, &htim_oc_init, TIM_CHANNEL_1);
 
 
 	  HAL_Delay(10);
