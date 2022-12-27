@@ -49,6 +49,7 @@
 
 static const uint16_t COUNTER_PERIOD = 60000;
 static const float MIN_DUTY_CYCLE = 0.05;
+static const float DUTY_CYCLE_RANGE = 0.05;
 static const uint16_t ADC_MAX = 0x3FF;
 static const uint32_t TIMEOUT = 500;
 // needs specification to send:
@@ -134,7 +135,12 @@ int main(void)
 	  adc = adc & 0x03FF;
 
 	  // convert adc to counts
-	  compare_data = (adc/ADC_MAX)*(COUNTER_PERIOD)*(MIN_DUTY_CYCLE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
+	  // offset: minimum duty cycle times counter period
+	  // range: since total range is from 0.05 to 0.1, adc range is from 0 to 0.05
+	  // so, at 100% of adc value, it is 0.05; at 0%, it is at 0
+	  // adc/ADC_MAX will give percentage of range
+	  // ticks: adc/ADC_MAX * counter period * full range
+	  compare_data = (((float)adc)/ADC_MAX)*(COUNTER_PERIOD)*(DUTY_CYCLE_RANGE) + (COUNTER_PERIOD)*(MIN_DUTY_CYCLE);
 
 	  // compare register
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_data);
