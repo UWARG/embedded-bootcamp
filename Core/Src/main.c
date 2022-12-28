@@ -92,48 +92,42 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-//  Set CS line to ON
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-//  Start the timer
-  HAL_TIM_Base_Start (&htim1);
 
+//  Set CS line HIGH
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+//  Start the timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+//  Start bit, CH0 Single, Doesn't matter
+  uint8_t transmit_data[3] = {1, 0x80, 0};
+  uint8_t receive_data[3];
+
+  const uint8_t NO_OF_BYTES = 3;
+  const uint16_t TIMEOUT = 1000;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-//	  Toggle CS line
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+//	  Bring CS line low to start peripheral communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-	  uint8_t transmit_data[10];
-	  uint8_t receive_data[10];
+//	  Transmit and Receive
+	  HAL_SPI_TransmitReceive(&hspi1, transmit_data, receive_data, NO_OF_BYTES, TIMEOUT);
 
-//	  Start bit
-	  transmit_data[0] = 1;
-//	  Single-ended, CH0
-	  transmit_data[1] = 0b10000000;
-//	  Doesn't matter
-	  transmit_data[2] = 0;
-//	  transmit and receive
-	  HAL_SPI_TransmitReceive(&hspi1, &transmit_data, &receive_data, 3, 1000);
-
-//	  Toggle CS line
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+//	  Bring CS line high to end communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 //	  Concatenate the last two bytes
 	  uint16_t combined = receive_data[1] << 8 | receive_data[2];
 //	  Keep the last 10 bits
 	  uint16_t adc_output = 0x03FF & combined; // 0x0000 0011 1111 1111 (only need last 10 bits)
-
 //	  Take ADC output between 0-1024 and converts to counts between 3200 and 6400 (5-10%)
-	  int counts_per_cycle = adc_output * 3.125 + 3200;
+	  uint16_t counts_per_cycle = adc_output * 3.125 + 3200;
 
 //	  convert to PWM
-	  TIM_OC_InitTypeDef htim_oc_init;
-	  htim_oc_init.OCMode = TIM_OCMODE_PWM1;
-	  htim_oc_init.Pulse = (uint32_t) counts_per_cycle;
-
-	  HAL_TIM_PWM_ConfigChannel(&htim1, &htim_oc_init, TIM_CHANNEL_1);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts_per_cycle);
 
 
 	  HAL_Delay(10);
