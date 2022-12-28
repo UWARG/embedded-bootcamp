@@ -96,8 +96,9 @@ int main(void)
 
   //turns gpio high and stop reading from adc
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8,GPIO_PIN_SET);
-  uint8_t txData[3] = {1,128,255};
-  uint8_t rxData[3] = {};
+  const NUMBYTE = 3; 
+  const uint8_t txData[NUMBYTE] = {1,0x80,0xFF};
+  uint8_t rxData[NUMBYTE] = {0};
   uint16_t count;
   HAL_StatusTypeDef hal_status;
 
@@ -107,7 +108,7 @@ int main(void)
   const double ADC_CONVERT = 3.128;
   const int FIVE_PERCENT_COUNT = 3200;
 
-
+ 
 
 
 
@@ -122,15 +123,15 @@ int main(void)
 	  //turns gpio low, start reading from adc
 	 	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8,GPIO_PIN_RESET);
 	 	  //wait what does spi_timeout do
-	 	  hal_status = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, SPI_TIMEOUT);  //using spi1, transmitting 3 groups of 8 bits
-	 	  if(hal_status != HAL_OK)
+	 	  hal_status = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, NUMBYTE, SPI_TIMEOUT);  //using spi1, transmitting 3 groups of 8 bits
+	 	  if(hal_status == HAL_OK)
 	 	  {
-	 		  break;
+	 		count = ((rxData[1] & 3 << 8 | rxData[2])*(ADC_CONVERT)) + FIVE_PERCENT_COUNT; // this converts adc value to duty cycle from 5% (3200) to 10% (6400)
+
+	 	  	HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, count); //output high when timer counter is below this register count
 	 	  }
 
-	 	  count = ((rxData[1] & 3 << 8 | rxData[2])*(ADC_CONVERT)) + FIVE_PERCENT_COUNT; // this converts adc value to duty cycle from 5% (3200) to 10% (6400)
 
-	 	  HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, count); //output high when timer counter is below this register count
 	 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
