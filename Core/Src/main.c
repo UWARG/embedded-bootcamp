@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,18 +89,52 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+    //Initializing buffers
+    uint8_t transmit_bits[3] = {0, 0x1, 0x80}; // populated with start and configure bits for CH0
+    uint8_t receive_bits[3] = {0x0};
+
+    //Initializing constants and variables
+    const uint16_t MAX_ADC_VALUE = 0x400 - 1; //as it's a 10 bit ADC (represents 00000011 11111111)
+    const uint16_t TOTAL_TIMER_COUNTS = 64000;
+    const uint16_t MIN_PERIOD = 0.05;
+    const uint16_t FIVE_PERCENT_COUNTS = TOTAL_TIMER_COUNTS * MIN_PERIOD;
+    uint16_t adc_value = 0x0;
+    double compare_value = 0;
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //Starts PWM signal generation
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //Ensure CS line is high
+
+    while (1)
+    {
+    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //Set CS pin low to begin communication
+
+    	HAL_SPI_TransmitReceive(&hspi1, &transmit_bits, &receive_bits, sizeof(receive_bits), 1000);
+    	//Send transmit bits and receive conversion
+
+    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //Set CS pin high to end communication
+
+    	adc_value = ((uint16_t)receive_bits[1] << 8) | (uint16_t)receive_bits[2];
+    	//Change conversion to standard 10 bit value
+
+    	compare_value = (double)FIVE_PERCENT_COUNTS; //minimum allowed compare value
+    	compare_value += ((double)adc_value/MAX_ADC_VALUE) * FIVE_PERCENT_COUNTS; //the compare value ranges between 5 and 10 percent
+
+    	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value); //Change the compare value for the timer on channel 1
+
+        HAL_Delay(10); //Delay to ensure MCU doesn't overload ADC
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+    }
   /* USER CODE END 3 */
 }
 
