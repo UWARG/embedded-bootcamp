@@ -94,7 +94,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     //Initializing buffers
-    uint8_t transmit_bits[3] = {0, 0x1, 0x80}; // populated with start and configure bits for CH0
+    uint8_t transmit_bits[3] = {0x0, 0x1, 0x80}; // populated with start and configure bits for CH0
     uint8_t receive_bits[3] = {0x0};
 
     //Initializing constants and variables
@@ -104,6 +104,7 @@ int main(void)
     const uint16_t FIVE_PERCENT_COUNTS = TOTAL_TIMER_COUNTS * MIN_PERIOD;
     uint16_t adc_value = 0x0;
     double compare_value = 0;
+    const int TIMEOUT = 1000;
 
   /* USER CODE END 2 */
 
@@ -111,13 +112,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //Starts PWM signal generation
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //Ensure CS line is high
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //Ensures CS line is high
 
     while (1)
     {
     	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //Set CS pin low to begin communication
 
-    	HAL_SPI_TransmitReceive(&hspi1, &transmit_bits, &receive_bits, sizeof(receive_bits), 1000);
+    	HAL_SPI_TransmitReceive(&hspi1, transmit_bits, receive_bits, sizeof(receive_bits), TIMEOUT);
     	//Send transmit bits and receive conversion
 
     	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //Set CS pin high to end communication
