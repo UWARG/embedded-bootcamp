@@ -110,7 +110,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  val = (uint16_t)*rxData;
 	  val = val >> 6;
-	  val = val*(3000/1024) + 3000;
+	  val = val * (3000 / 1024) + 3000;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, val);
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
