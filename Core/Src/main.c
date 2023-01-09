@@ -98,13 +98,13 @@ int main(void)
     uint8_t receive_bits[3] = {0x0};
 
     //Initializing constants and variables
-    const uint16_t MAX_ADC_VALUE = 0x400 - 1; //as it's a 10 bit ADC (represents 00000011 11111111)
+    const uint16_t MAX_ADC_VALUE = 1023; //as it's a 10 bit ADC (represents 00000011 11111111)
     const uint16_t TOTAL_TIMER_COUNTS = 64000;
-    const uint16_t MIN_PERIOD = 0.05;
-    const uint16_t FIVE_PERCENT_COUNTS = TOTAL_TIMER_COUNTS * MIN_PERIOD;
+    const double MIN_PERIOD = 0.05;
+    const double FIVE_PERCENT_COUNTS = TOTAL_TIMER_COUNTS * MIN_PERIOD;
     uint16_t adc_value = 0x0;
     double compare_value = 0;
-    const int TIMEOUT = 1000;
+    const uint16_t TIMEOUT = 1000;
 
   /* USER CODE END 2 */
 
@@ -126,7 +126,7 @@ int main(void)
     	adc_value = ((uint16_t)receive_bits[1] << 8) | (uint16_t)receive_bits[2];
     	//Change conversion to standard 10 bit value
 
-    	compare_value = (double)FIVE_PERCENT_COUNTS; //minimum allowed compare value
+    	compare_value = FIVE_PERCENT_COUNTS; //minimum allowed compare value
     	compare_value += ((double)adc_value/MAX_ADC_VALUE) * FIVE_PERCENT_COUNTS; //the compare value ranges between 5 and 10 percent
 
     	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value); //Change the compare value for the timer on channel 1
