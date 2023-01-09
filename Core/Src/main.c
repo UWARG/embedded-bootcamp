@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,14 +89,48 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+   //buffers
+  uint8_t transmit_data[3] = {0x0, 0x1,0x80}; // populates with start and configures bits for CH0
+  uint8_t receive_data[3] ={0x0};
+
+  //CONSTANTS and Variables
+  const uint16_t ADC_MAX = 0x400 -1; // hexadecimal for 1024 = 2^10 (largest number that has 10 bits) and subtracting 1 is required to account for integers starting at 0
+  const uint16_t TOTAL_TIM_COUNTS = 60000;
+  const uint16_t MIN_DUTY_CYCLE = 0.05;
+  const uint16_t MIN_COMP_VAL = TOTAL_TIM_COUNTS * MIN_DUTY_CYCLE;
+  const uint16_t TIMEOUT = 1000;
+  double compare_val = 0.0;
+  uint16_t adc_val = 0x0;
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);// begins PWM signal
+   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // makes CS line high
+
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);//sets CS line to low to begin communication
+
+	  HAL_SPI_TransmitReceive(&hspi1, transmit_data, receive_data, sizeof(receive_data), TIMEOUT); // sends transmit bits and receives the conversion data
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);// sets CS line to high to end communication
+
+	  adc_val = ((uint16_t)receive_data[1] << 8)| (uint16_t)receive_data[2];// conversion to standard 10 bit val
+
+	  compare_val = MIN_COMP_VAL; // sets the compare value to the minimum
+
+	  compare_val += ((double)adc_val/ADC_MAX)*MIN_DUTY_CYCLE; //the compare value is in the range in between 5 to 10 percent
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val); // changes the compare value for the timer connected on channel 1
+
+	  HAL_Delay(10); // required delay
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
