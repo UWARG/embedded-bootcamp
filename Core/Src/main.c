@@ -58,7 +58,7 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 //Single potentiometer on CH0
-uint8_t txData[3] = {0x01, 0x80, 0x00};
+const uint8_t TXDATA[3] = {0x01, 0x80, 0x00};
 uint8_t rxData[3];
 const uint16_t SIZE = 3;
 const uint32_t TIMEOUT = 500;
@@ -104,11 +104,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1) {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, SIZE, TIMEOUT);
+	  HAL_SPI_TransmitReceive(&hspi1, TXDATA, rxData, SIZE, TIMEOUT);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  val = val | rxData[1];
 	  val = val << 14;
-	  val = val >> 8;
+	  val = val >> 6;
 	  val = val | rxData[2];
 	  val = val*(3000/1024) + 3000;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, val);
