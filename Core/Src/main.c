@@ -101,7 +101,7 @@ int main(void)
   const uint16_t ADC_MAX = 1023; // hexadecimal for 1024 = 2^10 (largest number that has 10 bits) and subtracting 1 is required to account for integers starting at 0
   const uint16_t TOTAL_TIM_COUNTS = 60000;
   const uint16_t MIN_DUTY_CYCLE = 0.05;
-  const uint16_t MIN_COMP_VAL = TOTAL_TIM_COUNTS * MIN_DUTY_CYCLE;
+  const double MIN_COMP_VAL = TOTAL_TIM_COUNTS * MIN_DUTY_CYCLE;
   const uint16_t TIMEOUT = 1000;
   double compare_val = 0.0;
   uint16_t adc_val = 0x0;
