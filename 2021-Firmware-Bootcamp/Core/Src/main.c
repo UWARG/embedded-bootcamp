@@ -131,8 +131,9 @@ int main(void)
 	 	  	HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, count); //output high when timer counter is below this register count
 	 	  }
 
-
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8,GPIO_PIN_SET);
 	 	  HAL_Delay(10);
+	  			
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
