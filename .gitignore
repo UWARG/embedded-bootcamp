@@ -54,3 +54,9 @@ dkms.conf
 .mxproject
 build/
 .dep/
+
+# Compiled files
+Debug/
+Release/
+
+.vscode/
