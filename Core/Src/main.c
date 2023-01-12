@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2023 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,8 +19,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "stm32f0xx_hal_tim.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,6 +48,7 @@
 
 /* USER CODE BEGIN PV */
 
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,6 +69,19 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+	static const uint16_t MAX_ADC_VAL = 1023;
+	static const uint16_t MAX_TIM_VAL = 65535;
+	static const uint16_t TIMEOUT = 100; //arbitrary ms value because not sure what to put
+	const uint16_t MIN_DUTY_CYCLE = 0.05;
+	static const uint16_t MIN_COMPARE_VALUE = MAX_TIM_VAL*MIN_DUTY_CYCLE;
+
+	static uint16_t VAL = 0x0;
+	static uint16_t COUNT_VAL = 0x0;
+	static uint16_t COMPARE_VAL = 0;
+	static const RX_BUFFER_SIZE = 3;   //allocation for receieing data buffer
+	static const uint8_t SPI_P_TX[3] ={0x01,0x80,0x00};  //allocation for transmit data buffer in CH0
+	uint8_t SPI_P_RX[3];  //allocation for receiving data buffer
 
   /* USER CODE END 1 */
 
@@ -87,14 +104,37 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
   while (1)
   {
+
+	 HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); //starting the PWM modulation
+
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //pulling line high in case it started low
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //pulling line low to begin communications
+
+	 HAL_SPI_TransmitReceive(&hspi1, SPI_P_TX, SPI_P_RX,sizeof(RX_BUFFER_SIZE), TIMEOUT);
+
+	 VAL = ((uint16_t)SPI_P_RX[1] << 8 & 0xff00); //imports the D2 index and shifts it left 8 bits, and is then masked
+	 COUNT_VAL = (VAL | (uint16_t)SPI_P_RX[2]); //con-join the channel data and data stream into a 10 bit
+
+	 COMPARE_VAL = ((double)COUNT_VAL/MAX_ADC_VAL)*MIN_DUTY_CYCLE; //compare value calculation <-- Doubtful on if its correct
+
+
+	 __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2,COMPARE_VAL); //comparing the counter value versus compare register
+
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //pulling line low to end communications
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
