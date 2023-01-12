@@ -92,6 +92,12 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  // adc conf
+  const uint32_t SPI_TIMEOUT = 1000;
+  #define RX_TX_SIZE (3)
+  uint8_t tx[RX_TX_SIZE] = {0x01, 0x80, 0x00}; // 1st byte: start bit, 2nd byte: single ended & channel 0, 3rd byte: don't care
+  uint8_t rx[RX_TX_SIZE] = {0x00, 0x00, 0x00}; // value will be stored in last 10 bits, first byte is garbage
+
 
   /* USER CODE END 2 */
 
@@ -102,6 +108,20 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    // read pot val from adc spi
+    enableCS();
+    HAL_SPI_TransmitReceive(&hspi1, tx, rx, RX_TX_SIZE, SPI_TIMEOUT);
+    disableCS();
+
+    uint16_t potVal = ((rx[1] & 0b11) << 8) | rx[2]; // combine 2nd and 3rd byte
+    
+    // convert pot val to motor freq
+
+
+    // send freq to motor timer pin
+
+    HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }

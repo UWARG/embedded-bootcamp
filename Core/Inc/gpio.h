@@ -38,7 +38,8 @@ extern "C" {
 void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void disableCS();
+void enableCS();
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
