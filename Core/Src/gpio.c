@@ -78,6 +78,8 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 2 */
+
+// active low CS pin for ADC spi interface
 void disableCS()
 {
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
