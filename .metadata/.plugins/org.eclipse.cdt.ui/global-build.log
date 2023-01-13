@@ -1,0 +1,14 @@
+18:17:21 **** Incremental Build of configuration Debug for project 2021-Firmware-Bootcamp ****
+make -j6 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F072xB -c -I../Core/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/Src/main.o"
+arm-none-eabi-g++ -o "2021-Firmware-Bootcamp.elf" @"objects.list"   -mcpu=cortex-m0 -T"C:\Users\hdoug\OneDrive - University of Waterloo\Documents\A_EmbeddedC\embedded-bootcamp\2021-Firmware-Bootcamp\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="2021-Firmware-Bootcamp.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+Finished building target: 2021-Firmware-Bootcamp.elf
+ 
+arm-none-eabi-size   2021-Firmware-Bootcamp.elf 
+arm-none-eabi-objdump -h -S  2021-Firmware-Bootcamp.elf  > "2021-Firmware-Bootcamp.list"
+   text	   data	    bss	    dec	    hex	filename
+  14748	     20	   1876	  16644	   4104	2021-Firmware-Bootcamp.elf
+Finished building: default.size.stdout
+ 
+Finished building: 2021-Firmware-Bootcamp.list
+ 
