@@ -94,10 +94,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   // adc conf
   const uint32_t SPI_TIMEOUT = 1000;
-  #define RX_TX_SIZE (3) // compiler throws vla error if const uint used
+  #define RX_TX_SIZE (3)                       // compiler throws vla error if const uint used
   uint8_t tx[RX_TX_SIZE] = {0x01, 0x80, 0x00}; // 1st byte: start bit, 2nd byte: single ended & channel 0, 3rd byte: don't care
-  uint8_t rx[RX_TX_SIZE] = {0x00, 0x00, 0x00}; // value will be stored in last 10 bits, first byte is garbage
-  const uint16_t ADC_MAX_VAL = 1023;
+  uint8_t rx[RX_TX_SIZE];                      // value will be stored in last 10 bits, first byte is garbage
+  const double ADC_MAX_VAL = 1023;
 
   // motor conf
   const uint16_t MIN_DUTY_CYLCLE = 0.05 * htim1.Init.Period;
