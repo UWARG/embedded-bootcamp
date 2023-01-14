@@ -1,4 +1,5 @@
 IMPLEMENT A MOTOR TESTER
+
 This project is a bootcamp challenge from the firmware Waterloo Aerial Robotics Team.
 
 My task was to input a potentiometer value from 0 to 3.3V and convert it to a PWM signal to control a motor using STM32 Cube IDE. 
