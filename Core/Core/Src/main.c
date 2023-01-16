@@ -106,6 +106,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM2_Init();
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); //starting the PWM modulation
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //pulling line high in case it started low
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -117,22 +119,26 @@ int main(void)
   while (1)
   {
 
-	 HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); //starting the PWM modulation
 
-	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //pulling line high in case it started low
+
+	 
 	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //pulling line low to begin communications
 
 	 HAL_SPI_TransmitReceive(&hspi1, SPI_P_TX, SPI_P_RX,sizeof(RX_BUFFER_SIZE), TIMEOUT);
 
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //pulling line high to end communications
+	 
+	 
 	 VAL = ((uint16_t)SPI_P_RX[1] << 8 & 0xff00); //imports the D2 index and shifts it left 8 bits, and is then masked
 	 COUNT_VAL = (VAL | (uint16_t)SPI_P_RX[2]); //con-join the channel data and data stream into a 10 bit
 
-	 COMPARE_VAL = ((double)COUNT_VAL/MAX_ADC_VAL)*MIN_DUTY_CYCLE; //compare value calculation <-- Doubtful on if its correct
+	 COMPARE_VAL = MAX_TIM_VAL*MIN_DUTY_CYCLE;
+	 COMPARE_VAL += ((double)COUNT_VAL/MAX_ADC_VAL)*MIN_DUTY_CYCLE; //compare value calculation between 5% and 10%
 
 
 	 __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2,COMPARE_VAL); //comparing the counter value versus compare register
 
-	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //pulling line low to end communications
+
 
 
     /* USER CODE END WHILE */
