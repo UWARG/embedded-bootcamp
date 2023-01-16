@@ -94,20 +94,20 @@ int main(void)
   /* USER CODE BEGIN 2 */
   // adc conf
   const uint32_t SPI_TIMEOUT = 1000;
-  #define RX_TX_SIZE (3)                       // compiler throws vla error if const uint used
-  uint8_t tx[RX_TX_SIZE] = {0x01, 0x80, 0x00}; // 1st byte: start bit, 2nd byte: single ended & channel 0, 3rd byte: don't care
-  uint8_t rx[RX_TX_SIZE];                      // value will be stored in last 10 bits, first byte is garbage
+  #define RX_TX_SIZE (3)                              // compiler throws vla error if const uint used
+  const uint8_t tx[RX_TX_SIZE] = {0x01, 0x80, 0x00};  // 1st byte: start bit, 2nd byte: single ended & channel 0, 3rd byte: don't care
+  uint8_t rx[RX_TX_SIZE];                             // value will be stored in last 10 bits, first byte is garbage
   const double ADC_MAX_VAL = 1023;
 
   // motor conf
-  const uint16_t MIN_DUTY_CYLCLE = 0.05 * htim1.Init.Period;
-  const uint16_t MAX_DUTY_CYLCLE = 0.1 * htim1.Init.Period;
+  const uint16_t MIN_DUTY_CYCLE = 0.05 * htim1.Init.Period;
+  const uint16_t MAX_DUTY_CYCLE = 0.10 * htim1.Init.Period;
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  disbaleCS();
+  disableCS();
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);  
   while (1)
   {
@@ -122,7 +122,7 @@ int main(void)
     uint16_t potVal = ((rx[1] & 0b11) << 8) | rx[2]; // combine 2nd and 3rd byte
     
     // convert pot val to motor signal duty cycle (5% to 10% = off to on) on ccr1
-    uint16_t dutyCycle = (potVal / ADC_MAX_VAL) * (MAX_DUTY_CYLCLE - MIN_DUTY_CYLCLE) + MIN_DUTY_CYLCLE;
+    uint16_t dutyCycle = (potVal / ADC_MAX_VAL) * (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE) + MIN_DUTY_CYCLE;
 
     // send duty cycle to motor timer pin
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, dutyCycle);
