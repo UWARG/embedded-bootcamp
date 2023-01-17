@@ -93,7 +93,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // Defining variables, array of 3 because sending 3 bytes
-  const uint8_t TX_DATA[3] = {0x01, 0x80, 0x00};
+  uint8_t tx_data[3] = {0x01, 0x80, 0x00};
   uint8_t rx_data[3];
   const uint16_t LENGTH = 3;
   const uint32_t TIMEOUT = 100;
@@ -114,12 +114,12 @@ int main(void)
 	  // Need to pull CS LOW to active SPI PB8
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  // Transmit and receive from SPI and see if it is OK
-	  HAL_StatusTypeDef hal_status = HAL_SPI_TransmitReceive(&hspi1, TX_DATA, rx_data, LENGTH, TIMEOUT);
+	  HAL_StatusTypeDef hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, LENGTH, TIMEOUT);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  if (hal_status == HAL_OK){
 		  // Set the count value got from ADC, the last 10 bits
-		  data = ((rx_data[1] & 0x03 << 8) | rx_data[2] ) / (1 << RESOLUTION) * FIVE_PERCENT_DUTY_CYCLE + FIVE_PERCENT_DUTY_CYCLE;
+		  data = (rx_data[2] | (rx_data[1] & 0x03)) / (1 << RESOLUTION) * FIVE_PERCENT_DUTY_CYCLE + FIVE_PERCENT_DUTY_CYCLE ;
 		  // Set the PWM in relation to that digital value.
 		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, data);
 	  }
