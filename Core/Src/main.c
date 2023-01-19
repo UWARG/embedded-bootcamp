@@ -107,26 +107,32 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-	  HAL_Delay(10);
+	  loop_start: HAL_Delay(10);
 	  // Note size is in bits
 
 
 	  // --- Take a reading ---
 	  // Set CS to LOW
 	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
-	  // (1) pipe in 0b00000001
-	  spi_transmit_data_buf ^= 0x01;
+	  // (1) pipe in 0b0000 0001
+	  spi_transmit_data_buf = 0x01;
 	  HAL_SPI_Transmit(&hspi1, &spi_transmit_data_buf,
 			           sizeof(uint8_t), adc_read_timeout);
 
 	  // (2) pipe in/out 0b1000 0000 / 0b0000 00RR
-	  // NOTE: Assumes that the NULL bit is just 0
-	  spi_transmit_data_buf ^= (spi_transmit_data_buf | 0xF0);
+	  spi_transmit_data_buf = 0xF0;
 	  HAL_SPI_TransmitReceive(&hspi1, &spi_transmit_data_buf,
 			  	  	  	  	  	  	  &spi_receive_data_buf,
 									  sizeof(uint16_t), adc_read_timeout);
 
-	  spi_reading ^= (spi_transmit_data_buf << 8);
+	  // Check we read in data properly
+	  if (spi_receive_data_buf > 3) {
+		  // We read data incorrectly, try to reset
+		  goto loop_start;
+	  }
+
+	  spi_reading ^= spi_receive_data_buf;
+	  spi_reading <<= 8; // Shift in in bits 9 and 8
 	  // (3) Grab remaining 8 bits from SPI
 	  spi_receive_data_buf = 0;
 	  HAL_SPI_Receive(&hspi1, &spi_receive_data_buf,
@@ -148,6 +154,9 @@ int main(void)
 
 	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,
 			  	  	  	  	(uint32_t) ADC_VAL_TO_COUNTS * spi_reading + 48000);
+	  // Reset ADC reading
+	  spi_reading = 0;
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
