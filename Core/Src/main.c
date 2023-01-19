@@ -76,6 +76,10 @@ int main(void)
   // Need 10 bits to represent a reading
   uint16_t spi_reading = 0;
   const uint32_t adc_read_timeout = 5; // In ms
+
+  // Set PWM to minimum duty-cycle
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 48000);
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
