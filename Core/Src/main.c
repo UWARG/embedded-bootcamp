@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// Is extern from spi.c/h
+extern SPI_HandleTypeDef hspi1;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -65,7 +69,9 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  uint8_t spi_transmit_data_buf, spi_receive_data_buf = 0;
+  // Need 10 bits to represent a reading
+  uint16_t spi_reading = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,14 +93,48 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1) {
+	  HAL_Delay(10);
+	  // Note size is in bits
+
+
+	  // --- Take a reading ---
+	  // Set CS to LOW
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+	  // (1) pipe in 0b0000001
+	  spi_transmit_data_buf ^= 0x01;
+	  HAL_SPI_Transmit(&hspi1, &spi_transmit_data_buf, 8, 5);
+
+	  // (2) pipe in/out 0b1000000 / 0b00000RR
+	  // NOTE: Assumes that the NULL bit is just 0
+	  spi_transmit_data_buf ^= (spi_transmit_data_buf | 0xF0);
+	  HAL_SPI_TransmitReceive(&hspi1, &spi_transmit_data_buf,
+			  	  	  	  	  	  	 &spi_receive_data_buf, 16, 5);
+
+	  spi_reading ^= (spi_transmit_data_buf << 8);
+	  // (3) Grab remaining 8 bits from SPI
+	  spi_receive_data_buf = 0;
+	  HAL_SPI_Receive(&hspi1, &spi_receive_data_buf, 8, 5);
+
+	  spi_reading ^= spi_receive_data_buf;
+	  // Set CS to HIGH, reading is done
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+	  // Reset both buffers
+	  spi_transmit_data_buf = 0;
+	  spi_transmit_data_buf = 0;
+	  // --- Reading is Done ---
+
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
