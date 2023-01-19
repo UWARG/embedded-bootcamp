@@ -80,7 +80,7 @@ int main(void)
 
   // Set PWM to minimum duty-cycle
   __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, ADC_MIN_COUNTS_DUTY_CYCLE);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);   // Set CS to LOW
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);   // Set CS to HIGH
 
   /* USER CODE END 1 */
 
