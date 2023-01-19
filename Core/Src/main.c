@@ -24,7 +24,8 @@
 #include "usart.h"
 #include "gpio.h"
 
-#define ADC_VAL_TO_COUNTS 46.875
+#define ADC_VAL_TO_COUNTS 46.875  
+#define ADC_MIN_COUNTS_DUTY_CYCLE 48000
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -78,7 +79,8 @@ int main(void)
   const uint32_t adc_read_timeout = 5; // In ms
 
   // Set PWM to minimum duty-cycle
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 48000);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, ADC_MIN_COUNTS_DUTY_CYCLE);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);   // Set CS to LOW
 
   /* USER CODE END 1 */
 
@@ -104,7 +106,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  // HAL_TIM_PWM_Start
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);  // Start the PWM signal
 
   /* USER CODE END 2 */
 
@@ -117,7 +119,7 @@ int main(void)
 
 	  // --- Take a reading ---
 	  // Set CS to LOW
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);  
 	  // (1) pipe in 0b0000 0001
 	  spi_transmit_data_buf = 0x01;
 	  HAL_SPI_Transmit(&hspi1, &spi_transmit_data_buf,
@@ -144,7 +146,7 @@ int main(void)
 
 	  spi_reading ^= spi_receive_data_buf;
 	  // Set CS to HIGH, reading is done
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 	  // Reset both buffers
 	  spi_transmit_data_buf = 0;
 	  spi_transmit_data_buf = 0;
@@ -157,7 +159,7 @@ int main(void)
 	  // Min counts is (5%) * (960000) = 48000
 
 	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,
-			  	  	  	  	(uint32_t) ADC_VAL_TO_COUNTS * spi_reading + 48000);
+			  	  	  	  	(uint32_t) ADC_VAL_TO_COUNTS * spi_reading + ADC_MIN_COUNTS_DUTY_CYCLE);
 	  // Reset ADC reading
 	  spi_reading = 0;
 
