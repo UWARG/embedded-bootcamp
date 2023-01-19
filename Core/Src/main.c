@@ -106,7 +106,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);  // Start the PWM signal
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);  // Start the PWM signal
 
   /* USER CODE END 2 */
 
@@ -126,7 +126,7 @@ int main(void)
 			           sizeof(uint8_t), adc_read_timeout);
 
 	  // (2) pipe in/out 0b1000 0000 / 0b0000 00RR
-	  spi_transmit_data_buf = 0xF0;
+	  spi_transmit_data_buf = 0x80;
 	  HAL_SPI_TransmitReceive(&hspi1, &spi_transmit_data_buf,
 			  	  	  	  	  	  	  &spi_receive_data_buf,
 									  sizeof(uint16_t), adc_read_timeout);
@@ -146,7 +146,7 @@ int main(void)
 
 	  spi_reading ^= spi_receive_data_buf;
 	  // Set CS to HIGH, reading is done
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 	  // Reset both buffers
 	  spi_transmit_data_buf = 0;
 	  spi_transmit_data_buf = 0;
@@ -159,7 +159,7 @@ int main(void)
 	  // Min counts is (5%) * (960000) = 48000
 
 	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,
-			  	  	  	  	(uint32_t) ADC_VAL_TO_COUNTS * spi_reading + ADC_MIN_COUNTS_DUTY_CYCLE);
+			  	  	  	  	ADC_VAL_TO_COUNTS * spi_reading + ADC_MIN_COUNTS_DUTY_CYCLE);
 	  // Reset ADC reading
 	  spi_reading = 0;
 
