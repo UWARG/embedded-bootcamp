@@ -24,6 +24,7 @@
 #include "usart.h"
 #include "gpio.h"
 
+#define ADC_VAL_TO_COUNTS 46.875
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -38,6 +39,8 @@
 /* USER CODE BEGIN PD */
 // Is extern from spi.c/h
 extern SPI_HandleTypeDef hspi1;
+// Is extern from tim.c/h
+extern TIM_HandleTypeDef htim2;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -72,6 +75,7 @@ int main(void)
   uint8_t spi_transmit_data_buf, spi_receive_data_buf = 0;
   // Need 10 bits to represent a reading
   uint16_t spi_reading = 0;
+  const uint32_t adc_read_timeout = 5; // In ms
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -96,6 +100,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  // HAL_TIM_PWM_Start
 
   /* USER CODE END 2 */
 
@@ -109,20 +114,23 @@ int main(void)
 	  // --- Take a reading ---
 	  // Set CS to LOW
 	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
-	  // (1) pipe in 0b0000001
+	  // (1) pipe in 0b00000001
 	  spi_transmit_data_buf ^= 0x01;
-	  HAL_SPI_Transmit(&hspi1, &spi_transmit_data_buf, 8, 5);
+	  HAL_SPI_Transmit(&hspi1, &spi_transmit_data_buf,
+			           sizeof(uint8_t), adc_read_timeout);
 
-	  // (2) pipe in/out 0b1000000 / 0b00000RR
+	  // (2) pipe in/out 0b1000 0000 / 0b0000 00RR
 	  // NOTE: Assumes that the NULL bit is just 0
 	  spi_transmit_data_buf ^= (spi_transmit_data_buf | 0xF0);
 	  HAL_SPI_TransmitReceive(&hspi1, &spi_transmit_data_buf,
-			  	  	  	  	  	  	 &spi_receive_data_buf, 16, 5);
+			  	  	  	  	  	  	  &spi_receive_data_buf,
+									  sizeof(uint16_t), adc_read_timeout);
 
 	  spi_reading ^= (spi_transmit_data_buf << 8);
 	  // (3) Grab remaining 8 bits from SPI
 	  spi_receive_data_buf = 0;
-	  HAL_SPI_Receive(&hspi1, &spi_receive_data_buf, 8, 5);
+	  HAL_SPI_Receive(&hspi1, &spi_receive_data_buf,
+			          sizeof(uint8_t), adc_read_timeout);
 
 	  spi_reading ^= spi_receive_data_buf;
 	  // Set CS to HIGH, reading is done
@@ -131,10 +139,15 @@ int main(void)
 	  spi_transmit_data_buf = 0;
 	  spi_transmit_data_buf = 0;
 	  // --- Reading is Done ---
+	  // --- Set Timer Based on ADC Reading ---
+	  	  // 0 to 3.3v goes into adc
+	  	  // 0 to 1024 gets mapped to that range
+	  // Timer counts up to 960000 over 20ms
+	  // Max counts is (10%) * (960000) = 96000
+	  // Min counts is (5%) * (960000) = 48000
 
-
-
-
+	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,
+			  	  	  	  	(uint32_t) ADC_VAL_TO_COUNTS * spi_reading + 48000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
