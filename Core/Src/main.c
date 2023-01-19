@@ -94,7 +94,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
    //buffers
-  uint8_t transmit_data[3] = {0x0, 0x1,0x80}; // populates with start and configures bits for CH0
+  const uint8_t transmit_data[3] = {0x0, 0x1,0x80}; // populates with start and configures bits for CH0
   uint8_t receive_data[3] ={0x0};
 
   //CONSTANTS and Variables
