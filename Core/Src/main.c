@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,22 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// ADC Configuration
+#define ADC_DATA_SIZE 8 // Set data size to 8 bits
+#define ADC_CLOCK_POLARITY 0 // Set clock polarity (0 or 1)
+#define ADC_PRESCALER 16 // Set prescaler to reduce speed for ADC
+#define ADC_MSB_FIRST 1 // Set to 1 if ADC sends most significant bit first
+
+// Timer (PWM) Configuration
+#define TIMER_CHANNEL_MODE PWM_GENERATION_CH1 // Set PWM channel mode
+#define TIMER_CLOCK_SOURCE INTERNAL_CLOCK // Set clock source to internal clock
+#define TIMER_PRESCALER 0 // Set timer prescaler based on input clock speed
+#define TIMER_PERIOD 20000 // Set timer period to achieve 50 Hz frequency
+
+//ADC conversion definitions
+#define ADC_COMMAND_INITIATE_CONVERSION 0x01
+#define ADC_COMMAND_READ_RESULT 0x02
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -66,6 +84,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -74,6 +93,15 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  // Initialize the ADC and timer peripherals
+  // Will need to use the HAL library functions for this
+  uint8_t command = ADC_COMMAND_INITIATE_CONVERSION; // Command to initiate a conversion
+  uint8_t result[2]; // Array to store the result of the conversion
+
+  // Function prototypes
+  void adc_initiate_conversion(void);
+  uint16_t adc_read_result(void);
+
 
   /* USER CODE END Init */
 
@@ -87,7 +115,20 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // Initialize the ADC and timer peripherals
+  // Will need to use the HAL library functions for this
+  // Set up variables for ADC communication
+  // uint16_t adc_value; // Variable to store the ADC value
+  //  uint16_t pwm_value; // Variable to store the PWM value
+
+
+
+
+  // Set up variables for ADC communication
 
   /* USER CODE END 2 */
 
@@ -98,6 +139,23 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  while (1)
+	      {
+	          // Initiate a conversion and Read the result of the conversion
+	  		  HAL_SPI_TransmitReceive (&hspi1, &command, result, 2, 100); // modify arguments
+//	  		  //HAL_SPI_Transmit(&hspi1, &command, 1, 100); // Send command to initiate conversion
+//	          //HAL_SPI_Receive(&hspi1, result, 2, 100); // Read 2 bytes (16 bits) of data from the ADC
+//
+//	  	      // Convert the ADC value to a PWM value
+//	          pwm_value = (result / (float)ADC_MAX_VALUE) * PWM_MAX_VALUE;  // might need to do a conversion from ADC result to PWM somehow before comparing
+
+	          // Set the compare register to the calculated PWM value
+	          __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, result); // Replace with your timer handle and channel
+
+	          HAL_Delay(10);
+	      }
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
