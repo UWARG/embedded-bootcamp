@@ -52,6 +52,8 @@
 #define ADC_COMMAND_INITIATE_CONVERSION 0x01
 #define ADC_COMMAND_READ_RESULT 0x02
 
+#define ADC_MAX_VALUE 4095 // Maximum value of the ADC (12-bit)
+#define PWM_MAX_VALUE 65535 // Maximum value of the PWM (16-bit)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -100,7 +102,8 @@ int main(void)
 
   // Function prototypes
   void adc_initiate_conversion(void);
-  uint16_t adc_read_result(void);
+  uint16_t adc_value; // Variable to store the ADC value
+  uint16_t pwm_value; // Variable to store the PWM value
 
 
   /* USER CODE END Init */
@@ -141,18 +144,16 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  while (1)
 	      {
-	          // Initiate a conversion and Read the result of the conversion
+	        // Initiate a conversion and Read the result of the conversion
 	  		  HAL_SPI_TransmitReceive (&hspi1, &command, result, 2, 100); // modify arguments
-//	  		  //HAL_SPI_Transmit(&hspi1, &command, 1, 100); // Send command to initiate conversion
-//	          //HAL_SPI_Receive(&hspi1, result, 2, 100); // Read 2 bytes (16 bits) of data from the ADC
-//
-//	  	      // Convert the ADC value to a PWM value
-//	          pwm_value = (result / (float)ADC_MAX_VALUE) * PWM_MAX_VALUE;  // might need to do a conversion from ADC result to PWM somehow before comparing
 
-	          // Set the compare register to the calculated PWM value
-	          __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, result); // Replace with your timer handle and channel
 
-	          HAL_Delay(10);
+	        pwm_value = (result / (float)ADC_MAX_VALUE) * PWM_MAX_VALUE;  // might need to do a conversion from ADC result to PWM somehow before comparing
+
+	        // Set the compare register to the calculated PWM value
+	        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, result); // Replace with your timer handle and channel
+
+	        HAL_Delay(10);
 	      }
 
 	  HAL_Delay(10);
