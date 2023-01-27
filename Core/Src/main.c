@@ -145,10 +145,10 @@ int main(void)
 	  while (1)
 	      {
 	        // Initiate a conversion and Read the result of the conversion
-	  		  HAL_SPI_TransmitReceive (&hspi1, &command, result, 2, 100); // modify arguments
+	  		  adc_value = HAL_SPI_TransmitReceive (&hspi1, &command, result, 2, 100); // modify arguments
 
 
-	        pwm_value = (result / (float)ADC_MAX_VALUE) * PWM_MAX_VALUE;  // might need to do a conversion from ADC result to PWM somehow before comparing
+	        pwm_value = (adc_value / (float)ADC_MAX_VALUE) * PWM_MAX_VALUE;  // might need to do a conversion from ADC result to PWM somehow before comparing
 
 	        // Set the compare register to the calculated PWM value
 	        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, result); // Replace with your timer handle and channel
