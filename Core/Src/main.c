@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2023 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,11 +19,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include <stdlib.h>
 
 /* USER CODE END Includes */
 
@@ -44,6 +48,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+const uint8_t RX_SEG_ONE_MASK = 0b00000011;
+const uint16_t BYTE_COUNT = 3;
+const uint16_t ADC_MAX_VAL = 1023;
+const uint16_t TIMER_1MS_COUNT = 3276;
+const uint16_t TIMER_2MS_COUNT = 6552;
+const uint32_t SPI_TIMEOUT = 5000;
 
 /* USER CODE END PV */
 
@@ -87,7 +98,27 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // SPI
+  SPI_HandleTypeDef *pSPI_Handle = &hspi1;
+  uint8_t *TxBuffer = malloc(BYTE_COUNT * sizeof(uint8_t));
+  uint8_t *RxBuffer = malloc(BYTE_COUNT * sizeof(uint8_t));
+
+  TxBuffer[0] = 0x01;
+  TxBuffer[1] = 0x80;
+  TxBuffer[2] = 0x00;
+
+  uint16_t RxSegOne = 0;
+  uint16_t RxComplete = 0;
+
+  // PWM
+  TIM_HandleTypeDef *pTIM_Handler = &htim1;
+  HAL_TIM_PWM_Start(pTIM_Handler, 1);
+
+  uint16_t compRegVal = 0;
 
   /* USER CODE END 2 */
 
@@ -95,9 +126,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	  if(HAL_SPI_TransmitReceive(pSPI_Handle, TxBuffer, RxBuffer, BYTE_COUNT, SPI_TIMEOUT) == HAL_OK)
+	  {
+		  RxSegOne = (RxBuffer[1] & RX_SEG_ONE_MASK) << 8;
+		  RxComplete = RxSegOne | RxBuffer[2];
+	  }
 
-    /* USER CODE BEGIN 3 */
+	  compRegVal = TIMER_1MS_COUNT + ( ((double)RxComplete / ADC_MAX_VAL) * (TIMER_2MS_COUNT - TIMER_1MS_COUNT) );
+	  __HAL_TIM_SET_COMPARE(pTIM_Handler, TIM_CHANNEL_1, compRegVal);
+
+	  /* USER CODE END WHILE */
+
+	  /* USER CODE BEGIN 3 */
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
