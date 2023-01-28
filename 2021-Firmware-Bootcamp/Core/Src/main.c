@@ -105,7 +105,7 @@ int main(void)
   uint8_t pTxData[3] = {0x01, 0x80, 0x00};
   uint8_t pRxData[3] = {0};
 
-  int adcVal = 0;
+  uint32_t adcVal = 0;
 
   /* USER CODE END 2 */
 
@@ -121,7 +121,7 @@ int main(void)
 
 	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, !PinState); //cs line put high after transmission is done
 
-	adcVal = ((float)(pRxData[1] & 0x03 << 8 | pRxData[2]))/1024 * COUNTER_PERIOD_ * DUTY_CYCLE_RANGE_ + COUNTER_PERIOD_ * DUTY_CYCLE_MIN_;
+	adcVal = (uint32_t)(((float)(pRxData[1] & 0x03 << 8 | pRxData[2]))/1024 * COUNTER_PERIOD_ * DUTY_CYCLE_RANGE_ + COUNTER_PERIOD_ * DUTY_CYCLE_MIN_);
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adcVal);
 
