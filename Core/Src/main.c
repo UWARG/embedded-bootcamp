@@ -55,6 +55,7 @@ const uint16_t ADC_MAX_VAL = 1023;
 const uint16_t TIMER_1MS_COUNT = 3276;
 const uint16_t TIMER_2MS_COUNT = 6552;
 const uint32_t SPI_TIMEOUT = 5000;
+const uint8_t TX_BUFFER[3] = {0x01, 0x80, 0x00};
 
 /* USER CODE END PV */
 
@@ -104,11 +105,13 @@ int main(void)
 
   // SPI
   SPI_HandleTypeDef *pSPI_Handle = &hspi1;
-  uint8_t TxBuffer[3] = {0x01, 0x80, 0x00};
   uint8_t RxBuffer[3] = {0, 0, 0};
 
   uint16_t RxSegOne = 0;
   uint16_t RxComplete = 0;
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
 
   // PWM
   TIM_HandleTypeDef *pTIM_Handler = &htim1;
@@ -122,9 +125,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
-	  HAL_StatusTypeDef SPI_Status = HAL_SPI_TransmitReceive(pSPI_Handle, TxBuffer, RxBuffer, BYTE_COUNT, SPI_TIMEOUT);
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_StatusTypeDef SPI_Status = HAL_SPI_TransmitReceive(pSPI_Handle, TX_BUFFER, RxBuffer, BYTE_COUNT, SPI_TIMEOUT);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  if(SPI_Status == HAL_OK)
 	  {
