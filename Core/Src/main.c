@@ -46,6 +46,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+#define NUMBER_BYTES 3
 
 /* USER CODE END PV */
 
@@ -92,6 +93,16 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  const uint8_t tx_buffer[NUMBER_BYTES] = {1, 0x80, 0};
+  const uint32_t spi_timeout = 100;
+  uint8_t rx_buffer[NUMBER_BYTES] = {0};
+  uint16_t counter_value;
+  const double adc_conversion = 3.128;
+  HAL_StatusTypeDef hal_status;
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -101,11 +112,21 @@ int main(void)
   while (1)
   {
 	  //CS line initially low, so brought it high and low again using GPIO Write function
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  //Transmitting and Receiving Data
-	  HAL_SPI_TransmitReceive(hspi1, pTxData, pRxData, Size, Timeout)
+	  hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_buffer, rx_buffer, NUMBER_BYTES, spi_timeout);
+
+
+	  if(hal_status == HAL_OK)
+	  {
+		  counter_value = ((rx_buffer[1] & 3 << 8) | rx_buffer[2]) * adc_conversion + 3200;
+
+		  HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counter_value);
+	  }
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, SET);
+
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
