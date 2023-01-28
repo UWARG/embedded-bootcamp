@@ -104,12 +104,8 @@ int main(void)
 
   // SPI
   SPI_HandleTypeDef *pSPI_Handle = &hspi1;
-  uint8_t *TxBuffer = malloc(BYTE_COUNT * sizeof(uint8_t));
-  uint8_t *RxBuffer = malloc(BYTE_COUNT * sizeof(uint8_t));
-
-  TxBuffer[0] = 0x01;
-  TxBuffer[1] = 0x80;
-  TxBuffer[2] = 0x00;
+  uint8_t TxBuffer[3] = {0x01, 0x80, 0x00};
+  uint8_t RxBuffer[3] = {0, 0, 0};
 
   uint16_t RxSegOne = 0;
   uint16_t RxComplete = 0;
@@ -126,7 +122,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(HAL_SPI_TransmitReceive(pSPI_Handle, TxBuffer, RxBuffer, BYTE_COUNT, SPI_TIMEOUT) == HAL_OK)
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+	  HAL_StatusTypeDef SPI_Status = HAL_SPI_TransmitReceive(pSPI_Handle, TxBuffer, RxBuffer, BYTE_COUNT, SPI_TIMEOUT);
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+
+	  if(SPI_Status == HAL_OK)
 	  {
 		  RxSegOne = (RxBuffer[1] & RX_SEG_ONE_MASK) << 8;
 		  RxComplete = RxSegOne | RxBuffer[2];
@@ -135,9 +135,9 @@ int main(void)
 	  compRegVal = TIMER_1MS_COUNT + ( ((double)RxComplete / ADC_MAX_VAL) * (TIMER_2MS_COUNT - TIMER_1MS_COUNT) );
 	  __HAL_TIM_SET_COMPARE(pTIM_Handler, TIM_CHANNEL_1, compRegVal);
 
-	  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-	  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
