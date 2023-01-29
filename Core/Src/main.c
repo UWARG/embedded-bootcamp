@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2023 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,6 +46,20 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+	const uint8_t FIRST_BYTE = 0b00000001; //send start bit
+	const uint8_t SECOND_BYTE = 0b10000000; //configure channel select CH0
+	const uint8_t THIRD_BYTE = 0b00000000; //all don't cares to get back 8bit register
+
+	const float COUNTER_PERIOD = 65535;
+	const float FIVE_PERCENT = 0.05;
+	const float FIVE_PERCENT_DUTY_CYCLE = COUNTER_PERIOD * FIVE_PERCENT;
+	const float MAX_BITS = 1024;
+	const float ADC_RATIO = FIVE_PERCENT_DUTY_CYCLE / MAX_BITS;
+
+	const int TOTAL_BITS = 6;
+	const int THREE = 3; //Binary = 11 to select first 2 bits
+	const int EIGHT = 8; //For left shifting by 8 bits
+
 
 /* USER CODE END PV */
 
@@ -87,7 +103,19 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+
+
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //Initially CS high
+
+  	  TIM_HandleTypeDef htim1;
+
+  	  HAL_TIM_PWM_START(&htm1, TIM_CHANNEL_1);
+
+  	  uint16_t pwm_val = 0;
 
   /* USER CODE END 2 */
 
@@ -95,6 +123,27 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_Delay(10);
+
+	  //ADC Communication Code
+	  uint8_t txData[3] = {FIRST_BYTE, SECOND_BYTE, THIRD_BYTE}; //does this need to be an array of pointers?
+	  // ie. uint8_t *txData[3] = {FIRST_BYTE, SECOND_BYTE, THIRD_BYTE};
+	  uint8_t rxData[3] = {0};
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, TOTAL_BITS, HAL_TIMEOUT); //Size = 6 since 3 transmitted and 3 received?
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  //Converting ADC Value to Integer between 0-1023 with Binary Operators
+
+	  pwm_val = (((rxData[1] & THREE) << EIGHT) | rxData[2]) * ADC_RATIO + FIVE_PERCENT_DUTY_CYCLE ;
+
+
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_val);
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
