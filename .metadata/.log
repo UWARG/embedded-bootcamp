@@ -1,0 +1,13 @@
+!SESSION 2023-01-29 18:23:41.766 -----------------------------------------------
+eclipse.buildId=Version 1.11.0
+java.version=11.0.16
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_CA
+Framework arguments:  -keyring /Users/tomchiu/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/tomchiu/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-01-29 18:24:33.010
+!MESSAGE Log4j initialized with config file /Users/tomchiu/Documents/Onedrive/OneDrive - University of Waterloo/WARG/embedded/embedded-bootcamp/.metadata/.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-01-29 18:24:42.382
+!MESSAGE Started RMI Server, listening on port 41337

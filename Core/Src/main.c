@@ -93,16 +93,21 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  //Brings gpio pin for high from the initial preset low value
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
+  //Tx buffer with start bit, the appropriate control bits for single ended transmission for CH0
   const uint8_t tx_buffer[NUMBER_BYTES] = {1, 0x80, 0};
   const uint32_t spi_timeout = 100;
   uint8_t rx_buffer[NUMBER_BYTES] = {0};
   uint16_t counter_value;
-  const double adc_conversion = 3.128;
   HAL_StatusTypeDef hal_status;
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  const double adc_conversion = 3.128;
+
 
   /* USER CODE END 2 */
 
@@ -111,7 +116,7 @@ int main(void)
   // Potentiometer connected to CH0 of ADC
   while (1)
   {
-	  //CS line initially low, so brought it high and low again using GPIO Write function
+	  //CS line brought low to start data transmission
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  //Transmitting and Receiving Data
@@ -120,11 +125,17 @@ int main(void)
 
 	  if(hal_status == HAL_OK)
 	  {
+		  /*Using AND operator to isolate the useful bits stored in the array's second index, and using
+		  bit shifting along with OR operator to combine with the useful bits in the array's third index
+		  followed by converting it to the respective time period value to equal ~10% of clock period; 10%
+		  of 64000*/
 		  counter_value = ((rx_buffer[1] & 3 << 8) | rx_buffer[2]) * adc_conversion + 3200;
 
+		  //Outputs high to LED when timer counter is below the calculated value
 		  HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counter_value);
 	  }
 
+	  //REturning CS line to high to indicate end of transmission
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, SET);
 
 	  HAL_Delay(10);
