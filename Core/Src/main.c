@@ -51,6 +51,9 @@
 const uint8_t MCP3004_FIRST_BYTE = 0b00000001;
 const uint8_t MCP3004_SECOND_BYTE = 0b10000000;
 const uint8_t MCP3004_THIRD_BYTE = 0b00000000;
+const uint8_t rxData[3] = {0};
+//data transmitted by ADC to potentiometer on CH0
+const uint8_t txData[3] = {MCP3004_FIRST_BYTE, MCP3004_SECOND_BYTE, MCP3004_THIRD_BYTE};
 
 
 // ADC to PWM communication
@@ -113,16 +116,12 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	
+  
   while (1)
   {
+    /* USER CODE BEGIN WHILE */
 	  HAL_Delay(10);
-
-	  uint8_t rxData[3] = {0};
-
-	  //data transmitted by ADC to potentiometer on CH0
-	  uint8_t txData[3] = {MCP3004_FIRST_BYTE, MCP3004_SECOND_BYTE, MCP3004_THIRD_BYTE};
-
 	  //set the chip select to low to start communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, 100);
@@ -132,8 +131,8 @@ int main(void)
 	  uint16_t ADC_RCVD_VAL = ((rxData[1] & 0b00000011) << 8) | rxData[2];
 
 	  float ADC_Ratio = (float)(ADC_RCVD_VAL/1023);
-	  float duty_cycle = ADC_Ratio * (0.10 - 0.05) + 0.05;
-	  uint16_t COMPARE_VAL = (uint16_t) (duty_cycle * 65535);
+	  float duty_cycle = ADC_Ratio * (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE) + MIN_DUTY_CYCLE;
+	  uint16_t COMPARE_VAL = (uint16_t) (duty_cycle * COUNTER_PERIOD);
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COMPARE_VAL);
 
