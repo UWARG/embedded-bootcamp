@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -65,41 +67,86 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+    //Transmit Bytes
+    //First byte: 00000001 -> 1
+    //Second byte: 1000000 -> 128
+    //Third byte: doesn't matter -> 0
+    uint8_t tx_data[3] = {1, 128, 0};
+    //Receive Bytes
+    uint8_t rx_data[3] = {0};
+    const uint8_t mask = 3;
+    uint16_t secondByte;
+    uint16_t thirdByte;
+    uint16_t counts;
+    /* USER CODE END 1 */
 
-  /* USER CODE END 1 */
+    /* MCU Configuration--------------------------------------------------------*/
 
-  /* MCU Configuration--------------------------------------------------------*/
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    /* USER CODE BEGIN Init */
 
-  /* USER CODE BEGIN Init */
+    /* USER CODE END Init */
 
-  /* USER CODE END Init */
+    /* Configure the system clock */
+    SystemClock_Config();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+    /* USER CODE BEGIN SysInit */
 
-  /* USER CODE BEGIN SysInit */
+    /* USER CODE END SysInit */
 
-  /* USER CODE END SysInit */
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_USART2_UART_Init();
+    MX_SPI1_Init();
+    MX_TIM1_Init();
+    /* USER CODE BEGIN 2 */
+    //Status
+    HAL_StatusTypeDef hal_status;
+    //Pull CS High
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART2_UART_Init();
-  /* USER CODE BEGIN 2 */
+    /* USER CODE END 2 */
 
-  /* USER CODE END 2 */
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    while (1)
+    {
+        /* USER CODE END WHILE */
+	    //Pull CS Low
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+	    //Initiate Communication with MCP 3004
+	    hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 100);
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+	    if(hal_status == HAL_OK)
+	    {
+		    //First byte of received data doesn't matter
+		    //First 5 bits (6th one is null) of second byte don't matter
+		    //All of third byte matters
+
+		    //Apply a mask (00000011) to just get last 2 bits of second byte
+		    secondByte = mask & rx_data[1];
+            thirdByte = rx_data[2];
+
+		    counts = (secondByte << 8) | thirdByte;
+		    //I am a little bit confused on how to convert the
+		    //digital value of the ADC to on-ounts
+		    //I decided to scale linearly from 3201 to 6270
+		    //which should keep the duty cycle between 5% and 10%
+		    counts = (counts * 3) + 3201;
+
+		    //Set Compare Register
+		    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
+
+	    }
+	    //Pull CS High
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+        HAL_Delay(10);
+        /* USER CODE BEGIN 3 */
+    }
+    /* USER CODE END 3 */
 }
 
 /**
