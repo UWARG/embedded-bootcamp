@@ -66,18 +66,22 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
+    /* USER CODE BEGIN 1 */
     //Transmit Bytes
     //First byte: 00000001 -> 1
-    //Second byte: 1000000 -> 128
+    //Second byte: 1000000 -> 128 -> 0x80
     //Third byte: doesn't matter -> 0
-    uint8_t tx_data[3] = {1, 128, 0};
+    const uint8_t TX_DATA[3] = {0x1, 0x80, 0x0};
     //Receive Bytes
-    uint8_t rx_data[3] = {0};
-    const uint8_t mask = 3;
-    uint16_t secondByte;
-    uint16_t thirdByte;
-    uint16_t counts;
+    uint8_t rx_data[3] = {0x0};
+    const uint8_t MASK = 0x3;
+    uint16_t second_byte = 0x0;
+    uint16_t third_byte = 0x0;
+    uint16_t counts = 0;
+    //5% of the period (64000) is 3200
+    const uint16_t FIVE_PERCENT_DUTY_CYCLE = 3200;
+    const float SCALING_FACTOR = 3.128f;
+
     /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
@@ -118,7 +122,7 @@ int main(void)
 	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	    //Initiate Communication with MCP 3004
-	    hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 100);
+	    hal_status = HAL_SPI_TransmitReceive(&hspi1, TX_DATA, rx_data, 3, 100);
 
 	    if(hal_status == HAL_OK)
 	    {
@@ -127,15 +131,18 @@ int main(void)
 		    //All of third byte matters
 
 		    //Apply a mask (00000011) to just get last 2 bits of second byte
-		    secondByte = mask & rx_data[1];
-            thirdByte = rx_data[2];
+		    second_byte = MASK & rx_data[1];
+            third_byte = rx_data[2];
 
-		    counts = (secondByte << 8) | thirdByte;
-		    //I am a little bit confused on how to convert the
-		    //digital value of the ADC to on-ounts
-		    //I decided to scale linearly from 3201 to 6270
-		    //which should keep the duty cycle between 5% and 10%
-		    counts = (counts * 3) + 3201;
+		    counts = (second_byte << 8) | third_byte;
+		    /*
+		    I decided to scale linearly from 3200 to 6400
+		    which should keep the duty cycle between 5% and 10%
+		    since I set the period to 64000.
+		    Since the number will be truncated the max value for
+		    counts will be 6399 and not 6400
+		    */
+		    counts = (counts * SCALING_FACTOR) + FIVE_PERCENT_DUTY_CYCLE;
 
 		    //Set Compare Register
 		    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
