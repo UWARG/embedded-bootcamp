@@ -106,8 +106,9 @@ int main(void)
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
+  //Ratio between 5% of the counter period (3200) and the maximum range for the 10-bit ADC (1023)
   const double adc_conversion = 3.128;
-
+  const int five_percent_count = 3200;
 
   /* USER CODE END 2 */
 
@@ -129,13 +130,13 @@ int main(void)
 		  bit shifting along with OR operator to combine with the useful bits in the array's third index
 		  followed by converting it to the respective time period value to equal ~10% of clock period; 10%
 		  of 64000*/
-		  counter_value = ((rx_buffer[1] & 3 << 8) | rx_buffer[2]) * adc_conversion + 3200;
+		  counter_value = ((rx_buffer[1] & 3 << 8) | rx_buffer[2]) * adc_conversion + five_percent_count;
 
 		  //Outputs high to LED when timer counter is below the calculated value
 		  HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counter_value);
 	  }
 
-	  //REturning CS line to high to indicate end of transmission
+	  //Returning CS line to high to indicate end of transmission
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, SET);
 
 	  HAL_Delay(10);
