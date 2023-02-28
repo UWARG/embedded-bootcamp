@@ -19,12 +19,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+uint16_t adc_value;
+uint16_t pwm_pulse_width = 0;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,7 +90,16 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_NVIC_SetPriority(TIM1_CC_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
+
+  TIM1->ARR = 64000; // Set period
+  TIM1->CR1 |= TIM_CR1_CEN; // set the enable bit to 1, start the timer
+
 
   /* USER CODE END 2 */
 
@@ -96,7 +108,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -143,7 +155,29 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void TIM1_CC_IRQHandler(void)
+{
+  // Interrupt handler code here
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET); // reached desired pwm pulse width, so set PWM pin low
+}
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance == TIM1)
+  {
+	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8); // pull down Chip Select
+	uint8_t tx_data[3] = {0x01, 0x80, 0x00};
+	uint8_t rx_data[3] = {0};
+
+	HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 1000);
+	adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2]; // read ADC value
+
+	pwm_pulse_width = (adc_value * (__HAL_TIM_GET_AUTORELOAD(&htim1) + 1)) / 4096;
+	TIM1->CCR1 = pwm_pulse_width;
+
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET); // set PA8 pin high
+  }
+}
 /* USER CODE END 4 */
 
 /**
