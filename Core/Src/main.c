@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-uint16_t adc_value;
+uint16_t ADC_value;
 uint16_t pwm_pulse_width = 0;
 /* USER CODE END Includes */
 
@@ -98,8 +98,7 @@ int main(void)
   HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
 
   TIM1->ARR = 64000; // Set period
-  TIM1->CR1 |= TIM_CR1_CEN; // set the enable bit to 1, start the timer
-
+  TIM1->CR1 |= TIM_CR1_CEN; // Set the enable bit to 1, start the timer
 
   /* USER CODE END 2 */
 
@@ -158,7 +157,8 @@ void SystemClock_Config(void)
 void TIM1_CC_IRQHandler(void)
 {
   // Interrupt handler code here
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET); // reached desired pwm pulse width, so set PWM pin low
+  // reached desired pwm pulse width, so set PWM pin low
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
@@ -170,9 +170,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	uint8_t rx_data[3] = {0};
 
 	HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 1000);
-	adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2]; // read ADC value
+	ADC_value = ((rx_data[1] & 0x03) << 8) | rx_data[2]; // read ADC value
 
-	pwm_pulse_width = (adc_value * (__HAL_TIM_GET_AUTORELOAD(&htim1) + 1)) / 4096;
+	pwm_pulse_width = (ADC_value * (__HAL_TIM_GET_AUTORELOAD(&htim1) + 1)) / 4096;
 	TIM1->CCR1 = pwm_pulse_width;
 
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET); // set PA8 pin high
