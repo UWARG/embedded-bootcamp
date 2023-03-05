@@ -26,8 +26,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 uint16_t ADC_value;
 uint16_t pwm_pulse_width = 0;
+
+// read from MCP3004 datasheet
+uint16_t ADC_RANGE = 1024; // 10-bit ADC has 1024 different values
+uint16_t ADC_SIZE = 3; // MCP3004 transmits 3 bytes
+uint16_t ADC_TIMEOUT = 5;
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -96,9 +103,6 @@ int main(void)
 
   HAL_NVIC_SetPriority(TIM1_CC_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
-
-  TIM1->ARR = 64000; // Set period
-  TIM1->CR1 |= TIM_CR1_CEN; // Set the enable bit to 1, start the timer
 
   /* USER CODE END 2 */
 
@@ -169,11 +173,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	uint8_t tx_data[3] = {0x01, 0x80, 0x00};
 	uint8_t rx_data[3] = {0};
 
-	HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 1000);
-	ADC_value = ((rx_data[1] & 0x03) << 8) | rx_data[2]; // read ADC value
+	HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, ADC_SIZE, ADC_TIMEOUT);
 
-	pwm_pulse_width = (ADC_value * (__HAL_TIM_GET_AUTORELOAD(&htim1) + 1)) / 4096;
-	TIM1->CCR1 = pwm_pulse_width;
+	// by anding the 2nd byte of rx_data with 0b0000011,
+	// we receive the 9th and 8th bit of the adc value
+	// then shifting them to the left by 8 bits to set them as the MSB
+	// oring the bits together to form the 10-bit ADC value
+	ADC_value = ((rx_data[1] & 0x03) << 8) | rx_data[2];
+
+	// the function gives the ARR value, the clock counts from 0 to ARR
+	// so add 1 to get the period of the clock
+	uint32_t TIM1_period = __HAL_TIM_GET_AUTORELOAD(&htim1) + 1;
+
+	// ADC_value / ADC_RANGE gives the duty cycle of the PWM signal
+	// Multiply it by the period gives the number of clock that the PWM signal should remain high
+	pwm_pulse_width = (ADC_value / ADC_RANGE) * TIM1_period;
+
+	// update compare value for the timer
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_pulse_width);
 
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET); // set PA8 pin high
   }
