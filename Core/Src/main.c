@@ -35,6 +35,9 @@ uint16_t ADC_RANGE = 1024; // 10-bit ADC has 1024 different values
 uint16_t ADC_SIZE = 3; // MCP3004 transmits 3 bytes
 uint16_t ADC_TIMEOUT = 5;
 
+uint16_t DUTY_CYCLE_MAX_COUNT = 6400; // 10% duty cycle timer count
+uint16_t DUTY_CYCLE_MIN_COUNT = 3200; // 5% duty cycle timer count
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -181,13 +184,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	// oring the bits together to form the 10-bit ADC value
 	ADC_value = ((rx_data[1] & 0x03) << 8) | rx_data[2];
 
-	// the function gives the ARR value, the clock counts from 0 to ARR
-	// so add 1 to get the period of the clock
-	uint32_t TIM1_period = __HAL_TIM_GET_AUTORELOAD(&htim1) + 1;
-
-	// ADC_value / ADC_RANGE gives the duty cycle of the PWM signal
-	// Multiply it by the period gives the number of clock that the PWM signal should remain high
-	pwm_pulse_width = (ADC_value / ADC_RANGE) * TIM1_period;
+	// ADC_value / ADC_RANGE gives the ratio of the active time
+	// Multiply it by the duty cycle range then add it by the minimum duty cycle
+	// to get final PWM signal active time
+	pwm_pulse_width = (ADC_value / ADC_RANGE) * (DUTY_CYCLE_MAX_COUNT - DUTY_CYCLE_MIN_COUNT)
+			+ DUTY_CYCLE_MIN_COUNT;
 
 	// update compare value for the timer
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_pulse_width);
