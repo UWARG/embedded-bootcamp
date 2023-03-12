@@ -84,13 +84,21 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   	  HAL_StatusTypeDef hal_status;
-
+  	  //Timeout for spi transmitreceive function in ms
+  	  const uint32_t SPI_TIMEOUT = 250;
   	  const int NUM_BITS_TO_SEND = 3;
+
+  	  const uint8_t BIT_MASK = 0x00000011; // for the second bit
   	  //MOSI data, according to figure 6.1 MCU transmitted data
   	  //MOSI = SPI_TXD, transmitted data
   	  uint8_t tx_data[NUM_BITS_TO_SEND] = {0x1, 0x80,  0x0};
   	  //MISO data
   	  uint8_t rx_data[NUM_BITS_TO_SEND] = {0x0};
+  	  uint8_t second_byte = 0;
+  	  uint8_t third_byte = 0;
+  	  int adc_response = 0;
+  	  int counts = 0;
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -109,6 +117,8 @@ int main(void)
 
   //Pull high in case device powered on with CS low
   HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(*htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,8 +126,28 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  //Bring CS line to low to init communication
 	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  hal_status =
+	  hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, NUM_BITS_TO_SEND,
+              SPI_TIMEOUT);
+
+	  if (hal_status == HAL_OK)
+	      {
+	          /*first byte doesn't matter i think (repeated question marks in documentation)
+		  	  first 5 bits in second byte don't matter. Sixth is null
+		  	  THEREFORE, we only need to set the last 2 bits of the second byte
+		  	  ie, use 3 or 0x00000011,. the previously defined mask
+		  	  */
+	  	  second_byte = rx_data[1] & BITMASK;
+	  	  third_byte = rx_data[2];
+	  	  adc_response = second_byte | third_byte;
+	  	  counts = adc_response + 1
+
+	  	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts)
+	      }
+
+	  //Bring CS line to high to reinit communication on next cycle
+	  //return hal_status;
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
