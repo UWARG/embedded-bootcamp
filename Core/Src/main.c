@@ -79,7 +79,6 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   	  // pow(2,10)-1 because of 10 bits, considering pot response 0-1023
-	  const int ADC_MAX_BITS = 1023;
 	  const int DUTY_CYCLE_COUNTS_5_PERCENT = 3200;
 
 	  /* I set the prescaler to 14, and the total count period
@@ -100,12 +99,15 @@ int main(void)
 
   	  //Timeout for spi transmit receive function in ms
   	  const uint32_t SPI_TIMEOUT = 250;
-  	  const int NUM_BITS_TO_SEND = 3;
+  	  const uint8_t NUM_BITS_TO_SEND = 3;
   	  //Bit mask as we only need the last 2 bits in the second returned byte
   	  const uint8_t BIT_MASK = 0x00000011;
 
-  	  //MOSI data, according to figure 6.1 MCU transmitted data
-  	  //MOSI = SPI_TXD, transmitted data
+  	  /*MOSI data, according to figure 6.1 MCU transmitted data
+  	   * first byte: 00000001
+  	   * second byte: 10000000: 128: 0x80
+  	   * third byte: doesn't matter, using 00000000
+  	   */
   	  uint8_t tx_data[NUM_BITS_TO_SEND] = {0x1, 0x80, 0x0};
 
   	  //MISO data
@@ -113,7 +115,7 @@ int main(void)
   	  uint8_t second_byte = 0;
   	  uint8_t third_byte = 0;
 
-  	  int pot_response = 0;
+  	  uint16_t pot_response = 0;
   	  int counts = 0;
 	  HAL_StatusTypeDef hal_status;
   /* USER CODE END Init */
@@ -131,8 +133,6 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(*htim1, TIM_CHANNEL_1);
-
   //Pull high in case device powered on with CS low
   HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
@@ -157,7 +157,7 @@ int main(void)
 	           *  the second byte. ie, use 3 or 0x00000011,. the
 	           *  previously defined mask
 		  	  */
-			  second_byte = rx_data[1] & BITMASK;
+			  second_byte = rx_data[1] & BIT_MASK;
 			  third_byte = rx_data[2];
 
 			  //Append all 10 bits together
@@ -165,7 +165,7 @@ int main(void)
 
 			  //convert to counts
 			  counts = pot_response * SCALING_FACTOR + DUTY_CYCLE_COUNTS_5_PERCENT;
-			  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
+			 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
 		  }
 	  //Bring CS line to high to reinit communication on next cycle
 	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
