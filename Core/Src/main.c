@@ -48,11 +48,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-const int ADC_MAX_BITS = 1024; // pow(2,10) because of 10 bits
-const int ADC_BITS_PER = 3 //The M...3004 sends 3 bits per
-const int DUTY_CYCLE_COUNTS_10_PERCENT = 6400; //64000 per entire, so 6400 for 10%
-const int DUTY_CYCLE_COUNTS_5_PERCENT = 3200;
-const int PRESCALER = 14;
 
 /* USER CODE END PV */
 
@@ -83,22 +78,42 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  	  HAL_StatusTypeDef hal_status;
-  	  //Timeout for spi transmitreceive function in ms
+  	  // pow(2,10)-1 because of 10 bits, considering pot response 0-1023
+	  const int ADC_MAX_BITS = 1023;
+	  const int DUTY_CYCLE_COUNTS_5_PERCENT = 3200;
+		  /* I set the prescaler to 14, and the total count period
+		   * to 64000.
+		   * To convert pot response (0-1023) to duty cycle counts
+		   * (3200-6400), the values must correspond in this fashion:
+		   *
+		   * 0 => 3200, and 1023 => 6400
+		   *
+		   * This should follow a standard formula. If 0 corresponds to
+		   * 3200, that means the formula to convert pot response to
+		   * counts must include a scalar addition of 3200. Followign a
+		   * mx + b fashion, the multiplier must be as follows:
+		   *
+		   * 6400 = m(1023) + 3200
+		   * or that m = 3.128f*/
+  	  const float SCALING_FACTOR = 3.128f;
+
+  	  //Timeout for spi transmit receive function in ms
   	  const uint32_t SPI_TIMEOUT = 250;
   	  const int NUM_BITS_TO_SEND = 3;
+  	  //Bit mask as we only need the last 2 bits in the second returned byte
+  	  const uint8_t BIT_MASK = 0x00000011;
 
-  	  const uint8_t BIT_MASK = 0x00000011; // for the second bit
   	  //MOSI data, according to figure 6.1 MCU transmitted data
   	  //MOSI = SPI_TXD, transmitted data
-  	  uint8_t tx_data[NUM_BITS_TO_SEND] = {0x1, 0x80,  0x0};
+  	  uint8_t tx_data[NUM_BITS_TO_SEND] = {0x1, 0x80, 0x0};
   	  //MISO data
   	  uint8_t rx_data[NUM_BITS_TO_SEND] = {0x0};
   	  uint8_t second_byte = 0;
   	  uint8_t third_byte = 0;
+
   	  int pot_response = 0;
   	  int counts = 0;
-
+	  HAL_StatusTypeDef hal_status;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -116,9 +131,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   //Pull high in case device powered on with CS low
-  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   HAL_TIM_PWM_Start(*htim1, TIM_CHANNEL_1);
-
+  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -141,12 +155,13 @@ int main(void)
 	  	  second_byte = rx_data[1] & BITMASK;
 	  	  third_byte = rx_data[2];
 	  	  adc_response = second_byte | third_byte;
-	  	  counts = pot_response + 1
-
-	  	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts)
+	  	  counts = pot_response * SCALING_FACTOR + DUTY_CYCLE_COUNTS_5_PERCENT
+	  	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
 	      }
-
+	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 	  //Bring CS line to high to reinit communication on next cycle
+	  HAL_Delay(10);
+
 	  //return hal_status;
     /* USER CODE BEGIN 3 */
   }
