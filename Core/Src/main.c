@@ -81,7 +81,8 @@ int main(void)
   	  // pow(2,10)-1 because of 10 bits, considering pot response 0-1023
 	  const int ADC_MAX_BITS = 1023;
 	  const int DUTY_CYCLE_COUNTS_5_PERCENT = 3200;
-		  /* I set the prescaler to 14, and the total count period
+
+	  /* I set the prescaler to 14, and the total count period
 		   * to 64000.
 		   * To convert pot response (0-1023) to duty cycle counts
 		   * (3200-6400), the values must correspond in this fashion:
@@ -95,7 +96,7 @@ int main(void)
 		   *
 		   * 6400 = m(1023) + 3200
 		   * or that m = 3.128f*/
-  	  const float SCALING_FACTOR = 3.128f;
+  	  const double SCALING_FACTOR = 3.128;
 
   	  //Timeout for spi transmit receive function in ms
   	  const uint32_t SPI_TIMEOUT = 250;
@@ -106,6 +107,7 @@ int main(void)
   	  //MOSI data, according to figure 6.1 MCU transmitted data
   	  //MOSI = SPI_TXD, transmitted data
   	  uint8_t tx_data[NUM_BITS_TO_SEND] = {0x1, 0x80, 0x0};
+
   	  //MISO data
   	  uint8_t rx_data[NUM_BITS_TO_SEND] = {0x0};
   	  uint8_t second_byte = 0;
@@ -129,9 +131,9 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(*htim1, TIM_CHANNEL_1);
 
   //Pull high in case device powered on with CS low
-  HAL_TIM_PWM_Start(*htim1, TIM_CHANNEL_1);
   HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -142,27 +144,32 @@ int main(void)
     /* USER CODE END WHILE */
 	  //Bring CS line to low to init communication
 	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, NUM_BITS_TO_SEND,
-              SPI_TIMEOUT);
+
+	  hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data,
+			  NUM_BITS_TO_SEND, SPI_TIMEOUT);
 
 	  if (hal_status == HAL_OK)
 	      {
-	          /*first byte doesn't matter i think (repeated question marks in documentation)
-		  	  first 5 bits in second byte don't matter. Sixth is null
-		  	  THEREFORE, we only need to set the last 2 bits of the second byte
-		  	  ie, use 3 or 0x00000011,. the previously defined mask
+	          /*first byte doesn't matter i think (repeated question
+	           * marks in documentation) first 5 bits in second byte
+	           * don't matter. Sixth is null
+	           *  THEREFORE, we only need to set the last 2 bits of
+	           *  the second byte. ie, use 3 or 0x00000011,. the
+	           *  previously defined mask
 		  	  */
-	  	  second_byte = rx_data[1] & BITMASK;
-	  	  third_byte = rx_data[2];
-	  	  adc_response = second_byte | third_byte;
-	  	  counts = pot_response * SCALING_FACTOR + DUTY_CYCLE_COUNTS_5_PERCENT
-	  	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
-	      }
-	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	  //Bring CS line to high to reinit communication on next cycle
-	  HAL_Delay(10);
+			  second_byte = rx_data[1] & BITMASK;
+			  third_byte = rx_data[2];
 
-	  //return hal_status;
+			  //Append all 10 bits together
+			  pot_response = second_byte | third_byte;
+
+			  //convert to counts
+			  counts = pot_response * SCALING_FACTOR + DUTY_CYCLE_COUNTS_5_PERCENT;
+			  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
+		  }
+	  //Bring CS line to high to reinit communication on next cycle
+	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
