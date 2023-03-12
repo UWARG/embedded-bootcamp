@@ -96,7 +96,7 @@ int main(void)
   	  uint8_t rx_data[NUM_BITS_TO_SEND] = {0x0};
   	  uint8_t second_byte = 0;
   	  uint8_t third_byte = 0;
-  	  int adc_response = 0;
+  	  int pot_response = 0;
   	  int counts = 0;
 
   /* USER CODE END Init */
@@ -141,7 +141,7 @@ int main(void)
 	  	  second_byte = rx_data[1] & BITMASK;
 	  	  third_byte = rx_data[2];
 	  	  adc_response = second_byte | third_byte;
-	  	  counts = adc_response + 1
+	  	  counts = pot_response + 1
 
 	  	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts)
 	      }
