@@ -19,11 +19,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+
 
 /* USER CODE END Includes */
 
@@ -44,6 +48,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+const int ADC_MAX_BITS = 1024; // pow(2,10) because of 10 bits
+const int ADC_BITS_PER = 3 //The M...3004 sends 3 bits per
+const int DUTY_CYCLE_COUNTS_10_PERCENT = 6400; //64000 per entire, so 6400 for 10%
+const int DUTY_CYCLE_COUNTS_5_PERCENT = 3200;
+const int PRESCALER = 14;
 
 /* USER CODE END PV */
 
@@ -74,7 +83,14 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  	  HAL_StatusTypeDef hal_status;
 
+  	  const int NUM_BITS_TO_SEND = 3;
+  	  //MOSI data, according to figure 6.1 MCU transmitted data
+  	  //MOSI = SPI_TXD, transmitted data
+  	  uint8_t tx_data[NUM_BITS_TO_SEND] = {0x1, 0x80,  0x0};
+  	  //MISO data
+  	  uint8_t rx_data[NUM_BITS_TO_SEND] = {0x0};
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,8 +103,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  //Pull high in case device powered on with CS low
+  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -96,7 +116,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  hal_status =
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -122,6 +143,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +199,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
