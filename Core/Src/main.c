@@ -99,24 +99,24 @@ int main(void)
 
   	  //Timeout for spi transmit receive function in ms
   	  const uint32_t SPI_TIMEOUT = 250;
-  	  const uint8_t NUM_BITS_TO_SEND = 3;
+  	  const uint8_t NUM_BYTES_TO_SEND = 3;
   	  //Bit mask as we only need the last 2 bits in the second returned byte
-  	  const uint8_t BIT_MASK = 0x00000011;
+  	  const uint8_t BIT_MASK = 0x3;
 
   	  /*MOSI data, according to figure 6.1 MCU transmitted data
   	   * first byte: 00000001
   	   * second byte: 10000000: 128: 0x80
   	   * third byte: doesn't matter, using 00000000
   	   */
-  	  uint8_t tx_data[NUM_BITS_TO_SEND] = {0x1, 0x80, 0x0};
+  	  uint8_t tx_data[NUM_BYTES_TO_SEND] = {0x1, 0x80, 0x0};
 
   	  //MISO data
-  	  uint8_t rx_data[NUM_BITS_TO_SEND] = {0x0};
+  	  uint8_t rx_data[NUM_BYTES_TO_SEND] = {0x0};
   	  uint8_t second_byte = 0;
   	  uint8_t third_byte = 0;
 
   	  uint16_t pot_response = 0;
-  	  int counts = 0;
+  	  uint8_t counts = 0;
 	  HAL_StatusTypeDef hal_status;
   /* USER CODE END Init */
 
@@ -146,7 +146,7 @@ int main(void)
 	  HAL_GPIO_WritePin( GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  hal_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data,
-			  NUM_BITS_TO_SEND, SPI_TIMEOUT);
+			  NUM_BYTES_TO_SEND, SPI_TIMEOUT);
 
 	  if (hal_status == HAL_OK)
 	      {
@@ -161,7 +161,7 @@ int main(void)
 			  third_byte = rx_data[2];
 
 			  //Append all 10 bits together
-			  pot_response = second_byte | third_byte;
+			  pot_response = (second_byte  << 8)| third_byte;
 
 			  //convert to counts
 			  counts = pot_response * SCALING_FACTOR + DUTY_CYCLE_COUNTS_5_PERCENT;
