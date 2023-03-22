@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define SPI_RAW_PAYLOAD_SIZE 3
+#define COUNT_PERIOD 65535
+#define POT_MAX_INPUT 1024
+#define ONE_BYTE 8
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,8 +94,25 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  // constants that will be used in the program
+  const double PWM_RANGE_LOWER_BOUND = COUNT_PERIOD*0.05;
+  const double PWM_RANGE_UPPER_BOUND = COUNT_PERIOD*0.1;
+  const uint16_t SPI_TIMEOUT = 1000;
+  const uint16_t PWM_RANGE = PWM_RANGE_UPPER_BOUND - PWM_RANGE_LOWER_BOUND;
+  const uint8_t ADC_RX_MASK[] = {0x00, 0x03, 0xFF};
+  const uint8_t ADC_START_TX[] = {0x01, 0x80, 0x00};
 
+  SPI_HandleTypeDef hal_adc_spi = hspi1;
+  TIM_HandleTypeDef hal_pwm_timer = htim1;
+  HAL_TIM_PWM_Init(&hal_pwm_timer);
+
+  HAL_StatusTypeDef hal_adc_status;
+  uint8_t adc_rx[] = {0x00, 0x00, 0x00};
+  uint16_t pot_input_int = 0;
+  uint16_t new_counter = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -96,8 +120,35 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
+
+  	// reset CS to LOW (pin B8)
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  	// start ADC and retrieve POT signal from set ADC
+	  hal_adc_status = HAL_SPI_TransmitReceive(
+	  		&hal_adc_spi, ADC_START_TX, adc_rx, SPI_RAW_PAYLOAD_SIZE, SPI_TIMEOUT);
+
+	  // process adc_rx
+	  if (HAL_OK == hal_adc_status){
+	  	// masking received data
+	  	adc_rx[1] = adc_rx[1] & ADC_RX_MASK[1];
+	  	adc_rx[2] = adc_rx[2] & ADC_RX_MASK[2];
+
+	  	// convert binary to integer
+	  	pot_input_int = 0;
+	  	pot_input_int = (adc_rx[1] << ONE_BYTE) & (!ONE_BYTE);
+	  	pot_input_int = pot_input_int | adc_rx[2];
+
+	  	// scale to desired PWM range (pre-scaler counter)
+	  	new_counter = PWM_RANGE_LOWER_BOUND + (pot_input_int/POT_MAX_INPUT)*PWM_RANGE;
+
+	  	// set PWM compare register
+	  	__HAL_TIM_SET_COMPARE(&hal_pwm_timer, TIM_CHANNEL_1, new_counter);
+	  }
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +173,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +229,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
