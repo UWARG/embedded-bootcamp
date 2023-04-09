@@ -145,6 +145,7 @@ int main(void)
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3200 + 3200 * percentage_above_min_duty_cycle);
 
 	HAL_Delay(10);
+  }
   /* USER CODE END 3 */
 }
 
@@ -218,6 +219,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  continue;
   }
   /* USER CODE END Error_Handler_Debug */
 }
