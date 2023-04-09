@@ -61,8 +61,8 @@ const uint16_t COUNT_PER_MS = 64000 / 20;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-uint8_t setup_adc_config_byte();
-void copy_bits(uint16_t* to, uint8_t from, uint8_t num_bits);
+uint8_t setupAdcConfigByte();
+void copyBits(uint16_t* to, uint8_t from, uint8_t num_bits);
 
 /* USER CODE END PFP */
 
@@ -87,7 +87,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  adc_config_byte = setup_adc_config_byte();
+  adc_config_byte = setupAdcConfigByte();
   // Set CS pin to high initially
   if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8)) {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -120,31 +120,31 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     /* Grab ADC value */
-	// Set CS to low
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    // Set CS to low
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-	// Send start bit
-	HAL_SPI_Transmit(&hspi1, &adc_start_byte, 1, 100);
+    // Send start bit
+    HAL_SPI_Transmit(&hspi1, &adc_start_byte, 1, 100);
 
-	// Send ADC configs, receive first 3 bits of data
-	HAL_SPI_TransmitReceive(&hspi1, &adc_config_byte, &adc_rec_buf, 1, 100);
-	copy_bits(&adc_val, adc_rec_buf, 2);
+    // Send ADC configs, receive first 3 bits of data
+    HAL_SPI_TransmitReceive(&hspi1, &adc_config_byte, &adc_rec_buf, 1, 100);
+    copyBits(&adc_val, adc_rec_buf, 2);
 
-	// Receive next 8 bits of data
-	HAL_SPI_Receive(&hspi1, &adc_rec_buf, 1, 100);
-	copy_bits(&adc_val, adc_rec_buf, 8);
+    // Receive next 8 bits of data
+    HAL_SPI_Receive(&hspi1, &adc_rec_buf, 1, 100);
+    copyBits(&adc_val, adc_rec_buf, 8);
 
-	// Set CS to high
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    // Set CS to high
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	/* Generate PWM */
-	// Calculate percentage of range of min to max ADC val
-	percentage_duty_cycle = adc_val / (MAX_VAL_IN_TEN_BITS + 1);
+    /* Generate PWM */
+    // Calculate percentage of range of min to max ADC val
+    percentage_duty_cycle = adc_val / (MAX_VAL_IN_TEN_BITS + 1);
 
-	// Set compare reg
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COUNT_PER_MS + COUNT_PER_MS * percentage_duty_cycle);
+    // Set compare reg
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COUNT_PER_MS + COUNT_PER_MS * percentage_duty_cycle);
 
-	HAL_Delay(10);
+    HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -191,12 +191,23 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint8_t setup_adc_config_byte() {
+/**
+  * @brief  Sets up 8-bit buffer with ADC mode/channel selection bits set
+  * @retval 8-bit value to setup ADC mode/channel
+  */
+uint8_t setupAdcConfigByte() {
 	// Select CH0 of ADC, single-ended mode
 	return 128; // bin: 1000 0000
 }
 
-void copy_bits(uint16_t* to, uint8_t from, uint8_t num_bits) {
+/**
+  * @brief  Copy bits from one buffer to another
+  * @param  to: pointer to destination buffer
+  * @param  from: source buffer
+  * @param  num_bits: number of bits to copy over
+  * @retval None
+  */
+void copyBits(uint16_t* to, uint8_t from, uint8_t num_bits) {
 	for (uint8_t i = 0; i < num_bits; i++) {
 		// Copy the last bit of from
 		uint8_t last_bit = from & 1;

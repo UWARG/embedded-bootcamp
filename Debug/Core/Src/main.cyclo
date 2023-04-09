@@ -1,5 +1,5 @@
 main.c:78:5:main	2
 main.c:156:6:SystemClock_Config	4
-main.c:194:9:setup_adc_config_byte	1
-main.c:199:6:copy_bits	2
-main.c:215:6:Error_Handler	1
+main.c:198:9:setupAdcConfigByte	1
+main.c:210:6:copyBits	2
+main.c:226:6:Error_Handler	1

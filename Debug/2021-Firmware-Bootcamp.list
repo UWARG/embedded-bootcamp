@@ -33,11 +33,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  14 .debug_line   000114c8  00000000  00000000  0004c547  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_str    00096c90  00000000  00000000  0005da0f  2**0
+ 15 .debug_str    00096c9c  00000000  00000000  0005da0f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .comment      00000050  00000000  00000000  000f469f  2**0
+ 16 .comment      00000050  00000000  00000000  000f46ab  2**0
                   CONTENTS, READONLY
- 17 .debug_frame  000032e8  00000000  00000000  000f46f0  2**2
+ 17 .debug_frame  000032e8  00000000  00000000  000f46fc  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -3490,8 +3490,8 @@ int main(void)
  8001b6e:	f000 fbe5 	bl	800233c <HAL_Init>
 
   /* USER CODE BEGIN Init */
-  adc_config_byte = setup_adc_config_byte();
- 8001b72:	f000 f8f0 	bl	8001d56 <setup_adc_config_byte>
+  adc_config_byte = setupAdcConfigByte();
+ 8001b72:	f000 f8f0 	bl	8001d56 <setupAdcConfigByte>
  8001b76:	0003      	movs	r3, r0
  8001b78:	001a      	movs	r2, r3
  8001b7a:	4b44      	ldr	r3, [pc, #272]	; (8001c8c <main+0x124>)
@@ -3543,8 +3543,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     /* Grab ADC value */
-	// Set CS to low
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    // Set CS to low
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
  8001bbc:	2380      	movs	r3, #128	; 0x80
  8001bbe:	005b      	lsls	r3, r3, #1
  8001bc0:	4833      	ldr	r0, [pc, #204]	; (8001c90 <main+0x128>)
@@ -3552,16 +3552,16 @@ int main(void)
  8001bc4:	0019      	movs	r1, r3
  8001bc6:	f000 fe8a 	bl	80028de <HAL_GPIO_WritePin>
 
-	// Send start bit
-	HAL_SPI_Transmit(&hspi1, &adc_start_byte, 1, 100);
+    // Send start bit
+    HAL_SPI_Transmit(&hspi1, &adc_start_byte, 1, 100);
  8001bca:	4933      	ldr	r1, [pc, #204]	; (8001c98 <main+0x130>)
  8001bcc:	4833      	ldr	r0, [pc, #204]	; (8001c9c <main+0x134>)
  8001bce:	2364      	movs	r3, #100	; 0x64
  8001bd0:	2201      	movs	r2, #1
  8001bd2:	f001 fd57 	bl	8003684 <HAL_SPI_Transmit>
 
-	// Send ADC configs, receive first 3 bits of data
-	HAL_SPI_TransmitReceive(&hspi1, &adc_config_byte, &adc_rec_buf, 1, 100);
+    // Send ADC configs, receive first 3 bits of data
+    HAL_SPI_TransmitReceive(&hspi1, &adc_config_byte, &adc_rec_buf, 1, 100);
  8001bd6:	4a32      	ldr	r2, [pc, #200]	; (8001ca0 <main+0x138>)
  8001bd8:	492c      	ldr	r1, [pc, #176]	; (8001c8c <main+0x124>)
  8001bda:	4830      	ldr	r0, [pc, #192]	; (8001c9c <main+0x134>)
@@ -3569,31 +3569,31 @@ int main(void)
  8001bde:	9300      	str	r3, [sp, #0]
  8001be0:	2301      	movs	r3, #1
  8001be2:	f001 fff3 	bl	8003bcc <HAL_SPI_TransmitReceive>
-	copy_bits(&adc_val, adc_rec_buf, 2);
+    copyBits(&adc_val, adc_rec_buf, 2);
  8001be6:	4b2e      	ldr	r3, [pc, #184]	; (8001ca0 <main+0x138>)
  8001be8:	7819      	ldrb	r1, [r3, #0]
  8001bea:	4b2e      	ldr	r3, [pc, #184]	; (8001ca4 <main+0x13c>)
  8001bec:	2202      	movs	r2, #2
  8001bee:	0018      	movs	r0, r3
- 8001bf0:	f000 f8b7 	bl	8001d62 <copy_bits>
+ 8001bf0:	f000 f8b7 	bl	8001d62 <copyBits>
 
-	// Receive next 8 bits of data
-	HAL_SPI_Receive(&hspi1, &adc_rec_buf, 1, 100);
+    // Receive next 8 bits of data
+    HAL_SPI_Receive(&hspi1, &adc_rec_buf, 1, 100);
  8001bf4:	492a      	ldr	r1, [pc, #168]	; (8001ca0 <main+0x138>)
  8001bf6:	4829      	ldr	r0, [pc, #164]	; (8001c9c <main+0x134>)
  8001bf8:	2364      	movs	r3, #100	; 0x64
  8001bfa:	2201      	movs	r2, #1
  8001bfc:	f001 fe9a 	bl	8003934 <HAL_SPI_Receive>
-	copy_bits(&adc_val, adc_rec_buf, 8);
+    copyBits(&adc_val, adc_rec_buf, 8);
  8001c00:	4b27      	ldr	r3, [pc, #156]	; (8001ca0 <main+0x138>)
  8001c02:	7819      	ldrb	r1, [r3, #0]
  8001c04:	4b27      	ldr	r3, [pc, #156]	; (8001ca4 <main+0x13c>)
  8001c06:	2208      	movs	r2, #8
  8001c08:	0018      	movs	r0, r3
- 8001c0a:	f000 f8aa 	bl	8001d62 <copy_bits>
+ 8001c0a:	f000 f8aa 	bl	8001d62 <copyBits>
 
-	// Set CS to high
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    // Set CS to high
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
  8001c0e:	2380      	movs	r3, #128	; 0x80
  8001c10:	005b      	lsls	r3, r3, #1
  8001c12:	481f      	ldr	r0, [pc, #124]	; (8001c90 <main+0x128>)
@@ -3601,9 +3601,9 @@ int main(void)
  8001c16:	0019      	movs	r1, r3
  8001c18:	f000 fe61 	bl	80028de <HAL_GPIO_WritePin>
 
-	/* Generate PWM */
-	// Calculate percentage of range of min to max ADC val
-	percentage_duty_cycle = adc_val / (MAX_VAL_IN_TEN_BITS + 1);
+    /* Generate PWM */
+    // Calculate percentage of range of min to max ADC val
+    percentage_duty_cycle = adc_val / (MAX_VAL_IN_TEN_BITS + 1);
  8001c1c:	4b21      	ldr	r3, [pc, #132]	; (8001ca4 <main+0x13c>)
  8001c1e:	881b      	ldrh	r3, [r3, #0]
  8001c20:	001a      	movs	r2, r3
@@ -3621,8 +3621,8 @@ int main(void)
  8001c3c:	600a      	str	r2, [r1, #0]
  8001c3e:	604b      	str	r3, [r1, #4]
 
-	// Set compare reg
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COUNT_PER_MS + COUNT_PER_MS * percentage_duty_cycle);
+    // Set compare reg
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COUNT_PER_MS + COUNT_PER_MS * percentage_duty_cycle);
  8001c40:	23c8      	movs	r3, #200	; 0xc8
  8001c42:	011b      	lsls	r3, r3, #4
  8001c44:	0018      	movs	r0, r3
@@ -3652,10 +3652,10 @@ int main(void)
  8001c7e:	0003      	movs	r3, r0
  8001c80:	6363      	str	r3, [r4, #52]	; 0x34
 
-	HAL_Delay(10);
+    HAL_Delay(10);
  8001c82:	200a      	movs	r0, #10
  8001c84:	f000 fbbe 	bl	8002404 <HAL_Delay>
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
  8001c88:	e798      	b.n	8001bbc <main+0x54>
  8001c8a:	46c0      	nop			; (mov r8, r8)
  8001c8c:	2000002c 	.word	0x2000002c
@@ -3784,10 +3784,13 @@ void SystemClock_Config(void)
  8001d52:	b019      	add	sp, #100	; 0x64
  8001d54:	bd90      	pop	{r4, r7, pc}
 
-08001d56 <setup_adc_config_byte>:
-
+08001d56 <setupAdcConfigByte>:
 /* USER CODE BEGIN 4 */
-uint8_t setup_adc_config_byte() {
+/**
+  * @brief  Sets up 8-bit buffer with ADC mode/channel selection bits set
+  * @retval 8-bit value to setup ADC mode/channel
+  */
+uint8_t setupAdcConfigByte() {
  8001d56:	b580      	push	{r7, lr}
  8001d58:	af00      	add	r7, sp, #0
 	// Select CH0 of ADC, single-ended mode
@@ -3798,9 +3801,13 @@ uint8_t setup_adc_config_byte() {
  8001d5e:	46bd      	mov	sp, r7
  8001d60:	bd80      	pop	{r7, pc}
 
-08001d62 <copy_bits>:
-
-void copy_bits(uint16_t* to, uint8_t from, uint8_t num_bits) {
+08001d62 <copyBits>:
+  * @param  to: pointer to destination buffer
+  * @param  from: source buffer
+  * @param  num_bits: number of bits to copy over
+  * @retval None
+  */
+void copyBits(uint16_t* to, uint8_t from, uint8_t num_bits) {
  8001d62:	b580      	push	{r7, lr}
  8001d64:	b084      	sub	sp, #16
  8001d66:	af00      	add	r7, sp, #0
@@ -3818,7 +3825,7 @@ void copy_bits(uint16_t* to, uint8_t from, uint8_t num_bits) {
  8001d7c:	18fb      	adds	r3, r7, r3
  8001d7e:	2200      	movs	r2, #0
  8001d80:	701a      	strb	r2, [r3, #0]
- 8001d82:	e020      	b.n	8001dc6 <copy_bits+0x64>
+ 8001d82:	e020      	b.n	8001dc6 <copyBits+0x64>
 		// Copy the last bit of from
 		uint8_t last_bit = from & 1;
  8001d84:	200e      	movs	r0, #14
@@ -3864,7 +3871,7 @@ void copy_bits(uint16_t* to, uint8_t from, uint8_t num_bits) {
  8001dcc:	7812      	ldrb	r2, [r2, #0]
  8001dce:	781b      	ldrb	r3, [r3, #0]
  8001dd0:	429a      	cmp	r2, r3
- 8001dd2:	d3d7      	bcc.n	8001d84 <copy_bits+0x22>
+ 8001dd2:	d3d7      	bcc.n	8001d84 <copyBits+0x22>
 	}
 }
  8001dd4:	46c0      	nop			; (mov r8, r8)
