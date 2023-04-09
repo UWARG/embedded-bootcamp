@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,12 +46,23 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t adc_start_byte = 1;
+uint8_t adc_config_byte = 0;
+uint8_t adc_rec_buf = 0;
+
+uint16_t adc_val = 0;
+double percentage_above_min_duty_cycle = 0.0f;
+const uint16_t MAX_VAL_IN_TEN_BITS = 1023;
+
+const uint16_t count = 64000;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+uint8_t setup_adc_config_byte();
+void copy_bits(uint16_t* to, uint8_t from, uint8_t num_bits);
 
 /* USER CODE END PFP */
 
@@ -74,6 +87,11 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  adc_config_byte = setup_adc_config_byte();
+  // Set CS pin to high initially
+  if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8)) {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  }
 
   /* USER CODE END Init */
 
@@ -87,7 +105,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -98,7 +119,32 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+    /* Grab ADC value */
+	// Set CS to low
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	// Send start bit
+	HAL_SPI_Transmit(&hspi1, &adc_start_byte, 1, 100);
+
+	// Send ADC configs, receive first 3 bits of data
+	HAL_SPI_TransmitReceive(&hspi1, &adc_config_byte, &adc_rec_buf, 1, 100);
+	copy_bits(&adc_val, adc_rec_buf, 2);
+
+	// Receive next 8 bits of data
+	HAL_SPI_Receive(&hspi1, &adc_rec_buf, 1, 100);
+	copy_bits(&adc_val, adc_rec_buf, 8);
+
+	// Set CS to high
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	/* Generate PWM */
+	// Calculate percentage of range of min to max ADC val
+	percentage_above_min_duty_cycle = adc_val / (MAX_VAL_IN_TEN_BITS + 1);
+
+	// Set compare reg
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3200 + 3200 * percentage_above_min_duty_cycle);
+
+	HAL_Delay(10);
   /* USER CODE END 3 */
 }
 
@@ -122,6 +168,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -143,6 +190,20 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint8_t setup_adc_config_byte() {
+	// Select CH0 of ADC, single-ended mode
+	return 128; // bin: 1000 0000
+}
+
+void copy_bits(uint16_t* to, uint8_t from, uint8_t num_bits) {
+	for (uint8_t i = 0; i < num_bits; i++) {
+		// Copy the last bit of from
+		uint8_t last_bit = from & 1;
+		*to <<= 1;
+		*to += last_bit;
+		from >>= 1;
+	}
+}
 
 /* USER CODE END 4 */
 
@@ -177,5 +238,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
