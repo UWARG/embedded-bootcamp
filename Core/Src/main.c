@@ -51,10 +51,10 @@ uint8_t adc_config_byte = 0;
 uint8_t adc_rec_buf = 0;
 
 uint16_t adc_val = 0;
-double percentage_above_min_duty_cycle = 0.0f;
+double percentage_duty_cycle = 0.0f;
 const uint16_t MAX_VAL_IN_TEN_BITS = 1023;
 
-const uint16_t count = 64000;
+const uint16_t COUNT_PER_MS = 64000 / 20;
 
 /* USER CODE END PV */
 
@@ -139,10 +139,10 @@ int main(void)
 
 	/* Generate PWM */
 	// Calculate percentage of range of min to max ADC val
-	percentage_above_min_duty_cycle = adc_val / (MAX_VAL_IN_TEN_BITS + 1);
+	percentage_duty_cycle = adc_val / (MAX_VAL_IN_TEN_BITS + 1);
 
 	// Set compare reg
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3200 + 3200 * percentage_above_min_duty_cycle);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COUNT_PER_MS + COUNT_PER_MS * percentage_duty_cycle);
 
 	HAL_Delay(10);
   }
