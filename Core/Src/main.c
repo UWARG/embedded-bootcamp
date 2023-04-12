@@ -46,12 +46,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t adc_start_byte = 1;
-uint8_t adc_config_byte = 0;
-uint8_t adc_rec_buf = 0;
+uint8_t send_arr[3] = {1, 128, 0};
+uint8_t rec_arr[3] = {0};
 
 uint16_t adc_val = 0;
-double percentage_duty_cycle = 0.0f;
+double percentage_duty_cycle = 0.0;
 const uint16_t MAX_VAL_IN_TEN_BITS = 1023;
 
 const uint16_t COUNT_PER_MS = 64000 / 20;
@@ -61,7 +60,6 @@ const uint16_t COUNT_PER_MS = 64000 / 20;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-uint8_t setupAdcConfigByte();
 void copyBits(uint16_t* to, uint8_t from, uint8_t num_bits);
 
 /* USER CODE END PFP */
@@ -87,11 +85,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  adc_config_byte = setupAdcConfigByte();
   // Set CS pin to high initially
-  if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8)) {
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-  }
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   /* USER CODE END Init */
 
@@ -123,16 +118,12 @@ int main(void)
     // Set CS to low
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-    // Send start bit
-    HAL_SPI_Transmit(&hspi1, &adc_start_byte, 1, 100);
-
-    // Send ADC configs, receive first 3 bits of data
-    HAL_SPI_TransmitReceive(&hspi1, &adc_config_byte, &adc_rec_buf, 1, 100);
-    copyBits(&adc_val, adc_rec_buf, 2);
-
-    // Receive next 8 bits of data
-    HAL_SPI_Receive(&hspi1, &adc_rec_buf, 1, 100);
-    copyBits(&adc_val, adc_rec_buf, 8);
+    // Retrieve ADC value
+    for (int i = 0; i < 3; i++) {
+    	HAL_SPI_TransmitReceive(&hspi1, &(send_arr[i]), &(rec_arr[i]), 1, 100);
+    }
+    copyBits(&adc_val, rec_arr[1], 2);
+    copyBits(&adc_val, rec_arr[2], 8);
 
     // Set CS to high
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -191,15 +182,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-/**
-  * @brief  Sets up 8-bit buffer with ADC mode/channel selection bits set
-  * @retval 8-bit value to setup ADC mode/channel
-  */
-uint8_t setupAdcConfigByte() {
-	// Select CH0 of ADC, single-ended mode
-	return 128; // bin: 1000 0000
-}
-
 /**
   * @brief  Copy bits from one buffer to another
   * @param  to: pointer to destination buffer
