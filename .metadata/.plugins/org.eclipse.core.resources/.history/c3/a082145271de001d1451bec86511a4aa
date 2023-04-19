@@ -97,44 +97,37 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  if (HAL_TIM_Base_Start(&htim1) != HAL_OK) // Start timer
-  {
-	  Error_Handler();
-  }
+  HAL_TIM_Base_Start(&htim1); // Start timer
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Disable communication with ADC
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  uint8_t tx_data[3];
-	  uint8_t rx_data[3];
+	  uint8_t txData[3];
+	  uint8_t rxData[3];
 
-	  tx_data[0] = 0b00000001; // Alignment bit x7, Start bit
-	  tx_data[1] = 0b10000000; // Single mode bit, Channel config bit *3, Don't care bit *4
-	  // tx_data[2] is only don't care bits
+	  txData[0] = 0b00000001; // Alignment bit x7, Start bit
+	  txData[1] = 0b10000000; // Single mode bit, Channel config bit *3, Don't care bit *4
+	  // txData[2] is only don't care bits
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // Initiate communication with ADC
 
-	  if (HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY) != HAL_OK)
+	  if (HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY) != HAL_OK)
 	  {
 		  Error_Handler();
 	  }
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Disable communication with ADC
 
-	  uint16_t ADC_value = (rx_data[1] << 8) | rx_data[0];
-	  unsigned int duty_cycle = 50;
+	  uint16_t ADCValue = (rxData[1] << 8) | rxData[0];
+	  unsigned int dutyCycle = 50;
 
-	  // Set compare register to the calculated "on counts" number
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle*((ADC_value/1023) + 1));
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, dutyCycle*((ADCValue/1023) + 1)); // Set compare register to the calculated "on counts" number
 
 	  HAL_Delay(10);
   }
-  if (HAL_TIM_Base_Stop(&htim1) != HAL_OK) // Stop timer (not sure if this is or not necessary as it is out of while loop)
-  {
-  	  Error_Handler();
-  }
+  HAL_TIM_Base_Stop(&htim1); // Stop timer (not sure if this is or not necessary as it is out of while loop
   /* USER CODE END 3 */
 }
 
