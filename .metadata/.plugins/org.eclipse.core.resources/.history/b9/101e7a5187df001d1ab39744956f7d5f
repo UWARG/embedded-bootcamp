@@ -97,7 +97,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK) // Start timer
+  if (HAL_TIM_Base_Start(&htim1) != HAL_OK) // Start timer
   {
 	  Error_Handler();
   }
@@ -110,8 +110,8 @@ int main(void)
 	  uint8_t tx_data[3];
 	  uint8_t rx_data[3];
 
-	  tx_data[0] = 0x01; // Alignment bit x7, Start bit
-	  tx_data[1] = 0x80; // Single mode bit, Channel config bit x3, Don't care bit x4
+	  tx_data[0] = 0b00000001; // Alignment bit x7, Start bit
+	  tx_data[1] = 0b10000000; // Single mode bit, Channel config bit *3, Don't care bit *4
 	  // tx_data[2] is only don't care bits
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // Initiate communication with ADC
@@ -123,17 +123,21 @@ int main(void)
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Disable communication with ADC
 
-	  uint16_t pot_value = (rx_data[1] << 8) | rx_data[2]; // take ADC value from buffer
-	  pot_value &= 0x03FF; // Take only last 10 bits
+	  uint16_t pot_value = (rx_data[1] << 8) | rx_data[0];
+	  pot_value &= 0b1111111111; // Take only last 10 bits
 
 	  const uint16_t FIVE_PERCENT_COUNTER_PERIOD = 3200; // 64000 * 0.05 = 3200
 	  const uint16_t POT_MAX_VALUE = 1023; // Maximum 10 bit value
-	  uint16_t duty_cycle = FIVE_PERCENT_COUNTER_PERIOD * (1 + pot_value / POT_MAX_VALUE); // 5% - 10% of Period
+	  uint16_t duty_cycle = FIVE_PERCENT_COUNTER_PERIOD * (1 + pot_value / POT_MAX_VALUE); // I'm not exactly sure if the math checks out
 
 	  // Set compare register to the calculated "on counts" number
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
 
 	  HAL_Delay(10);
+  }
+  if (HAL_TIM_Base_Stop(&htim1) != HAL_OK) // Stop timer (not sure if this is or not necessary as it is out of while loop)
+  {
+  	  Error_Handler();
   }
   /* USER CODE END 3 */
 }

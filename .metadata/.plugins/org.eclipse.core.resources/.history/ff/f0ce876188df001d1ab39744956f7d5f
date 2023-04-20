@@ -124,11 +124,11 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Disable communication with ADC
 
 	  uint16_t pot_value = (rx_data[1] << 8) | rx_data[2]; // take ADC value from buffer
-	  pot_value &= 0x03FF; // Take only last 10 bits
+	  pot_value &= 0b1111111111; // Take only last 10 bits
 
 	  const uint16_t FIVE_PERCENT_COUNTER_PERIOD = 3200; // 64000 * 0.05 = 3200
 	  const uint16_t POT_MAX_VALUE = 1023; // Maximum 10 bit value
-	  uint16_t duty_cycle = FIVE_PERCENT_COUNTER_PERIOD * (1 + pot_value / POT_MAX_VALUE); // 5% - 10% of Period
+	  uint16_t duty_cycle = FIVE_PERCENT_COUNTER_PERIOD * (1 + pot_value / POT_MAX_VALUE); // 5% - 10% of Counter Period
 
 	  // Set compare register to the calculated "on counts" number
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
