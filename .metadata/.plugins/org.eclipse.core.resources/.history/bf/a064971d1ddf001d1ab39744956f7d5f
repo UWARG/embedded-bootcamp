@@ -126,8 +126,8 @@ int main(void)
 	  uint16_t pot_value = (rx_data[1] << 8) | rx_data[0];
 	  pot_value &= 0b1111111111; // Take only last 10 bits
 
-	  const uint16_t FIVE_PERCENT_COUNTER_PERIOD = 3200; // 64000 * 0.05 = 3200
-	  const uint16_t POT_MAX_VALUE = 1023; // Maximum 10 bit value
+	  uint16_t FIVE_PERCENT_COUNTER_PERIOD = 3200;
+	  uint16_t POT_MAX_VALUE = 1023;
 	  uint16_t duty_cycle = FIVE_PERCENT_COUNTER_PERIOD * (1 + pot_value / POT_MAX_VALUE); // I'm not exactly sure if the math checks out
 
 	  // Set compare register to the calculated "on counts" number
