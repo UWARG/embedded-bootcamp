@@ -123,11 +123,12 @@ int main(void)
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Disable communication with ADC
 
-	  uint16_t pot_value = (rx_data[1] << 8) | rx_data[0];
-	  unsigned int duty_cycle = 3200*(1 + pot_value/1023); // I'm not exactly sure if the math checks out
+	  uint16_t ADC_value = (rx_data[1] << 8) | rx_data[0];
+	  unsigned int duty_cycle = 3200*(1 + ADC_value/1023);
 
 	  // Set compare register to the calculated "on counts" number
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
+	  // I'm not exactly sure if the math here checks out ---------^
 
 	  HAL_Delay(10);
   }

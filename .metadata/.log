@@ -206,3 +206,21 @@ org.eclipse.ui.PartInitException: Invalid Input: Must be IFileEditorInput
 
 !ENTRY org.eclipse.cdt.core 1 0 2023-04-18 20:11:23.331
 !MESSAGE Indexed '2021-Firmware-Bootcamp' (25 sources, 85 headers) in 3.53 sec: 4,879 declarations; 28,943 references; 0 unresolved inclusions; 1 syntax errors; 2 unresolved names (0.0059%)
+!SESSION 2023-04-19 20:04:50.728 -----------------------------------------------
+eclipse.buildId=Version 1.10.1
+java.version=11.0.14.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_CA
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY org.eclipse.core.resources 2 10035 2023-04-19 20:05:01.489
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2023-04-19 20:05:13.252
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-04-19 20:05:13.336
+!MESSAGE Log4j initialized with config file C:\Users\ronik\Programming\WARG\embedded-bootcamp\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-04-19 20:05:22.754
+!MESSAGE Started RMI Server, listening on port 41337
