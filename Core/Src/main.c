@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -51,6 +53,12 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+// Declare constants
+const uint8_t ADC_READ_TIMEOUT = 5; // Corresponds to 5 ms
+const float MAX_DUTY_CYCLE = 0.05; // Corresponds to 5%
+const float MIN_DUTY_CYCLE = 0.10; // Corresponds to 10%
+const uint16_t COUNTER_PERIOD = 65535; // Corresponds to 2^16 - 1
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -65,6 +73,14 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+  // Control Bit Selection to select Channel 1 (SGL/DIFF = 1 | D2 = 0 | D1 = 0 | D0 = 1)
+  uint8_t tx_data = 0x00;
+  uint8_t rx_data = 0x00;
+  uint16_t adc_value = 0x0000;
+  float adc_ratio = 0.0;
+  float duty_cycle = 0.0;
+  uint16_t compare_value = 0x0000;
 
   /* USER CODE END 1 */
 
@@ -87,7 +103,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // Start the PWM signal
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,6 +116,48 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // Delay to ensure the MCU doesn't overload the ADC
+	  HAL_Delay(10);
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // Set Chip Select (CS) to LOW to enable communication
+
+	  // Transmit the first byte (From Diagram 6-1 the first byte is 0000 0001)
+	  tx_data = 0b00000001;
+	  HAL_SPI_Transmit(&hspi1, &tx_data, sizeof(uint8_t), ADC_READ_TIMEOUT);
+	  tx_data = 0;
+
+	  /*
+	   * Transmit the second byte (From Diagram 6-1 the second byte should be 1000 0000)
+	   * Explanation: SGL/DIFF = 1 -> Want to select single-ended
+	   * D2 = 1 | D1 = 0 | D0 = 0 -> Want to select Channel 0
+	  */
+	  tx_data = 0b10000000;
+	  HAL_SPI_TransmitReceive(&hspi1, &tx_data, &rx_data, sizeof(uint8_t), ADC_READ_TIMEOUT);
+	  tx_data = 0;
+
+	  // AND the rx_data with 0000 0011 to only keep bits 0 and 1
+	  // LEFT SHIFT	by 8 bits to move bits 0 and 1 to bits 8 and 9 respectively
+	  adc_value = (rx_data & 0x03) << 8;
+	  rx_data = 0;
+
+	  // Transmit the third byte (From Diagram 6-1 the third byte XXXX XXXX where X represents a don't care)
+	  tx_data = 0b00000000;
+	  HAL_SPI_TransmitReceive(&hspi1, &tx_data, &rx_data, sizeof(uint8_t), ADC_READ_TIMEOUT);
+	  tx_data = 0;
+
+	  // OR the adc_value with rx_data to receive bits 7 to 0
+	  adc_value |= rx_data;
+	  rx_data = 0;
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Set CS to HIGH to disable communication
+
+	  // The ADC ratio is the value received from the ADC divided by the maximum value 10 bits can store 2^10 - 1 = 1023
+	  adc_ratio = (float)(adc_value / 1023);
+	  duty_cycle = (adc_ratio * (MAX_DUTY_CYCLE - MIN_DUTY_CYCLE)) + MIN_DUTY_CYCLE;
+	  compare_value = (uint16_t)(duty_cycle * COUNTER_PERIOD);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +185,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +241,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
