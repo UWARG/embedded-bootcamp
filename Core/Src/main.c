@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,17 +92,42 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  uint8_t txData[3],rxData[3];
+
+	  txData[0] = 0b00000001; txData[1] = 0b10000000; txData[2] = 0b00000000;
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, 100);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  uint8_t upperByte = rxData[1];
+	  uint8_t lowerByte = rxData[2];
+	  uint16_t sixteenBitADC = (upperByte<<8) | lowerByte;
+
+	  uint16_t dutyCycle = sixteenBitADC / 0b1111111111;
+	  int timeHigh = 1 + dutyCycle*1;
+	  int compareValue = 3200 * timeHigh;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareValue);
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
