@@ -37,7 +37,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-
+	const float maxADC = 1024;
+	const int ticksPerMillisecond = 3200;
 
 /* USER CODE END PD */
 
@@ -112,7 +113,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  uint8_t txData[3],rxData[3];
 
-	  txData[0] = 0b00000001; txData[1] = 0b10000000; txData[2] = 0b00000000;
+	  txData[0] = 0b00000001; txData[1] = 0b10000000; txData[2] = 0b00000000; // from data sheet
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, 100);
@@ -120,11 +121,15 @@ int main(void)
 
 	  uint8_t upperByte = rxData[1];
 	  uint8_t lowerByte = rxData[2];
+	  // convert the ADC value into a 16 bit integer:
 	  uint16_t sixteenBitADC = (upperByte<<8) | lowerByte;
 
-	  uint16_t dutyCycle = sixteenBitADC / 0b1111111111;
-	  int timeHigh = 1 + dutyCycle*1;
-	  int compareValue = 3200 * timeHigh;
+	  // find the ratio between the transmitted ADC value and its max value to get the duty cycle:
+	  uint16_t dutyCycle = sixteenBitADC / maxADC;
+	  // add the duty cycle to 1 millisecond to get the on time (it's between 1 and 2 ms):
+	  float timeHigh = dutyCycle + 1;
+	  // multiply the time high by ticks per ms to get the required compare value for the macro:
+	  int compareValue = ticksPerMillisecond * timeHigh;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareValue);
 	  HAL_Delay(10);
