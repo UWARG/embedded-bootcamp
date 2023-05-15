@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,18 +89,36 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_TIM_PWM_Start(*htim, TIM_CHANNEL_1); //assuming channel 1 based on schematic "servo header". Timer needs to be started only once in program, so it is outside loop
   while (1)
   {
-    /* USER CODE END WHILE */
+	  int pTxData = 0;
+	  int pRxData = 0;
+	  HAL_Delay(10);
+	  *pTxData = 0b000000011000000000000000;
+			  /*
+			   * 00000001 - first byte sent, contains only start bit.
+			   * second byte: single / diffrential bit set to 1 for single ended. 0's for channel 0, then more 0's for dont care bits.
+			   * third byte: entirely dont care bits, all useful information is sent in the 1 bits.
+			   */
+	  HAL_SPI_TransmitReceive_IT(*hspi, *pTxData, *pRxData, 3); //size = 3 bytes (24bits), Rxdata is pointer to received data, TxData is pointer to transmitted. *hspi has config info
+	  //bitwise operations to read the data. data is stored in last 10 bits of Rxdata.
+	  int mask = 0b000000000000001111111111;
+	  int value = mask & *pRxdata; //ands the received value with mask, so only the important bits of information remain, and this 'value' is a number from 0 to 1024.
+	  //should have some code here to convert ADC -> PWM duty cycle, but not sure how to do this given my calculations said id have 960,000 steps which is without a doubt, wrong. Add this later.
+	  int duty_cycle = value;
+	  __HAL_TIM_SET_COMPARE(*htim1, TIM_CHANNEL_1, duty_cycle); //i pray this works. my duty cycle value is likely wrong, but this should update the counter
 
     /* USER CODE BEGIN 3 */
-  }
+  } /* USER CODE END WHILE */
   /* USER CODE END 3 */
 }
 
