@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -65,7 +67,19 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	// Timer Variables
+	const uint16_t 	COUNTER_PERIOD = 64000;
+	const uint16_t	ADC_MAX = 1023;
+	const int 	SPI_TIMEOUT = 1000;
 
+	// ADC Variables
+	const int MIN_COUNT_VALUE = 0.05;
+	const uint8_t MIN_COMPARE_VAL = MIN_COUNT_VALUE * COUNTER_PERIOD;
+	uint16_t adc_input = 0;
+
+    // SPI Variables
+    uint8_t 	SPI_Transmit[3] = {0x1, 0x80, 0x0};
+    uint8_t 	SPI_Recieve[3] = {0x0, 0x0, 0x0};
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,7 +101,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // Init PWM Timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  // Set Chip Select high to stop communication
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
@@ -95,6 +117,28 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  // Set Chip Select low to start communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // Send and receive SPI Data in duplex mode
+	  HAL_SPI_TransmitReceive(&hspi1, SPI_Transmit, SPI_Recieve, 3, SPI_TIMEOUT);
+
+	  // Set Chip Select high to stop communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // Save ADC data
+	  adc_input = ((SPI_Recieve[1] << 8) & (SPI_Recieve[2]));
+
+	  // Calculate Capture Compare value
+	  double compare_value = (double)adc_input / ADC_MAX * MIN_COMPARE_VAL + MIN_COMPARE_VAL;
+
+	  // Update Capture Compare Value
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
+
+	  // To prevent code blowing up
+	  HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
