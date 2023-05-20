@@ -19,12 +19,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
+#include "stdint.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +68,18 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  const uint16_t COUNTER_PERIOD = 60000;
+  const uint16_t ADC_MAX_VALUE = 1023;
+  const uint8_t RX_BIT_MASK[3] = {0x0, 0x7F, 0xE0};
+
+  const double PWN_LB = COUNTER_PERIOD*0.05;
+  const double PWM_UB = COUNTER_PERIOD*0.1;
+  const double PWM_RANGE = PWM_UB-PWM_LB;
+
+  uint8_t tx_data[3] = {0x18, 0x0, 0x0};
+  uint8_t rx_xata[3] = {0x0, 0x0, 0x0};
+  uint16_t adc_value = 0;
+  uint16_t pwm_output = 0;
 
   /* USER CODE END 1 */
 
@@ -87,9 +102,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+  /* initialize PWM timer */
+  HAL_TIM_PWM_Init(&htim1);
+
+  /* initialize CS high */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -98,7 +119,22 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	/* Initiate Tx-Rx*/
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 100);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	/* Read in bits and convert to 16 bit */
+	adc_value = ((rx_data[0]&rx_mask[1])<<3) | ((rx_data[1]&rx_mask[2])>>5);
+
+	pwm_output = PWM_LB + (adc_value/adc_max)*PWM_RANGE;
+
+	/* Send PWM signal */
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_output);
   }
+
+  HAL_Delay(10);
   /* USER CODE END 3 */
 }
 
