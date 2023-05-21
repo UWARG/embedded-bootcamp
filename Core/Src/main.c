@@ -128,7 +128,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  // Save ADC data
-	  adc_input = ((SPI_Recieve[1] << 8) & (SPI_Recieve[2]));
+	  adc_input = ((SPI_Recieve[1] << 8) | (SPI_Recieve[2]));
 
 	  // Calculate Capture Compare value
 	  double compare_value = (double)adc_input / ADC_MAX * MIN_COMPARE_VAL + MIN_COMPARE_VAL;
