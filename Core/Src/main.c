@@ -128,7 +128,7 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	/* Read in bits and convert to 16 bit */
-	adc_value = ((rx_data[0]&RX_BIT_MASK)<<8) | rx_data[1];
+	adc_value = ((rx_data[1]&RX_BIT_MASK)<<8) | rx_data[2];
 
 	pwm_output = PWM_LB + (adc_value/adc_max)*PWM_RANGE;
 
