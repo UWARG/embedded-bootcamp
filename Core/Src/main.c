@@ -70,13 +70,15 @@ int main(void)
   /* USER CODE BEGIN 1 */
   const uint16_t COUNTER_PERIOD = 60000;
   const uint16_t ADC_MAX_VALUE = 1023;
-  const uint8_t RX_BIT_MASK[3] = {0x0, 0x7F, 0xE0};
+  const uint8_t TX_DATA[3] = {0x01, 0x0, 0x0};
+  const uint8_t RX_BIT_MASK = 0x03;
+  const int NUM_BYTES = 3;
+  const int TIMEOUT_MS = 100;
 
-  const double PWN_LB = COUNTER_PERIOD*0.05;
+  const double PWM_LB = COUNTER_PERIOD*0.05;
   const double PWM_UB = COUNTER_PERIOD*0.1;
   const double PWM_RANGE = PWM_UB-PWM_LB;
 
-  uint8_t tx_data[3] = {0x18, 0x0, 0x0};
   uint8_t rx_xata[3] = {0x0, 0x0, 0x0};
   uint16_t adc_value = 0;
   uint16_t pwm_output = 0;
@@ -106,8 +108,8 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  /* initialize PWM timer */
-  HAL_TIM_PWM_Init(&htim1);
+  /* Start PWM timer */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* initialize CS high */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -122,11 +124,11 @@ int main(void)
 
 	/* Initiate Tx-Rx*/
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 100);
+	HAL_SPI_TransmitReceive(&hspi1, TX_DATA, rx_data, NUM_BYTES, TIMEOUT_MS);
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	/* Read in bits and convert to 16 bit */
-	adc_value = ((rx_data[0]&rx_mask[1])<<3) | ((rx_data[1]&rx_mask[2])>>5);
+	adc_value = ((rx_data[0]&RX_BIT_MASK)<<8) | rx_data[1];
 
 	pwm_output = PWM_LB + (adc_value/adc_max)*PWM_RANGE;
 
