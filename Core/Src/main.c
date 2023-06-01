@@ -89,6 +89,24 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  HAL_StatusTypeDef hal_status;
+
+  SPI_HandleTypeDef p_hspi1 = &hspi1;
+
+  uint8_t tx_buffer[100];
+  tx_buffer[0] = 0x01;
+  tx_buffer[1] = 0x80;
+
+  uint8_t rx_buffer[100];
+
+  uint16_t data_size = 8;
+  uint32_t timeout = 1 << 32;
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,7 +116,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  hal_status =  HAL_SPI_TransmitReceive(p_hspi1, tx_buffer, rx_buffer, data_size, timeout);
   }
+
+  HAL_Delay(10);
   /* USER CODE END 3 */
 }
 
