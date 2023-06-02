@@ -21,6 +21,7 @@
 #include "main.h"
 #include "usart.h"
 #include "gpio.h"
+#include "spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -117,6 +118,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  hal_status =  HAL_SPI_TransmitReceive(p_hspi1, tx_buffer, rx_buffer, data_size, timeout);
+
+	  //uint16_t analog_voltage_val = rx_buffer[2] & 0xFF + rx_buffer[1] & 0x02;
   }
 
   HAL_Delay(10);
