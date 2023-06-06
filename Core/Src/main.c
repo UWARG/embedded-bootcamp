@@ -47,6 +47,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+HAL_StatusTypeDef hal_status;
+uint8_t data_size = 3;
+uint32_t timeout = 1 << 31;
 
 /* USER CODE END PV */
 
@@ -97,43 +100,16 @@ int main(void)
 
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-  HAL_StatusTypeDef hal_status;
-
-  SPI_HandleTypeDef *p_hspi1 = &hspi1;
-
   uint8_t tx_buffer[3];
   tx_buffer[0] = 0x01;
   tx_buffer[1] = 0x80;
-
   uint8_t rx_buffer[3];
 
-  uint16_t data_size = 8;
-  uint32_t timeout = 1 << 32;
-
+  //pull CS pin low.
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-  hal_status =  HAL_SPI_TransmitReceive(p_hspi1, tx_buffer, rx_buffer, data_size, timeout);
-
-  uint8_t second_byte =  rx_buffer[1];
-  uint8_t third_byte = rx_buffer[2];
-
-
-  /* We want the last 2 bits of the second received byte and the full byte of the third received byte */
-  uint16_t analog_voltage_val = ((second_byte & 0x03) << 8) + third_byte;
-
-
-  int mapped_val = (480.0/1024) * analog_voltage_val;
-  uint16_t on_counts = mapped_val + 480;
-
-
-  /* Start timer */
+  // Start timer
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
-
-
-
-
-
 
   /* USER CODE END 2 */
 
@@ -141,7 +117,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  hal_status =  HAL_SPI_TransmitReceive(&hspi1, tx_buffer, rx_buffer, data_size, timeout); // transmit/receive data to/from ADC.
+
+	  uint8_t second_byte =  rx_buffer[1];
+	  uint8_t third_byte = rx_buffer[2];
+
+	  // We want the last 2 bits of the second received byte and the full byte of the third received byte.
+	  uint16_t analog_voltage_val = ((second_byte & 0x03) << 8) + third_byte;
+
+	  // map ADC value to a value between 480 and 960 for 5 - 10% duty cycle since counter period is 9600.
+	  int mapped_val = (480.0/1024) * analog_voltage_val;
+	  uint16_t on_counts = mapped_val + 480;
+
+	  // Set compare register.
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, on_counts);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
