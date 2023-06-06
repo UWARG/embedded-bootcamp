@@ -19,9 +19,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -88,24 +90,49 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
+  MX_ADC_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   HAL_StatusTypeDef hal_status;
 
-  SPI_HandleTypeDef p_hspi1 = &hspi1;
+  SPI_HandleTypeDef *p_hspi1 = &hspi1;
 
-  uint8_t tx_buffer[100];
+  uint8_t tx_buffer[3];
   tx_buffer[0] = 0x01;
   tx_buffer[1] = 0x80;
 
-  uint8_t rx_buffer[100];
+  uint8_t rx_buffer[3];
 
   uint16_t data_size = 8;
   uint32_t timeout = 1 << 32;
 
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  hal_status =  HAL_SPI_TransmitReceive(p_hspi1, tx_buffer, rx_buffer, data_size, timeout);
+
+  uint8_t second_byte =  rx_buffer[1];
+  uint8_t third_byte = rx_buffer[2];
+
+
+  /* We want the last 2 bits of the second received byte and the full byte of the third received byte */
+  uint16_t analog_voltage_val = ((second_byte & 0x03) << 8) + third_byte;
+
+
+  int mapped_val = (480.0/1024) * analog_voltage_val;
+  uint16_t on_counts = mapped_val + 480;
+
+
+  /* Start timer */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+
+
+
+
 
 
   /* USER CODE END 2 */
@@ -114,12 +141,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, on_counts);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  hal_status =  HAL_SPI_TransmitReceive(p_hspi1, tx_buffer, rx_buffer, data_size, timeout);
 
-	  //uint16_t analog_voltage_val = rx_buffer[2] & 0xFF + rx_buffer[1] & 0x02;
   }
 
   HAL_Delay(10);
@@ -139,8 +165,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI14|RCC_OSCILLATORTYPE_HSI48;
   RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
+  RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
+  RCC_OscInitStruct.HSI14CalibrationValue = 16;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
