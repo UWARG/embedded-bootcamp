@@ -50,6 +50,8 @@
 HAL_StatusTypeDef hal_status;
 uint8_t data_size = 3;
 uint32_t timeout = 1 << 31;
+float max_analog_value = 1024;
+float one_ms_duty_cycle_val = 480; //With a 9600 counter period, 480 is 5% or 1ms.
 
 /* USER CODE END PV */
 
@@ -103,10 +105,12 @@ int main(void)
   uint8_t tx_buffer[3];
   tx_buffer[0] = 0x01;
   tx_buffer[1] = 0x80;
-  uint8_t rx_buffer[3];
+  tx_buffer[2] = 0x0;
 
-  //pull CS pin low.
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+  uint8_t rx_buffer[3];
+  rx_buffer[0] = 0x0;
+
+
 
   // Start timer
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -117,7 +121,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  //pull CS pin low.
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
 	  hal_status =  HAL_SPI_TransmitReceive(&hspi1, tx_buffer, rx_buffer, data_size, timeout); // transmit/receive data to/from ADC.
+
+	  //pull CS pin high.
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  uint8_t second_byte =  rx_buffer[1];
 	  uint8_t third_byte = rx_buffer[2];
@@ -126,11 +137,13 @@ int main(void)
 	  uint16_t analog_voltage_val = ((second_byte & 0x03) << 8) + third_byte;
 
 	  // map ADC value to a value between 480 and 960 for 5 - 10% duty cycle since counter period is 9600.
-	  int mapped_val = (480.0/1024) * analog_voltage_val;
-	  uint16_t on_counts = mapped_val + 480;
+	  uint16_t mapped_val = (one_ms_duty_cycle_val/max_analog_value) * analog_voltage_val;
+	  uint16_t on_counts = mapped_val + one_ms_duty_cycle_val;
 
 	  // Set compare register.
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, on_counts);
+
+
 
     /* USER CODE END WHILE */
 
