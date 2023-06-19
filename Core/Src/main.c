@@ -97,26 +97,28 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_TIM_PWM_Start(*htim, TIM_CHANNEL_1); //assuming channel 1 based on schematic "servo header". Timer needs to be started only once in program, so it is outside loop
+  int pRxData[24];
+  int pTxData[24] = {0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //exchanging 3 bytes of information, therefore our arrays are 24bits in length. first byte contains start bit. second byte contains the single / diffrential bit (set to 1 for single), 0's to select the channel, and some dont cares. third byte is entire dont care bits.
+  TIM_HandleTypeDef htim1; //declare timer 1
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //assuming channel 1 based on schematic "servo header". Timer needs to be started only once in program, so it is outside loop
   while (1)
   {
-	  int pTxData = 0;
-	  int pRxData = 0;
-	  HAL_Delay(10);
-	  *pTxData = 0b000000011000000000000000;
-			  /*
-			   * 00000001 - first byte sent, contains only start bit.
-			   * second byte: single / diffrential bit set to 1 for single ended. 0's for channel 0, then more 0's for dont care bits.
-			   * third byte: entirely dont care bits, all useful information is sent in the 1 bits.
-			   */
-	  HAL_SPI_TransmitReceive_IT(*hspi, *pTxData, *pRxData, 3); //size = 3 bytes (24bits), Rxdata is pointer to received data, TxData is pointer to transmitted. *hspi has config info
+	  HAL_SPI_TransmitReceive(&hspi, pTxData, pRxData, 3); //size = 3 bytes (24bits), Rxdata is pointer to received data (array), TxData is pointer to transmitted. *hspi has config info
 	  //bitwise operations to read the data. data is stored in last 10 bits of Rxdata.
-	  int mask = 0b000000000000001111111111;
-	  int value = mask & *pRxdata; //ands the received value with mask, so only the important bits of information remain, and this 'value' is a number from 0 to 1024.
-	  //should have some code here to convert ADC -> PWM duty cycle, but not sure how to do this given my calculations said id have 960,000 steps which is without a doubt, wrong. Add this later.
-	  int duty_cycle = value;
-	  __HAL_TIM_SET_COMPARE(*htim1, TIM_CHANNEL_1, duty_cycle); //i pray this works. my duty cycle value is likely wrong, but this should update the counter
-
+	  int ADCval = 0; //ADC value
+	  for (int i = 23; i > 0; i--) { //start at end of pRxData, going through and incrementing the value
+		 //ADCval += pRxData[i] * powers of 2. rightmost is 2^0, leftmost is 2^24
+		 if (i == 23) ADCval += pRxData[i]; //at last bit, value is multiplied by 2^0 = 1, so value added is just pRxData
+		 else {
+			 int pow = 1; //start at 2^0 then multiply by 2 for each increasing power cause easier.
+			 for (int j = 1; j < 23-i; j++) {
+				 pow *= 2;
+			 }
+			 ADCval += pRxData[i] * pow;
+		 }
+	  }
+	  int duty_cycle = ADCval;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle); //i pray this works. my duty cycle value is likely wrong, but this should update the counter. changed * to &.
     /* USER CODE BEGIN 3 */
   } /* USER CODE END WHILE */
   /* USER CODE END 3 */
