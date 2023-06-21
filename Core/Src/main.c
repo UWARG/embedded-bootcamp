@@ -97,27 +97,20 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int pRxData[24];
-  int pTxData[24] = {0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //exchanging 3 bytes of information, therefore our arrays are 24bits in length. first byte contains start bit. second byte contains the single / diffrential bit (set to 1 for single), 0's to select the channel, and some dont cares. third byte is entire dont care bits.
+  uint8_t pRxData[3]; //receiving 3 bytes (byte by byte) from SPI.
+  //int pTxData[24] = {0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //exchanging 3 bytes of information, therefore our arrays are 24bits in length. first byte contains start bit. second byte contains the single / diffrential bit (set to 1 for single), 0's to select the channel, and some dont cares. third byte is entire dont care bits.
+  uint8_t pTxData[3] = {0x01, 0x80, 0x00}; //SPI requires byte by byte, so we have to use uin8_t. we have 24 bits -> 3 bytes. The 3 hexadecimal numbers each represent 1 byte, and are made by splitting the 24 bits above into 3 bytes, and representing these groupings (binary) as hexadecimal numbers.
   TIM_HandleTypeDef htim1; //declare timer 1
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //assuming channel 1 based on schematic "servo header". Timer needs to be started only once in program, so it is outside loop
   while (1)
   {
 	  HAL_SPI_TransmitReceive(&hspi, pTxData, pRxData, 3); //size = 3 bytes (24bits), Rxdata is pointer to received data (array), TxData is pointer to transmitted. *hspi has config info
 	  //bitwise operations to read the data. data is stored in last 10 bits of Rxdata.
-	  int ADCval = 0; //ADC value
-	  for (int i = 23; i > 0; i--) { //start at end of pRxData, going through and incrementing the value
-		 //ADCval += pRxData[i] * powers of 2. rightmost is 2^0, leftmost is 2^24
-		 if (i == 23) ADCval += pRxData[i]; //at last bit, value is multiplied by 2^0 = 1, so value added is just pRxData
-		 else {
-			 int pow = 1; //start at 2^0 then multiply by 2 for each increasing power cause easier.
-			 for (int j = 1; j < 23-i; j++) {
-				 pow *= 2;
-			 }
-			 ADCval += pRxData[i] * pow;
-		 }
-	  }
-	  int duty_cycle = ADCval;
+	  uint16_t ADCval = 0; //ADC value has a range of 10 bits. The smallest int size this fits into is uint16_t (16 bits).
+	  //Now, we convert the last 2 bits of the second byte + the last byte into our 10 bit ADC value. The earlier bits are don't cares.
+	  uint16_t bitTwo = (pRxData[1] & 0x03) << 8; //this number is the last two bits of second byte, and the first two (non-zero) bits of our 10bit number. & 0x03 ensures that all bits aside from last two are zeroes.
+	  ADCval = bitTwo | pRxData[2]; //uses bitwise OR to combine the two last bits of second byte and the last byte to make our 10bit ADC number.
+	  uint16_t duty_cycle = ADCval;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle); //i pray this works. my duty cycle value is likely wrong, but this should update the counter. changed * to &.
     /* USER CODE BEGIN 3 */
   } /* USER CODE END WHILE */
