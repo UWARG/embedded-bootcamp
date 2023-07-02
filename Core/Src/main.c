@@ -19,12 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,7 +40,13 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define ADC_SPI_NUM_BYTES 3U
+#define ADC_SPI_TX_START_BYTE 0x01U
+#define ADC_SPI_TX_CH0_SE_BYTE 0x80U
+#define ADC_SPI_RX_VAL_MASK 0b00000011U
+#define ADC_MAX_OUTPUT_VAL 1023U
+#define TIM_COUNTS_1MS 3276U
+#define TIM_COUNTS_2MS 6552U
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -87,16 +95,36 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  uint8_t adc_tx_buf[ADC_SPI_NUM_BYTES] = {ADC_SPI_TX_START_BYTE, ADC_SPI_TX_CH0_SE_BYTE, 0};
+  uint8_t adc_rx_buf[ADC_SPI_NUM_BYTES] = {0};
+  uint16_t adc_val = 0;
+  uint16_t comparision_val;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	   /* Pull the PB8 GPIO (CS) pin low */
+	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	   if (HAL_SPI_TransmitReceive(&hspi1, adc_tx_buf, adc_rx_buf, ADC_SPI_NUM_BYTES, HAL_MAX_DELAY) != HAL_OK) {
+	       // SPI transfer error
+		   // pull CS high
+		   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	       while (1);
+	   }
+	   // pull CS high now that adc spi transfer is done
+	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	   adc_val = (adc_rx_buf[1] & ADC_SPI_RX_VAL_MASK) << 8;
+	   adc_val |= adc_rx_buf[0];
 
+	   comparision_val = TIM_COUNTS_1MS + (((float)adc_val / ADC_MAX_OUTPUT_VAL) * (TIM_COUNTS_2MS - TIM_COUNTS_1MS));
+	   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, comparision_val);
+    /* USER CODE END WHILE */
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -122,6 +150,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +206,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
