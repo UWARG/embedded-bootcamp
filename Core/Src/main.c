@@ -112,8 +112,8 @@ int main(void)
 	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	   if (HAL_SPI_TransmitReceive(&hspi1, adc_tx_buf, adc_rx_buf, ADC_SPI_NUM_BYTES, HAL_MAX_DELAY) != HAL_OK) {
 	       // SPI transfer error
-		   // pull CS high
-		   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+		     // pull CS high
+		     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 	       while (1);
 	   }
 	   // pull CS high now that adc spi transfer is done
