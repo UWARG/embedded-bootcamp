@@ -47,7 +47,7 @@
 #define ADC_MAX_OUTPUT_VAL 1023U
 #define TIM_COUNTS_1MS 3276U
 #define TIM_COUNTS_2MS 6552U
-#define ADC_SPI_TIMEOUT 1U
+#define ADC_SPI_TIMEOUT 1000U
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
