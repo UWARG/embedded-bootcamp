@@ -47,6 +47,7 @@
 #define ADC_MAX_OUTPUT_VAL 1023U
 #define TIM_COUNTS_1MS 3276U
 #define TIM_COUNTS_2MS 6552U
+#define ADC_SPI_TIMEOUT 1U
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -98,7 +99,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t adc_tx_buf[ADC_SPI_NUM_BYTES] = {ADC_SPI_TX_START_BYTE, ADC_SPI_TX_CH0_SE_BYTE, 0};
+  const uint8_t adc_tx_buf[ADC_SPI_NUM_BYTES] = {ADC_SPI_TX_START_BYTE, ADC_SPI_TX_CH0_SE_BYTE, 0};
   uint8_t adc_rx_buf[ADC_SPI_NUM_BYTES] = {0};
   uint16_t adc_val = 0;
   uint16_t comparision_val;
@@ -110,11 +111,11 @@ int main(void)
   {
 	   /* Pull the PB8 GPIO (CS) pin low */
 	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	   if (HAL_SPI_TransmitReceive(&hspi1, adc_tx_buf, adc_rx_buf, ADC_SPI_NUM_BYTES, HAL_MAX_DELAY) != HAL_OK) {
+	   if (HAL_SPI_TransmitReceive(&hspi1, adc_tx_buf, adc_rx_buf, ADC_SPI_NUM_BYTES, ADC_SPI_TIMEOUT) != HAL_OK) {
 	       // SPI transfer error
 		     // pull CS high
 		     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	       while (1);
+	       // Log and handle error somehow if needed
 	   }
 	   // pull CS high now that adc spi transfer is done
 	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
