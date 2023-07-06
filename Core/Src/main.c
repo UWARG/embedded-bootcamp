@@ -116,14 +116,15 @@ int main(void)
 		     // pull CS high
 		     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 	       // Log and handle error somehow if needed
-	   }
-	   // pull CS high now that adc spi transfer is done
-	   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	   adc_val = (adc_rx_buf[1] & ADC_SPI_RX_VAL_MASK) << 8;
-	   adc_val |= adc_rx_buf[0];
+	   } else {
+        // pull CS high now that adc spi transfer is done
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+        adc_val = (adc_rx_buf[1] & ADC_SPI_RX_VAL_MASK) << 8;
+        adc_val |= adc_rx_buf[0];
 
-	   comparision_val = TIM_COUNTS_1MS + (((float)adc_val / ADC_MAX_OUTPUT_VAL) * (TIM_COUNTS_2MS - TIM_COUNTS_1MS));
-	   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, comparision_val);
+        comparision_val = TIM_COUNTS_1MS + (((float)adc_val / ADC_MAX_OUTPUT_VAL) * (TIM_COUNTS_2MS - TIM_COUNTS_1MS));
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, comparision_val);
+     }
     /* USER CODE END WHILE */
 	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
