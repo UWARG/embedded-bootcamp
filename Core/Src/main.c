@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define SPI_BUF_SIZE 3 // bytes
+#define SPI_TIMEOUT 64 // ticks
+#define ADC_MAX 0x03ff
+#define TIM_MAX_CNT 64000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -75,6 +81,12 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  uint8_t txd[SPI_BUF_SIZE] = {0x80, 0x01, 0x00};
+  uint8_t rxd[SPI_BUF_SIZE] = {0};
+  uint32_t adc_out = 0;
+  uint32_t compare_value = 0;
+  HAL_StatusTypeDef ret = 0;
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,7 +99,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_GPIO_WritePin(GPIOA, GPIO_8, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
@@ -95,6 +111,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // pull down chip select (PB8)
+	  HAL_GPIO_WritePin(GPIOB, GPIO_8, GPIO_PIN_RESET);
+	  // SPI transaction with SPI1
+	  ret = HAL_SPI_TransmitReceive(&hspi1, txd, rxd, SPI_BUF_SIZE, SPI_TIMEOUT);
+	  // compute ADC value from SPI data
+	  adc_out = *((uint32_t *) rxd ) & 0x3ff;
+	  // convert ADC value to compare register value
+	  compare_value = TIM_MAX_CNT / 20 + (TIM_MAX_CNT / 20 * adc_out / ADC_MAX);
+	  // set compare register of timer 1 channel 1
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
+	  // pull up chip select
+	  HAL_GPIO_WritePin(GPIOA, GPIO_8, GPIO_PIN_SET);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
