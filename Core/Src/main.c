@@ -118,7 +118,7 @@ int main(void)
 	  // SPI transaction with SPI1 (return value ignored)
 	  HAL_SPI_TransmitReceive(&hspi1, txd, rxd, SPI_BUF_SIZE, SPI_TIMEOUT);
 	  // compute ADC value from SPI data
-	  adc_out = *((uint32_t *) rxd ) & 0x3ff;
+	  adc_out = *((uint32_t *) rxd ) & ADC_MAX;
 	  // convert ADC value to compare register value
 	  compare_value = TIM_MAX_CNT / 20 + (TIM_MAX_CNT / 20 * adc_out / ADC_MAX);
 	  // set compare register of timer

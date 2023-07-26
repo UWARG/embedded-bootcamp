@@ -510,7 +510,7 @@ int main(void)
  80003b8:	2303      	movs	r3, #3
  80003ba:	f001 fc95 	bl	8001ce8 <HAL_SPI_TransmitReceive>
 	  // compute ADC value from SPI data
-	  adc_out = *((uint32_t *) rxd ) & 0x3ff;
+	  adc_out = *((uint32_t *) rxd ) & ADC_MAX;
  80003be:	003b      	movs	r3, r7
  80003c0:	681b      	ldr	r3, [r3, #0]
  80003c2:	059b      	lsls	r3, r3, #22
