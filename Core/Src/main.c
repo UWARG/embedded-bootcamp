@@ -37,8 +37,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define SPI_BUF_SIZE 3 // bytes
-#define SPI_TIMEOUT 64 // ticks
-#define ADC_MAX 0x03ff
+#define SPI_TIMEOUT 64 // milliseconds
+#define ADC_MAX 1023
 #define TIM_MAX_CNT 64000
 /* USER CODE END PD */
 
@@ -83,8 +83,8 @@ int main(void)
 
   uint8_t txd[SPI_BUF_SIZE] = {0x80, 0x01, 0x00};
   uint8_t rxd[SPI_BUF_SIZE] = {0};
-  uint32_t adc_out = 0;
-  uint32_t compare_value = 0;
+  uint16_t adc_out = 0;
+  uint16_t compare_value = 0;
 
   /* USER CODE END Init */
 
@@ -106,6 +106,8 @@ int main(void)
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
   // start timer 1 channel 1
   HAL_TIM_Base_Start(&htim1);
+  // start pwm with timer 1 on channel 1
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -117,18 +119,14 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  // SPI transaction with SPI1 (return value ignored)
 	  HAL_SPI_TransmitReceive(&hspi1, txd, rxd, SPI_BUF_SIZE, SPI_TIMEOUT);
+	  // pull up chip select
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
 	  // compute ADC value from SPI data
-	  adc_out = 0;
-	  for (int i = 0; i < 10; ++ i)
-	  {
-		  adc_out |= ((*((uint32_t *) rxd)) & (1 >> (14 + i))) << (5 + 2*i);
-	  }
+	  adc_out = rxd[1] >> 2 | rxd[2];
 	  // convert ADC value to compare register value
 	  compare_value = TIM_MAX_CNT / 20 + (TIM_MAX_CNT / 20 * adc_out / ADC_MAX);
 	  // set compare register of timer
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
-	  // pull up chip select
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
