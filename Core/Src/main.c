@@ -92,16 +92,42 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Ensure CSB is pulled high (default)
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  const uint8_t txBuffer[3] = {0b00000001, 0b10000000, 0b00000000};
+  /* Dummy zeroes sent to provide leading clocks
+   * Starting bit (1) sent in first block
+   * Single-ended input mode set in first bit of second block
+   * D2 (don't care for MCP3004)
+   * D1 set to 0 for CH0
+   * D2 set to 0 for CH0 
+   * More dummy bits for sending clocks */
+
+  uint8_t rxBuffer[3] = {0};
+  uint8_t adcValue;
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    HAL_StatusTypeDef commsStatus = HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-    /* USER CODE BEGIN 3 */
+    if (status == HAL_OK) {
+      // D0 and D1 of rxBuffer[1] contain the higher bits of the ADC value
+      // D9 to D2 of rxBuffer[1] contain the lower bits of the ADC value
+      adcValue = ((rxBuffer[1] & 0x03) << 8) | rxBuffer[2];
+    }
+    
+    printf("ADC value: %u\n", adcValue);
     HAL_Delay(10);
+    /* USER CODE END WHILE */
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
