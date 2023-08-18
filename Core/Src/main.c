@@ -36,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TIM_COUNTS_1MS 3276;
+#define TIM_COUNTS_2MS 6552;
+#define ADC_RESOLUTION 1023 // Largest 10 bit value = 2^10 - 1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -94,6 +97,7 @@ int main(void)
 
   // Ensure CSB is pulled high (default)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // actually start PWM;
 
   const uint8_t txBuffer[3] = {0b00000001, 0b10000000, 0b00000000};
   /* Dummy zeroes sent to provide leading clocks
@@ -105,8 +109,8 @@ int main(void)
    * More dummy bits for sending clocks */
 
   uint8_t rxBuffer[3] = {0};
-  uint8_t adcValue;
-
+  uint8_t adcValue = 0;
+  uint8_t compareRegister;
 
   /* USER CODE END 2 */
 
@@ -115,16 +119,18 @@ int main(void)
   while (1)
   {
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-    HAL_StatusTypeDef commsStatus = HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, HAL_MAX_DELAY);
+    HAL_StatusTypeDef spiCommStatus = HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-    if (status == HAL_OK) {
+    if (spiCommStatus == HAL_OK) {
       // D0 and D1 of rxBuffer[1] contain the higher bits of the ADC value
       // D9 to D2 of rxBuffer[1] contain the lower bits of the ADC value
       adcValue = ((rxBuffer[1] & 0x03) << 8) | rxBuffer[2];
-    }
-    
-    printf("ADC value: %u\n", adcValue);
+      // threshold voltage = adc value / adc resolution * VREF;
+      compareRegister = TIM_COUNTS_1MS + (((float)adc_val / ADC_RESOLUTION) * (TIM_COUNTS_2MS - TIM_COUNTS_1MS));
+      _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareRegister);
+    } // use else block to log failed SPI comms
+
     HAL_Delay(10);
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
