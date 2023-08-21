@@ -36,9 +36,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TIM_COUNTS_1MS 3276;
-#define TIM_COUNTS_2MS 6552;
 #define ADC_RESOLUTION 1023 // Largest 10 bit value = 2^10 - 1
+#define SPI_COMMS_TIMEOUT 1000
+#define TIM_COUNTS_1MS 3000
+#define TIM_COUNTS_2MS 6000
+/* COUNT = (time_in_secs * 48 * 10^6 Hz ) / 16
+ * TIM_COUNTS_1MS = ((0.001 sec * 48 * 10^6) / 16
+ * TIM_COUNTS_2MS = ((0.002 sec * 48 * 10^6) / 16
+ * */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -99,14 +104,16 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // actually start PWM;
 
-  const uint8_t txBuffer[3] = {0b00000001, 0b10000000, 0b00000000};
-  /* Dummy zeroes sent to provide leading clocks
+  const uint8_t TX_BUFFER[3] = {0x1, 0x80, 0x0};
+  /* 0x1 == 0b00000001
+   * Dummy zeroes sent to provide leading clocks
    * Starting bit (1) sent in first block
+   * 0x80 == 0b10000000
    * Single-ended input mode set in first bit of second block
    * D2 (don't care for MCP3004)
    * D1 set to 0 for CH0
    * D2 set to 0 for CH0 
-   * More dummy bits for sending clocks */
+   * More dummy bits sent in third block for sending clocks */
 
   uint8_t rxBuffer[3] = {0};
   uint8_t adcValue = 0;
@@ -119,7 +126,7 @@ int main(void)
   while (1)
   {
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-    HAL_StatusTypeDef spiCommStatus = HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, HAL_MAX_DELAY);
+    HAL_StatusTypeDef spiCommStatus = HAL_SPI_TransmitReceive(&hspi1, TX_BUFFER, rxBuffer, 3, SPI_COMMS_TIMEOUT);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
     if (spiCommStatus == HAL_OK) {
