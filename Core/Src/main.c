@@ -36,6 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+  const uint16_t MAX_ADC_VALUE = 1023;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -92,6 +94,13 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  const int ADC_TIMEOUT = 1000;   // 48 clock edges at 50 Hz is 960ms, set 1000ms to be safe
+  const int ADC_DATA_SIZE = 3;
+
+  uint8_t tx_ADC[ADC_DATA_SIZE] = {0x01, 0x80, 0x00};   // 0x01: start bit, 0x80: select single-ended config on CH0, 0x00: don't care bits
+  uint8_t rx_ADC[ADC_DATA_SIZE] = {0};
 
   /* USER CODE END 2 */
 
@@ -100,6 +109,13 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	HAL_SPI_TransmitReceive(&hspi1, tx_ADC, rx_ADC, ADC_DATA_SIZE, ADC_TIMEOUT);
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
 
     /* USER CODE BEGIN 3 */
   }
