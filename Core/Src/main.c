@@ -36,7 +36,17 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-  const uint16_t MAX_ADC_VALUE = 1023;
+
+const int ADC_TIMEOUT = 1000;   // 48 clock edges at 50 Hz is 960ms, set 1000ms to be safe
+const int ADC_DATA_SIZE = 3;
+const uint8_t MAX_ADC_VALUE = 1023;	// 10 bits unsigned can store values between 0 to 2^10 - 1
+
+const int COUNTER_PERIOD = 64000;
+const int MIN_PWM_DUTY_CYCLE = 0.05 * COUNTER_PERIOD;
+const int MAX_PWM_DUTY_CYCLE = 0.1 * COUNTER_PERIOD;
+const int PWM_DUTY_CYCLE_RANGE = MAX_PWM_DUTY_CYCLE - MIN_PWM_DUTY_CYCLE;
+
+
 
 /* USER CODE END PD */
 
@@ -96,12 +106,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
-  const int ADC_TIMEOUT = 1000;   // 48 clock edges at 50 Hz is 960ms, set 1000ms to be safe
-  const int ADC_DATA_SIZE = 3;
-
   uint8_t tx_ADC[ADC_DATA_SIZE] = {0x01, 0x80, 0x00};   // 0x01: start bit, 0x80: select single-ended config on CH0, 0x00: don't care bits
   uint8_t rx_ADC[ADC_DATA_SIZE] = {0};
 
+  uint16_t adc_output = 0;
+  uint16_t pwm_duty_cycle = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,11 +119,26 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
+	// Start communication with ADC
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
+	// Full duplex SPI transaction, sending command bits and receiving ADC output
 	HAL_SPI_TransmitReceive(&hspi1, tx_ADC, rx_ADC, ADC_DATA_SIZE, ADC_TIMEOUT);
 
+	// End communication
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	// Take last 10 bits of ADC output since it's LSB first
+	adc_output = ((rx_ADC[1] & 0x03) << 8) | rx_ADX[2];
+
+	// Convert to PWM signal - map it from the range of ADC values to the range of PWM duty cycle values;
+	pwm_duty_cycle = adc_output / MAX_ADC_VALUE * PWM_DUTY_CYCLE_RANGE + MIN_PWM_DUTY_CYCLE;
+
+	// Update the duty cycle
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwn_duty_cycle);
+
+	// Delay to prevent MCU from overloading ADC
+	HAL_Delay(10);
 
 
     /* USER CODE BEGIN 3 */
