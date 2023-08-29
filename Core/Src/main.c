@@ -92,6 +92,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // start the timer
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,6 +103,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  uint16_t adc_val = read_adc(); // get ADC reading
+
+	  float duty_cycle = 0.05 + (0.05 * (adc_val / 1023.0)); // map adc_val to duty cycle in range [0.05, 0.1]
+	  uint16_t pulse = (uint16_t)(duty_cycle * 64000); // change to "counts"
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse); // PWM signal output to motor
 
 	  HAL_Delay(10); // delay to prevent overloading of the ADC
   }
