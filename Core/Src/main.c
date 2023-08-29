@@ -57,7 +57,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint16_t read_adc();
 /* USER CODE END 0 */
 
 /**
@@ -92,16 +92,18 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  HAL_Delay(10); // delay to prevent overloading of the ADC
   }
   /* USER CODE END 3 */
 }
@@ -147,7 +149,17 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t read_adc() {
+	uint8_t adc_tx_data[3] = {0x01, 0x80, 0x00}; // transmission data based on ADC data sheet
+	uint8_t adc_rx_data[3] = {0}; // empty array to store received data from ADC
 
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // set CS to LOW to initiate communication
+    HAL_SPI_TransmitReceive(&hspi1, adc_tx_data, adc_rx_data, 3, HAL_MAX_DELAY); // transmit and receive data over SPI protocol
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // set CS to high to terminate communication
+
+    uint16_t adc_val = ((adc_rx_data[1] & 0x0F) << 8) | adc_rx_data[2]; // extract information from ADC transmission using last 10 bits
+    return adc_val; // return ADC output value
+}
 /* USER CODE END 4 */
 
 /**

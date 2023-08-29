@@ -1,0 +1,4 @@
+../Core/Src/main.c:67:5:main	1
+../Core/Src/main.c:115:6:SystemClock_Config	4
+../Core/Src/main.c:152:10:read_adc	1
+../Core/Src/main.c:169:6:Error_Handler	1
