@@ -37,15 +37,13 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-const int ADC_TIMEOUT = 1000;   // 48 clock edges at 50 Hz is 960ms, set 1000ms to be safe
+const uint16_t ADC_TIMEOUT = 1000;   // 48 clock edges at 50 Hz is 960ms, set 1000ms to be safe
 const uint16_t MAX_ADC_VALUE = 1023;	// 10 bits unsigned can store values between 0 to 2^10 - 1
 
-const int COUNTER_PERIOD = 64000;
-const int MIN_PWM_DUTY_CYCLE = 0.05 * COUNTER_PERIOD;
-const int MAX_PWM_DUTY_CYCLE = 0.1 * COUNTER_PERIOD;
-const int PWM_DUTY_CYCLE_RANGE = MAX_PWM_DUTY_CYCLE - MIN_PWM_DUTY_CYCLE;
-
-
+const uint16_t COUNTER_PERIOD = 64000;
+const uint16_t MIN_PWM_DUTY_CYCLE = 0.05 * COUNTER_PERIOD;
+const uint16_t MAX_PWM_DUTY_CYCLE = 0.1 * COUNTER_PERIOD;
+const uint16_t PWM_DUTY_CYCLE_RANGE = MAX_PWM_DUTY_CYCLE - MIN_PWM_DUTY_CYCLE;
 
 /* USER CODE END PD */
 
@@ -105,7 +103,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
-  uint8_t tx_ADC[3] = {0x01, 0x80, 0x00};   // 0x01: start bit, 0x80: select single-ended config on CH0, 0x00: don't care bits
+  const uint8_t tx_ADC[3] = {0x01, 0x80, 0x00};   // 0x01: start bit, 0x80: select single-ended config on CH0, 0x00: don't care bits
   uint8_t rx_ADC[3] = {0};
 
   uint16_t adc_output = 0;
