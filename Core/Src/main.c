@@ -46,7 +46,17 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+const float MIN_DUTY_CYCLE = 0.05;
+const float DUTY_CYCLE_RANGE = 0.05;
+const float ADC_MAX_OUTPUT = 1023.0;
+const uint16_t COUNTER_PERIOD = 64000;
 
+const uint8_t ADC_TX_START_BITS = 0x01;
+const uint8_t ADC_TX_CHANNEL_BITS = 0x80;
+const uint8_t ADC_TX_DONTCARE_BITS = 0x00;
+
+const uint8_t ADC_SPI_BUFFER_SZ = 3;
+const uint8_t ADC_TXRX_DELAY = 200;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,7 +67,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint16_t read_adc();
+HAL_StatusTypeDef read_adc(uint16_t*);
 /* USER CODE END 0 */
 
 /**
@@ -103,12 +113,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  uint16_t adc_val = read_adc(); // get ADC reading
+	  uint16_t adc_val;
+	  HAL_StatusTypeDef status_code = read_adc(&adc_val);
 
-	  float duty_cycle = 0.05 + (0.05 * (adc_val / 1023.0)); // map adc_val to duty cycle in range [0.05, 0.1]
-	  uint16_t pulse = (uint16_t)(duty_cycle * 64000); // change to "counts"
-
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse); // PWM signal output to motor
+	  if (status_code == HAL_OK) {
+		  float duty_cycle = MIN_DUTY_CYCLE + (DUTY_CYCLE_RANGE * (adc_val / ADC_MAX_OUTPUT)); // map adc_val to duty cycle in range [0.05, 0.1]
+		  uint16_t pulse = (uint16_t)(duty_cycle * COUNTER_PERIOD); // change to "counts"
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse); // PWM signal output to motor
+	  }
 
 	  HAL_Delay(10); // delay to prevent overloading of the ADC
   }
@@ -156,16 +168,16 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint16_t read_adc() {
-	uint8_t adc_tx_data[3] = {0x01, 0x80, 0x00}; // transmission data based on ADC data sheet
+HAL_StatusTypeDef read_adc(uint16_t* adc_val) {
+	uint8_t adc_tx_data[3] = {ADC_TX_START_BITS, ADC_TX_CHANNEL_BITS, ADC_TX_DONTCARE_BITS}; // transmission data based on ADC data sheet
 	uint8_t adc_rx_data[3] = {0}; // empty array to store received data from ADC
 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // set CS to LOW to initiate communication
-    HAL_SPI_TransmitReceive(&hspi1, adc_tx_data, adc_rx_data, 3, HAL_MAX_DELAY); // transmit and receive data over SPI protocol
+    HAL_StatusTypeDef status_code = HAL_SPI_TransmitReceive(&hspi1, adc_tx_data, adc_rx_data, ADC_SPI_BUFFER_SZ, ADC_TXRX_DELAY); // transmit and receive data over SPI protocol
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // set CS to high to terminate communication
 
-    uint16_t adc_val = ((adc_rx_data[1] & 0x0F) << 8) | adc_rx_data[2]; // extract information from ADC transmission using last 10 bits
-    return adc_val; // return ADC output value
+    (*adc_val) = ((adc_rx_data[1] & 0x0F) << 8) | adc_rx_data[2]; // extract information from ADC transmission using last 10 bits
+    return status_code;
 }
 /* USER CODE END 4 */
 
