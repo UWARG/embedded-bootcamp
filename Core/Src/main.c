@@ -176,7 +176,7 @@ HAL_StatusTypeDef read_adc(uint16_t* adc_val) {
     HAL_StatusTypeDef status_code = HAL_SPI_TransmitReceive(&hspi1, adc_tx_data, adc_rx_data, ADC_SPI_BUFFER_SZ, ADC_TXRX_DELAY); // transmit and receive data over SPI protocol
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // set CS to high to terminate communication
 
-    (*adc_val) = ((adc_rx_data[1] & 0x0F) << 8) | adc_rx_data[2]; // extract information from ADC transmission using last 10 bits
+    *adc_val = ((adc_rx_data[1] & 0x0F) << 8) | adc_rx_data[2]; // extract information from ADC transmission using last 10 bits
     return status_code;
 }
 /* USER CODE END 4 */

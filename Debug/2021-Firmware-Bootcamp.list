@@ -2560,7 +2560,7 @@ HAL_StatusTypeDef read_adc(uint16_t* adc_val) {
  800137c:	0019      	movs	r1, r3
  800137e:	f000 fd83 	bl	8001e88 <HAL_GPIO_WritePin>
 
-    (*adc_val) = ((adc_rx_data[1] & 0x0F) << 8) | adc_rx_data[2]; // extract information from ADC transmission using last 10 bits
+    *adc_val = ((adc_rx_data[1] & 0x0F) << 8) | adc_rx_data[2]; // extract information from ADC transmission using last 10 bits
  8001382:	2108      	movs	r1, #8
  8001384:	187b      	adds	r3, r7, r1
  8001386:	785b      	ldrb	r3, [r3, #1]
