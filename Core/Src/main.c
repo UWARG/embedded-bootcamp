@@ -95,7 +95,7 @@ int main(void)
 
 
   //from Figure 6-1. Transmitted Data: 00000001, 10000000, 00000000
-  uint8_t transmit_array[3] = {0x01, 0x80, 0x00};
+  const uint8_t transmit_array[3] = {0x01, 0x80, 0x00};
   //from Figure 6-1. Received Data: 00000000,     00000000,      00000000
   //                              first 8 bits	 second 8 bits    last 8 bits 	  of data
   uint8_t receive_array[3] = {0};

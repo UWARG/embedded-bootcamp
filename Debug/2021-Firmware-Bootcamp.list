@@ -29,23 +29,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
  12 .comment      00000043  00000000  00000000  00020034  2**0
                   CONTENTS, READONLY
- 13 .debug_info   0000e2ae  00000000  00000000  00020077  2**0
+ 13 .debug_info   0000e2c8  00000000  00000000  00020077  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_abbrev 000020cd  00000000  00000000  0002e325  2**0
+ 14 .debug_abbrev 000020d4  00000000  00000000  0002e33f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_aranges 00000db0  00000000  00000000  000303f8  2**3
+ 15 .debug_aranges 00000db0  00000000  00000000  00030418  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_rnglists 00000ac2  00000000  00000000  000311a8  2**0
+ 16 .debug_rnglists 00000ac2  00000000  00000000  000311c8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_macro  00019cfb  00000000  00000000  00031c6a  2**0
+ 17 .debug_macro  00019cfb  00000000  00000000  00031c8a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line   00011a3f  00000000  00000000  0004b965  2**0
+ 18 .debug_line   00011a41  00000000  00000000  0004b985  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    00097050  00000000  00000000  0005d3a4  2**0
+ 19 .debug_str    00097050  00000000  00000000  0005d3c6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_frame  00003250  00000000  00000000  000f43f4  2**2
+ 20 .debug_frame  00003250  00000000  00000000  000f4418  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 0000005c  00000000  00000000  000f7644  2**0
+ 21 .debug_line_str 0000005c  00000000  00000000  000f7668  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1974,7 +1974,7 @@ int main(void)
 
 
   //from Figure 6-1. Transmitted Data: 00000001, 10000000, 00000000
-  uint8_t transmit_array[3] = {0x01, 0x80, 0x00};
+  const uint8_t transmit_array[3] = {0x01, 0x80, 0x00};
  8000f3e:	1d3b      	adds	r3, r7, #4
  8000f40:	4a37      	ldr	r2, [pc, #220]	; (8001020 <main+0x100>)
  8000f42:	8811      	ldrh	r1, [r2, #0]
@@ -2088,10 +2088,11 @@ int main(void)
  8000fea:	f7ff fdab 	bl	8000b44 <__aeabi_i2f>
  8000fee:	1c03      	adds	r3, r0, #0
  8000ff0:	613b      	str	r3, [r7, #16]
-
 	/* ADC count range is from 0 to 64000. In order to have duty cycle range between 5% and 10%, the count must range from
 		64000 * 0.05 to 64000 * 0.1 (5% to 10%) which is 3200 to 6400 counts. It is easier to set Duty Count Min (64000 * 0.05)
-		as a reference level and add an offset in order to stay in the range.*/
+		as a reference level and add an offset in order to stay in the range.
+
+		64000/ (64000*0.1) = 20*/
 	float offsetFromDutyCountMin = counts/20;
  8000ff2:	4911      	ldr	r1, [pc, #68]	; (8001038 <main+0x118>)
  8000ff4:	6938      	ldr	r0, [r7, #16]
