@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -65,7 +67,9 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint8_t adc_value[2];  // Array to hold SPI received data
+	const uint16_t TIMER_PERIOD = 65535;  //
+	const uint16_t ADC_MAX = 1024;  //
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,6 +91,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +101,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_SPI_Receive(&hspi1, adc_value, 2, HAL_MAX_DELAY);
+	  uint16_t adc_combined = (adc_value[0] << 8) | adc_value[1];
+	  uint16_t pwm_value = (adc_combined * TIMER_PERIOD) / ADC_MAX;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+	  HAL_Delay(10);
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
