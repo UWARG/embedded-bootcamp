@@ -19,12 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+	extern SPI_HandleTypeDef hspi1;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,8 +89,22 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+
+  //from Figure 6-1. Transmitted Data: 00000001, 10000000, 00000000
+  uint8_t transmit_array[3] = {0x01, 0x80, 0x00};
+  //from Figure 6-1. Received Data: 00000000,     00000000,      00000000
+  //                              first 8 bits	 second 8 bits    last 8 bits 	  of data
+  uint8_t receive_array[3] = {0};
+
+  //ADC value has 10 bits of useful information. Next step from 8 is 16.
+  uint16_t adcValue = 0;
+  uint16_t maxAdcValue = 1023; //Largest number that 10bits can hold 2^10 - 1
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //Starts the PWM signal generation (only need to do once)
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +114,40 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	//setting CS to low since CS is active low
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //pin8 cause gpio output PB8
+
+	HAL_SPI_TransmitReceive(&hspi1, transmit_array, receive_array, 6, HAL_MAX_DELAY); //array name is a memory address
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);//back to high
+
+	adcValue = (receive_array[1] << 8) | receive_array[2]; //concatenate element 1 and element 2 to form 10bit adc value
+
+	adcValue &= 0x03FF; //set the 6 MSB to 0 by bitwise ANDing. 0x03FF  = 0000001111111111 (in base 2). X & 1 = X
+
+	//On-time = (DUTY_CYCLE) * period | Period = 20ms
+	//float dutyCycleMAX = 0.1; //Correlates to 10% on
+	//float dutyCycleMIN = 0.05; //Correlates to 5% on
+
+
+	//64000 counts
+	//converting ADC to counts
+	float counts = (adcValue/maxAdcValue)* 64000;
+
+	/* ADC count range is from 0 to 64000. In order to have duty cycle range between 5% and 10%, the count must range from
+		64000 * 0.05 to 64000 * 0.1 (5% to 10%) which is 3200 to 6400 counts. It is easier to set Duty Count Min (64000 * 0.05)
+		as a reference level and add an offset in order to stay in the range.
+
+		64000/ (64000*0.1) = 20*/
+	float offsetFromDutyCountMin = counts/20;
+	float finalDutyCount = (64000 * 0.05) + offsetFromDutyCountMin;
+
+
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, finalDutyCount);
+
+
+	HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +172,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +228,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
