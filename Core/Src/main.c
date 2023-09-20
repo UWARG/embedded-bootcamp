@@ -133,7 +133,7 @@ int main(void)
 		uint16_t newMin = 3000;
 		uint16_t newMax = 6000;
 
-		uint16_t mappedValue = newMin + (adcValue - oldMin) * (newMax - newMin) / (oldMax - oldMin);
+		uint16_t mappedValue = newMin + ( adcValue - oldMin) * (newMax - newMin) / (oldMax - oldMin);
 
 		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, mappedValue);
     /* USER CODE END WHILE */

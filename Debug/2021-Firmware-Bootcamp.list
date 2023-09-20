@@ -824,7 +824,7 @@ int main(void)
  80005fe:	4a16      	ldr	r2, [pc, #88]	; (8000658 <main+0x13c>)
  8000600:	801a      	strh	r2, [r3, #0]
 
-		uint16_t mappedValue = newMin + (adcValue - oldMin) * (newMax - newMin) / (oldMax - oldMin);
+		uint16_t mappedValue = newMin + ( adcValue - oldMin) * (newMax - newMin) / (oldMax - oldMin);
  8000602:	237e      	movs	r3, #126	; 0x7e
  8000604:	18fb      	adds	r3, r7, r3
  8000606:	881a      	ldrh	r2, [r3, #0]
