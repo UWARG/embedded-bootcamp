@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,6 +89,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +99,26 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		uint8_t txData[3] = {0x01, 0x80, 0x00};  // Command bytes to request data from ADC channel 0
+		uint8_t rxData[3];  // Buffer to store received data
+
+		// Transmit and Receive data
+		HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+
+		uint16_t adcValue;
+		if (status == HAL_OK) {
+		// Since this is MSB, I don't have to reverse the digits
+		adcValue = ((rxData[1] & 0x03) << 8) | rxData[2];
+		}
+
+		uint16_t oldMin = 0;
+		uint16_t oldMax = 1023;
+		uint16_t newMin = 3000;
+		uint16_t newMax = 6000;
+
+		uint16_t mappedValue = newMin + (adcValue - oldMin) * (newMax - newMin) / (oldMax - oldMin);
+
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, mappedValue);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
