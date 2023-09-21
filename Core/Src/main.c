@@ -99,26 +99,28 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		uint8_t txData[3] = {0x01, 0x80, 0x00};  // Command bytes to request data from ADC channel 0
-		uint8_t rxData[3];  // Buffer to store received data
+	  const uint8_t txData[3] = {0x01, 0x80, 0x00};  // Command bytes to request data from ADC channel 0
+	  uint8_t rxData[3];  // Buffer to store received data
 
-		// Transmit and Receive data
-		HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+	  // Transmit and Receive data
+	  const uint8_t dataSize = 3;
+	  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, dataSize, HAL_MAX_DELAY);
 
-		uint16_t adcValue;
-		if (status == HAL_OK) {
-		// Since this is MSB, I don't have to reverse the digits
-		adcValue = ((rxData[1] & 0x03) << 8) | rxData[2];
-		}
+	  uint16_t adcValue;
 
-		uint16_t oldMin = 0;
-		uint16_t oldMax = 1023;
-		uint16_t newMin = 3000;
-		uint16_t newMax = 6000;
+	  if (status == HAL_OK) {
+		  // Since this is MSB, I don't have to reverse the digits
+		  adcValue = ((rxData[1] & 0x03) << 8) | rxData[2];
+	  }
 
-		uint16_t mappedValue = newMin + (adcValue - oldMin) * (newMax - newMin) / (oldMax - oldMin);
+	  uint16_t oldMin = 0;
+	  uint16_t oldMax = 1023;
+	  uint16_t newMin = 3000;
+	  uint16_t newMax = 6000;
 
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, mappedValue);
+	  uint16_t mappedValue = newMin + (adcValue - oldMin) * (newMax - newMin) / (oldMax - oldMin);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, mappedValue);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
