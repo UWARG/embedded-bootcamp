@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -38,6 +40,10 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define COUNTER_PERIOD 65535
+#define MIN_DC 0.05
+#define MAX_DC 0.10
+#define MAX_ADC_VAL 1023
 
 /* USER CODE END PM */
 
@@ -87,7 +93,18 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  //transmit buffer
+  const uint8_t tx_buffer[3] = {0x01, 0x80, 0};
+  //receive buffer
+  uint8_t rx_buffer[3] = {0};
+
+  uint8_t adcVal = 0;
+
+  //start PWM timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,9 +112,27 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // Pull CS pin to low to initiate
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  HAL_SPI_TransmitReceive(&hspi1, tx_buffer, rx_buffer, 3, HAL_MAX_DELAY);
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  //rx [2] contains 8 bits of useful data, [1] contains 2 and needs to be shifted
+	  adcVal = ((rx_buffer[1] & 0x03) << 8) | rx_buffer[2];
+
+	  //convert ADC value to PWM
+	  uint8_t onRatio = (adcVal/MAX_ADC_VAL);
+
+	  //adcVal 0-> 5%, 1023 -> 10%
+	  uint8_t onCounts = (MIN_DC)*(COUNTER_PERIOD) + (MAX_DC - MIN_DC)*(COUNTER_PERIOD)*(onRatio);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, onCounts);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
