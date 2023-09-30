@@ -77,6 +77,20 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  // ADC values
+  const uint16_t MAX_ADC_VAL = 0x400 - 1; // 10 bits max is 0-1023
+  const uint16_t TIMER_COUNTS = 64000;
+  const uint16_t MIN_PERIOD = 0.05;
+  const uint16_t DUTY_CYCLE_COUNTS = TIMER_COUNTS * MIN_PERIOD;
+
+  uint16_t adc_val = 0x0;
+  double compare_reg = 0;
+
+  // Buffers
+  uint8_t transmit_bits[3] = {0, 0x1, 0x80}; // start and configure bits for CH0
+  uint8_t receive_bits[3] = {0x0};
+
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -93,12 +107,36 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Timer initialization before while loop
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // Starts PWM signal generation
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Ensure CS line is high
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1) {
+    
+    // Set CS pin low to begin communication
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+    // Send transmit bits and receive conversion
+    HAL_SPI_TransmitReceive(&hspi1, &transmit_bits, &receive_bits, sizeof(receive_bits), 1000);
+
+    // Set CS pin high to end communication
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+    // Change conversion to standard 10 bit value
+    adc_val = ((uint16_t)receive_bits[1] << 8) | (uint16_t)receive_bits[2];
+
+    compare_reg = (double)DUTY_CYCLE_COUNTS; // minimum allowed compare value
+    compare_reg += ((double)adc_val/MAX_ADC_VAL) * DUTY_CYCLE_COUNTS; // compare value ranges between 5 and 10 percent
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value); // Change the compare value for the timer on channel 1
+
+	  HAL_Delay(10); // Prevent MCU overloading ADC
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
