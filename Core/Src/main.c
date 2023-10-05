@@ -68,15 +68,15 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-	uint8_t SPI_Tran[3] = {0X0, 0X80, 0X0};
+	const uint8_t SPI_TRAN[3] = {0X0, 0X80, 0X0};
 	uint8_t SPI_Rec[3] = {0x0, 0x0, 0x0};
 
 	const uint16_t ADC_MAX = 1024;
 	const uint16_t COUNTER_PERIOD = 65535;
-	const int SPI_TIMEOUT = 1000;
+	const uint16_t SPI_TIMEOUT = 1000;
 
-	const int MIN_COUNT_VALUE = 0.05;
-	const uint8_t MIN_COMPARE_VAL = MIN_COUNT_VALUE * COUNTER_PERIOD;
+	const float MIN_COUNT_VALUE = 0.05;
+	const uint16_t MIN_COMPARE_VAL = MIN_COUNT_VALUE * COUNTER_PERIOD;
 
 	uint16_t adc_input = 0;
 
@@ -121,7 +121,7 @@ int main(void)
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-	  HAL_SPI_TransmitReceive(&hspi1, SPI_Tran, SPI_Rec, 3, SPI_TIMEOUT);
+	  HAL_SPI_TransmitReceive(&hspi1, SPI_TRAN, SPI_Rec, 3, SPI_TIMEOUT);
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
