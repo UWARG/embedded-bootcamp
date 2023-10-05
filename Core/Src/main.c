@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2023 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -66,6 +68,20 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	uint8_t SPI_Tran[3] = {0X0, 0X80, 0X0};
+	uint8_t SPI_Rec[3] = {0x0, 0x0, 0x0};
+
+	const uint16_t ADC_MAX = 1024;
+	const uint16_t COUNTER_PERIOD = 65535;
+	const int SPI_TIMEOUT = 1000;
+
+	const int MIN_COUNT_VALUE = 0.05;
+	const uint8_t MIN_COMPARE_VAL = MIN_COUNT_VALUE * COUNTER_PERIOD;
+
+	uint16_t adc_input = 0;
+
+
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,7 +103,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
 
   /* USER CODE END 2 */
 
@@ -95,6 +118,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  HAL_SPI_TransmitReceive(&hspi1, SPI_Tran, SPI_Rec, 3, SPI_TIMEOUT);
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  adc_input = ( ( SPI_Tran[1] <<8 ) | (SPI_Rec[2]));
+
+	  double compare_value = (double)adc_input /ADC_MAX + MIN_COMPARE_VAL + MIN_COMPARE_VAL;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
+
+	  HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
