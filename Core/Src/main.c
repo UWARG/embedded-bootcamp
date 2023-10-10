@@ -19,11 +19,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <math.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 
 /* USER CODE END Includes */
 
@@ -87,7 +91,17 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  const int MAX_ADC_VAL = 1024;
+  uint8_t dataIn[3] = {0};
+  uint8_t dataOut[3] = {0b00000001, 0b10000000, 0b00000000};
+  uint16_t adcVal = 0;
+  uint16_t counterVal = 0;
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,7 +109,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //SPI setting pin low to start, then back to high after transmission is over
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, dataOut, dataIn, 3, 10);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  adcVal = ((dataIn[1] & 0b11) << 8) + dataIn[2];
+
+	  counterVal = round((3000 * ( adcVal / MAX_ADC_VAL ))) + 3000; //will give value between 3000 and 6000
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counterVal);
+
+	  HAL_Delay(10);
+
+
     /* USER CODE END WHILE */
+
 
     /* USER CODE BEGIN 3 */
   }
