@@ -97,7 +97,7 @@ int main(void)
 
   const int MAX_ADC_VAL = 1024;
   uint8_t dataIn[3] = {0};
-  uint8_t dataOut[3] = {0b00000001, 0b10000000, 0b00000000};
+  const int DATA_OUT[3] = {0b00000001, 0b10000000, 0b00000000};
   uint16_t adcVal = 0;
   uint16_t counterVal = 0;
 
@@ -111,7 +111,7 @@ int main(void)
   {
 	  //SPI setting pin low to start, then back to high after transmission is over
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, dataOut, dataIn, 3, 10);
+	  HAL_SPI_TransmitReceive(&hspi1, DATA_OUT, dataIn, 3, 10);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  adcVal = ((dataIn[1] & 0b11) << 8) + dataIn[2];
