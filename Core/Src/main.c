@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -45,17 +47,22 @@
 
 /* USER CODE BEGIN PV */
 
+#define COUNTER_PERIOD 64000
+#define MIN_DC 0.05
+#define MAX_DC 0.10
+#define MAX_ADC 1023
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 
+/* USER CODE BEGIN PFP */
+void SystemClock_Config(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -65,6 +72,11 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+	uint8_t txData[3]= {0x1, 0x80, 0};
+	uint8_t rxData[3]= {0x0, 0x0, 0x0};
+
+	uint8_t adcVal = 0;
 
   /* USER CODE END 1 */
 
@@ -87,7 +99,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
 
   /* USER CODE END 2 */
 
@@ -98,6 +116,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+
+	  adcVal = ((rxData[1] & 0x03) << 8) | rxData[2];
+
+	  uint8_t onRatio = (adcVal/MAX_ADC);
+
+	  uint8_t cycleCounts = (MIN_DC)*(COUNTER_PERIOD) + (MAX_DC - MIN_DC)*(COUNTER_PERIOD)*(onRatio);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cycleCounts);
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -106,8 +135,7 @@ int main(void)
   * @brief System Clock Configuration
   * @retval None
   */
-void SystemClock_Config(void)
-{
+void SystemClock_Config(void){
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
@@ -150,8 +178,7 @@ void SystemClock_Config(void)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
-{
+void Error_Handler(void){
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
