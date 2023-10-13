@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -55,6 +57,14 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#define size 3
+uint32_t on_counts = 0; // timer count value
+uint16_t ADC_Value = 0;
+const uint8_t START_BIT = 0b00000001;
+const uint8_t START_CONFIG = 0b10000000; // start configuration for ADC
+const uint8_t TRANSMIT[size] = {START_BIT, START_CONFIG, 0};
+uint8_t buffer[size] = {0, 0, 0};
+const uint32_t TIMEOUT = 1000;
 
 /* USER CODE END 0 */
 
@@ -87,7 +97,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  //pull the chip select high initially
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  // start PWM timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,6 +113,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //Pull chip select low
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // transmit data (start bit, channel config) and receive data in buffer
+	  HAL_SPI_TransmitReceive(&hspi1, TRANSMIT, buffer, 3, TIMEOUT);
+
+	  //Pull chip select high
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // interpret and convert ADC value to timer counts
+	  ADC_Value = (buffer[1] << 8) | buffer[2];
+
+	  // Counter period = 64000, 5% on-time (3200 counts) - 10% on-time (6400 counts)
+	  on_counts = 3200 + ((double)(3200/1023) * ADC_Value);
+
+	  //set compare register
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, on_counts);
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +158,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +214,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
