@@ -71,8 +71,10 @@ int main(void)
   // MAX_ADC_VAL = 2^10 - 1
   const uint16_t MAX_ADC_VAL = 0b1111111111;
   const int TIMER_PERIOD = 64000;
-  const double DUTY_CYCLE = 0.05;
-  const int ON_TIME = DUTY_CYCLE * TIMER_PERIOD;
+  const double DUTY_CYCLE_MIN = 0.05;
+  const double DUTY_CYCLE_MAX = 0.10;
+  const int DUTY_CYCLE_COUNTS_MIN = DUTY_CYCLE_MIN * TIMER_PERIOD;
+  const int DUTY_CYCLE_COUNTS_DELTA = (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN) * TIMER_PERIOD;
   const int SPI_TIMEOUT = 1000;
 
   // configure data_in bits for CH0
@@ -110,6 +112,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // start PWM signal generation
   HAL_TIM_PWM_Start(&htm1, TIM_CHANNEL_1);
   // CS line must be brought high first
   HAL_TIM_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN);
@@ -135,11 +138,17 @@ int main(void)
 	  // ADC value = the last 10 bits of the receive buffer
 	  adc_val = ((uint16_t)r_buffer[1] << 8) | (uint16_t)r_buffer[2];
 
-	  // compare register value = duty cycle counts + map of adc_val -> duty cycle counts
-	  compare_val = ON_TIME + (adc_val / MAX_ADC_VAL) * ON_TIME;
+	  // set compare register value based on minimum duty cycle of 5% (lowest motor speed)
+	  compare_val = DUTY_CYCLE_COUNTS;
 
+	  // increase compare register value based on difference between maximum (10%) and minimum duty cycle (5%)
+	  // this additional value is calculated by mapping the ADC reading onto the DUTY_CYCLE_COUNTS_DELTA
+	  compare_val += DUTY_CYCLE_COUNTS_DELTA * adc_val / MAX_ADC_VAL;
+
+	  // set compare register
 	  HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
 
+	  // add delay to avoid overloading the ADC
 	  HAL_Delay(10);
 
     /* USER CODE BEGIN 3 */
