@@ -68,6 +68,23 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+  // MAX_ADC_VAL = 2^10 - 1
+  const uint16_t MAX_ADC_VAL = 0b1111111111;
+  const int TIMER_PERIOD = 64000;
+  const double DUTY_CYCLE = 0.05;
+  const int ON_TIME = DUTY_CYCLE * TIMER_PERIOD;
+  const int SPI_TIMEOUT = 1000;
+
+  // configure data_in bits for CH0
+  uint8_t t_buffer[3] = {0b1, 0b10000000, 0};
+  // initialize data_out bits (default to 0s)
+  uint8_t r_buffer[3] = {0};
+  // initialize variable for ADC value (default to 0)
+  uint8_t adc_val = 0;
+  // initialize variable for compare register value (default to 0)
+  uint8_t compare_val = 0;
+
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -93,6 +110,11 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_TIM_PWM_Start(&htm1, TIM_CHANNEL_1);
+  // CS line must be brought high first
+  HAL_TIM_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -100,6 +122,25 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+	  // CS line to low (active)
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // send and receive data
+	  HAL_SPI_TransmitReceive(&hspi1, t_buffer, r_buffer, sizeof(3), SPI_TIMEOUT);
+
+	  // CS line to high (inactive)
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // ADC value = the last 10 bits of the receive buffer
+	  adc_val = ((uint16_t)r_buffer[1] << 8) | (uint16_t)r_buffer[2];
+
+	  // compare register value = duty cycle counts + map of adc_val -> duty cycle counts
+	  compare_val = ON_TIME + (adc_val / MAX_ADC_VAL) * ON_TIME;
+
+	  HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+
+	  HAL_Delay(10);
 
     /* USER CODE BEGIN 3 */
   }
