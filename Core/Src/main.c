@@ -113,9 +113,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // start PWM signal generation
-  HAL_TIM_PWM_Start(&htm1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   // CS line must be brought high first
-  HAL_TIM_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 
   /* USER CODE END 2 */
@@ -139,14 +139,14 @@ int main(void)
 	  adc_val = ((uint16_t)r_buffer[1] << 8) | (uint16_t)r_buffer[2];
 
 	  // set compare register value based on minimum duty cycle of 5% (lowest motor speed)
-	  compare_val = DUTY_CYCLE_COUNTS;
+	  compare_val = DUTY_CYCLE_COUNTS_MIN;
 
 	  // increase compare register value based on difference between maximum (10%) and minimum duty cycle (5%)
 	  // this additional value is calculated by mapping the ADC reading onto the DUTY_CYCLE_COUNTS_DELTA
 	  compare_val += DUTY_CYCLE_COUNTS_DELTA * adc_val / MAX_ADC_VAL;
 
 	  // set compare register
-	  HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
 
 	  // add delay to avoid overloading the ADC
 	  HAL_Delay(10);
