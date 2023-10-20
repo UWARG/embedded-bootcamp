@@ -70,15 +70,15 @@ int main(void)
 
   // MAX_ADC_VAL = 2^10 - 1
   const uint16_t MAX_ADC_VAL = 0b1111111111;
-  const int TIMER_PERIOD = 64000;
+  const uint16_t TIMER_PERIOD = 64000;
   const double DUTY_CYCLE_MIN = 0.05;
   const double DUTY_CYCLE_MAX = 0.10;
-  const int DUTY_CYCLE_COUNTS_MIN = DUTY_CYCLE_MIN * TIMER_PERIOD;
-  const int DUTY_CYCLE_COUNTS_DELTA = (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN) * TIMER_PERIOD;
-  const int SPI_TIMEOUT = 1000;
+  const uint16_t DUTY_CYCLE_COUNTS_MIN = DUTY_CYCLE_MIN * TIMER_PERIOD;
+  const uint16_t DUTY_CYCLE_COUNTS_DELTA = (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN) * TIMER_PERIOD;
+  const uint16_t SPI_TIMEOUT = 1000;
 
   // configure data_in bits for CH0
-  uint8_t t_buffer[3] = {0b1, 0b10000000, 0};
+  const uint8_t t_buffer[3] = {0b1, 0b10000000, 0};
   // initialize data_out bits (default to 0s)
   uint8_t r_buffer[3] = {0};
   // initialize variable for ADC value (default to 0)
