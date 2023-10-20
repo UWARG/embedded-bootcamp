@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,17 +89,41 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);  // Start PWM on channel 1
+  uint8_t rxData;
+  uint8_t txData;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	// Set the chip select low to start communication
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	txData = 1;
+	// First transmission to send start bit
+	HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 1, HAL_MAX_DELAY);
+	txData = 128;
+	// second transmission to send control bits and receive first few adc values
+	HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 1, HAL_MAX_DELAY);
+	uint16_t adc_value_1 = rxData << 8;
+	// third transmission to recieve 8 adc bits
+	HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 1, HAL_MAX_DELAY);
+	uint16_t adc_value = adc_value_1 | rxData;
+
+	// Set the chip select high to end communication
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+
+	uint16_t pwm_value = (adc_value*7.5) / 1024;
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
