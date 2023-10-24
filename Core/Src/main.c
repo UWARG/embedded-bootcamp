@@ -72,7 +72,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	/* declaring the read and transmit buffer*/
 	uint8_t txData[3]= {0x1, 0x80, 0};
 	uint8_t rxData[3]= {0x0, 0x0, 0x0};
 
@@ -102,33 +102,41 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  /* Setting pin 6 as the write pin and setting the pin to high*/
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+
+  /* Starting the PWM output on the Timer peripheral */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+      /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+      /* USER CODE BEGIN 3 */
 
-	  adcVal = ((rxData[1] & 0x03) << 8) | rxData[2];
+      // Transmit and receive data using SPI
+      HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
 
-	  uint8_t onRatio = (adcVal/MAX_ADC);
+      // Extract the ADC value from received data
+      adcVal = ((rxData[1] & 0x03) << 8) | rxData[2];
 
-	  uint8_t cycleCounts = (MIN_DC)*(COUNTER_PERIOD) + (MAX_DC - MIN_DC)*(COUNTER_PERIOD)*(onRatio);
+      // Calculate the duty cycle (onRatio) based on the ADC value
+      uint8_t onRatio = (adcVal / MAX_ADC);
 
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cycleCounts);
+      // Calculate the cycle counts based on the duty cycle
+      uint8_t cycleCounts = (MIN_DC) * (COUNTER_PERIOD) + (MAX_DC - MIN_DC) * (COUNTER_PERIOD) * (onRatio);
 
-	  HAL_Delay(10);
+      // Set the PWM duty cycle for TIM1 on channel 1
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cycleCounts);
+
+      // Delay to prevent explodey death
+      HAL_Delay(10);
+
+      /* USER CODE END 3 */
   }
-  /* USER CODE END 3 */
 }
 
 /**
@@ -183,11 +191,9 @@ void Error_Handler(void){
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
-  {
-  }
+  {}
   /* USER CODE END Error_Handler_Debug */
 }
-
 #ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
