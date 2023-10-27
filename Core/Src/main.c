@@ -24,8 +24,6 @@
 #include "usart.h"
 #include "gpio.h"
 
-#define BIT9_10 (0x2 << 8)
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -38,6 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_MAX_VALUE 1023
+#define DUTY_CYCLE_RANGE 3200
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -107,16 +107,15 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	txData[0] = 0x1;  // 00000001 for start bit
-	txData[1] = 0x90; // 10010000 for single-ended on CH1
+	txData[1] = 0x80; // 10000000 for single-ended on CH1
 
 	HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
-	uint16_t adc_value = ((rxData[1] << 8) & BIT9_10) | rxData[2];
+	uint16_t adc_value = ((rxData[1] << 8) & (0x3 << 8)) | rxData[2];
 
 	// Set the chip select high to end communication
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
 
-	uint16_t pwm_value = (adc_value / 1023); // dividing adc value by max count
-	TIM1->CCR1 = 7.5; // setting duty cycle to 7.5%
+	uint16_t pwm_value = (adc_value / ADC_MAX_VALUE)/DUTY_CYCLE_RANGE + DUTY_CYCLE_RANGE;
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
     /* USER CODE END WHILE */
