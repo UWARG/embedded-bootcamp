@@ -95,7 +95,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);  // Start PWM on channel 1
-  uint8_t rxData[3];
+  const uint8_t txData[3]= {0x1, 0x80, 0};
   uint8_t txData[3];
   /* USER CODE END 2 */
 
@@ -110,12 +110,12 @@ int main(void)
 	txData[1] = 0x80; // 10000000 for single-ended on CH1
 
 	HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
-	uint16_t adc_value = ((rxData[1] << 8) & (0x3 << 8)) | rxData[2];
+	uint16_t adc_value = (rxData[1] & 0x03) << 8 | rxData[2];
 
 	// Set the chip select high to end communication
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
 
-	uint16_t pwm_value = (adc_value / ADC_MAX_VALUE)/DUTY_CYCLE_RANGE + DUTY_CYCLE_RANGE;
+	uint16_t pwm_value = DUTY_CYCLE_RANGE + ((adc_value / ADC_MAX_VALUE)*DUTY_CYCLE_RANGE);
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
     /* USER CODE END WHILE */

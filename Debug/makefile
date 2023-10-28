@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := embedded-bootcamp
+BUILD_ARTIFACT_NAME := 2021-Firmware-Bootcamp
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-embedded-bootcamp.elf \
+2021-Firmware-Bootcamp.elf \
 
 MAP_FILES += \
-embedded-bootcamp.map \
+2021-Firmware-Bootcamp.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-embedded-bootcamp.list \
+2021-Firmware-Bootcamp.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: embedded-bootcamp.elf secondary-outputs
+main-build: 2021-Firmware-Bootcamp.elf secondary-outputs
 
 # Tool invocations
-embedded-bootcamp.elf embedded-bootcamp.map: $(OBJS) $(USER_OBJS) C:\Users\lokes\STM32CubeIDE\workspace_1.13.2\embedded-bootcamp\STM32F072RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "embedded-bootcamp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\lokes\STM32CubeIDE\workspace_1.13.2\embedded-bootcamp\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="embedded-bootcamp.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+2021-Firmware-Bootcamp.elf 2021-Firmware-Bootcamp.map: $(OBJS) $(USER_OBJS) C:\Users\lokes\embedded-bootcamp\STM32F072RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "2021-Firmware-Bootcamp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\lokes\embedded-bootcamp\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="2021-Firmware-Bootcamp.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-embedded-bootcamp.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "embedded-bootcamp.list"
+2021-Firmware-Bootcamp.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "2021-Firmware-Bootcamp.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout embedded-bootcamp.elf embedded-bootcamp.list embedded-bootcamp.map
+	-$(RM) 2021-Firmware-Bootcamp.elf 2021-Firmware-Bootcamp.list 2021-Firmware-Bootcamp.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
