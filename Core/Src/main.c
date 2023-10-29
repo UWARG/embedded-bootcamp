@@ -73,10 +73,10 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	/* declaring the read and transmit buffer*/
-	uint8_t txData[3]= {0x1, 0x80, 0};
+	const uint8_t txData[3]= {0x1, 0x80, 0};
 	uint8_t rxData[3]= {0x0, 0x0, 0x0};
 
-	uint8_t adcVal = 0;
+	uint16_t adcVal = 0;
 
   /* USER CODE END 1 */
 

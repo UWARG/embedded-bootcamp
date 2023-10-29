@@ -3488,7 +3488,7 @@ int main(void)
  8001b6a:	b086      	sub	sp, #24
  8001b6c:	af02      	add	r7, sp, #8
   /* USER CODE BEGIN 1 */
-
+	/* declaring the read and transmit buffer*/
 	uint8_t txData[3]= {0x1, 0x80, 0};
  8001b6e:	2308      	movs	r3, #8
  8001b70:	18fb      	adds	r3, r7, r3
@@ -3538,24 +3538,26 @@ int main(void)
   MX_TIM1_Init();
  8001ba4:	f000 f9a0 	bl	8001ee8 <MX_TIM1_Init>
   /* USER CODE BEGIN 2 */
-
+  /* Setting pin 6 as the write pin and setting the pin to high*/
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
  8001ba8:	4b26      	ldr	r3, [pc, #152]	; (8001c44 <main+0xdc>)
  8001baa:	2201      	movs	r2, #1
  8001bac:	2140      	movs	r1, #64	; 0x40
  8001bae:	0018      	movs	r0, r3
  8001bb0:	f000 fe08 	bl	80027c4 <HAL_GPIO_WritePin>
+
+  /* Starting the PWM output on the Timer peripheral */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
  8001bb4:	4b24      	ldr	r3, [pc, #144]	; (8001c48 <main+0xe0>)
  8001bb6:	2100      	movs	r1, #0
  8001bb8:	0018      	movs	r0, r3
  8001bba:	f002 f8c7 	bl	8003d4c <HAL_TIM_PWM_Start>
-  while (1)
-  {
-    /* USER CODE END WHILE */
+      /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+      /* USER CODE BEGIN 3 */
+
+      // Transmit and receive data using SPI
+      HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
  8001bbe:	1d3a      	adds	r2, r7, #4
  8001bc0:	2308      	movs	r3, #8
  8001bc2:	18f9      	adds	r1, r7, r3
@@ -3566,14 +3568,16 @@ int main(void)
  8001bcc:	2303      	movs	r3, #3
  8001bce:	f001 fccd 	bl	800356c <HAL_SPI_TransmitReceive>
 
-	  adcVal = ((rxData[1] & 0x03) << 8) | rxData[2];
+      // Extract the ADC value from received data
+      adcVal = ((rxData[1] & 0x03) << 8) | rxData[2];
  8001bd2:	210f      	movs	r1, #15
  8001bd4:	187b      	adds	r3, r7, r1
  8001bd6:	1d3a      	adds	r2, r7, #4
  8001bd8:	7892      	ldrb	r2, [r2, #2]
  8001bda:	701a      	strb	r2, [r3, #0]
 
-	  uint8_t onRatio = (adcVal/MAX_ADC);
+      // Calculate the duty cycle (onRatio) based on the ADC value
+      uint8_t onRatio = (adcVal / MAX_ADC);
  8001bdc:	187b      	adds	r3, r7, r1
  8001bde:	781b      	ldrb	r3, [r3, #0]
  8001be0:	491b      	ldr	r1, [pc, #108]	; (8001c50 <main+0xe8>)
@@ -3585,7 +3589,8 @@ int main(void)
  8001bee:	187b      	adds	r3, r7, r1
  8001bf0:	701a      	strb	r2, [r3, #0]
 
-	  uint8_t cycleCounts = (MIN_DC)*(COUNTER_PERIOD) + (MAX_DC - MIN_DC)*(COUNTER_PERIOD)*(onRatio);
+      // Calculate the cycle counts based on the duty cycle
+      uint8_t cycleCounts = (MIN_DC) * (COUNTER_PERIOD) + (MAX_DC - MIN_DC) * (COUNTER_PERIOD) * (onRatio);
  8001bf2:	187b      	adds	r3, r7, r1
  8001bf4:	781b      	ldrb	r3, [r3, #0]
  8001bf6:	0018      	movs	r0, r3
@@ -3610,14 +3615,16 @@ int main(void)
  8001c24:	0003      	movs	r3, r0
  8001c26:	7023      	strb	r3, [r4, #0]
 
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cycleCounts);
+      // Set the PWM duty cycle for TIM1, channel 1
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cycleCounts);
  8001c28:	4b07      	ldr	r3, [pc, #28]	; (8001c48 <main+0xe0>)
  8001c2a:	681b      	ldr	r3, [r3, #0]
  8001c2c:	197a      	adds	r2, r7, r5
  8001c2e:	7812      	ldrb	r2, [r2, #0]
  8001c30:	635a      	str	r2, [r3, #52]	; 0x34
 
-	  HAL_Delay(10);
+      // Delay for 10 milliseconds
+      HAL_Delay(10);
  8001c32:	200a      	movs	r0, #10
  8001c34:	f000 fb76 	bl	8002324 <HAL_Delay>
   {
