@@ -90,11 +90,12 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  const uint8_t tr_ADCVAal[3] = {0x1, 0x8, 0x0};
+  const uint16_t BitMAX_SIZE = 1023;
   uint8_t rc_ADCVal[3] = {0};
-  uint8_t tr_ADCVAal[3] = {0x1, 0x8, 0x0};
   uint16_t adc_OutVal = 0;
-  uint32_t PWMVal = 0;
-  uint16_t BitMAX_SIZE = 1023;
+  uint16_t PWMVal = 0;
+
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
@@ -107,16 +108,16 @@ int main(void)
 	  // Chip Select Toggle
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-	       // Send + Receive Data from ADC Converter
+	  // Send + Receive Data from ADC Converter
 	  HAL_SPI_TransmitReceive (&hspi1, tr_ADCVAal, rc_ADCVal, 3, 1000);
 
-	       // Chip Select toggle off
+	  // Chip Select toggle off
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  adc_OutVal = ((rc_ADCVal[1] & 0x3) << 8) | rc_ADCVal[2]; // ADC Val will be a number between 0-1
+	  adc_OutVal = ((rc_ADCVal[1] & 0x3) << 8) | rc_ADCVal[2];
 
-	       // SYSTEM CLOCK CYCLE = 60000, 5% = 3000, 10% = 6000
-	  PWMVal = 3000 + ((adc_OutVal / BitMAX_SIZE) * 3000); // translate adc val to the 5-10% range of the clock cycle
+	  // SYSTEM CLOCK CYCLE = 60000, 5% = 3000, 10% = 6000
+	  PWMVal = 3000 + ((adc_OutVal / BitMAX_SIZE) * 3000); // translate ADC Val to the 5-10% range of the clock cycle
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWMVal);
 
