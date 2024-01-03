@@ -36,6 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TRANSMIT_RECEIVE_SIZE 3
+#define TRANSMIT_RECEIVE_TIMEOUT 1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -97,7 +99,7 @@ int main(void)
   // The 0b1 indicates a start bit.
   // The 0b10000000 selects CH0 of the ADC, single-ended.
   // The 0b0 is really a don't care for the "sample and hold" period.
-  uint8_t txBuffer[3] = {0b1, 0b10000000, 0b0};
+  const uint8_t TX_SIGNAL[3] = {0b1, 0b10000000, 0b0};
 
   // The buffer to receive the data.
   uint8_t rxBuffer[3] = {0};
@@ -106,8 +108,8 @@ int main(void)
   const uint16_t maxAdcVal = 1023;
 
   // Min and max PWM percentages for duty cycle.
-  const float minPWM = 0.05;
-  const float maxPWM = 0.10;
+  const float MIN_PWM = 0.05;
+  const float MAX_PWM = 0.10;
 
   // Start the timer for PWM.
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -121,7 +123,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // Use the ADC.
-	  HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, 1000);
+	  HAL_SPI_TransmitReceive(&hspi1, TX_SIGNAL, rxBuffer, TRANSMIT_RECEIVE_SIZE, TRANSMIT_RECEIVE_TIMEOUT);
 
 	  // Format the data from the rx buffer to get the ADC value.
 	  uint16_t adcVal = ((rxBuffer[1] & 0b00000011) << 8) | rxBuffer[2];
@@ -130,7 +132,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  // Computation to convert adcVal to counts, ranging from 5% to 10%.
-	  uint16_t pwmVal = (minPWM*htim1.Init.Period) + ((adcVal / maxAdcVal)*((maxPWM - minPWM)*htim1.Init.Period));
+	  uint16_t pwmVal = (MIN_PWM*htim1.Init.Period) + ((adcVal / maxAdcVal)*((MAX_PWM - MIN_PWM)*htim1.Init.Period));
 
 	  // Change timer output by setting the compare register.
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmVal);
