@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,15 +89,55 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // The data to transmit.
+  // The 0b1 indicates a start bit.
+  // The 0b10000000 selects CH0 of the ADC, single-ended.
+  // The 0b0 is really a don't care for the "sample and hold" period.
+  uint8_t txBuffer[3] = {0b1, 0b10000000, 0b0};
+
+  // The buffer to receive the data.
+  uint8_t rxBuffer[3] = {0};
+
+  // The largest value the ADC can output (2^10 - 1).
+  const uint16_t maxAdcVal = 1023;
+
+  // Min and max PWM percentages for duty cycle.
+  const float minPWM = 0.05;
+  const float maxPWM = 0.10;
+
+  // Start the timer for PWM.
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // Start communication by bringing CS low.
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // Use the ADC.
+	  HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, 1000);
+
+	  // Format the data from the rx buffer to get the ADC value.
+	  uint16_t adcVal = ((rxBuffer[1] & 0b00000011) << 8) | rxBuffer[2];
+
+	  // Stop communication by bringing CS high.
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // Computation to convert adcVal to counts, ranging from 5% to 10%.
+	  uint16_t pwmVal = (minPWM*htim1.Init.Period) + ((adcVal / maxAdcVal)*((maxPWM - minPWM)*htim1.Init.Period));
+
+	  // Change timer output by setting the compare register.
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmVal);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
+
 
     /* USER CODE BEGIN 3 */
   }
