@@ -88,17 +88,38 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+ 
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //CS pin should be default high
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);  // Start PWM on channel 1
+  uint8_t txData[3]= {0x1, 0x80, 0};
+  uint8_t rxData[3] = {0};
+  uint16_t adcValue; //To only use the 10 bits that are useful
+  uint16_t compareRegister;
+ 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //CS low to start communication
+	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, sizeof(txData), HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //CS high to end communication
+
+	  //Useful data: last two bits of rxData[1] and all bits in rxData[2]
+
+	  adcValue = (rxData[1] << 8) | rxData[2]; //converts the two bytes into 16bit number
+
+	  compareRegister = (float)adcValue/ADC_MAX_VALUE*DUTY_CYCLE_RANGE;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareRegister);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+
+  HAL_Delay(10);
   /* USER CODE END 3 */
 }
 
