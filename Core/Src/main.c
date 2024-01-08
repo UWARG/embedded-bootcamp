@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_MAX 1023
+#define TIM_1MS 3200
+#define TIM_2MS 6400
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,7 +49,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+TIM_HandleTypeDef htim;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,6 +80,13 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  SPI_HandleTypeDef *hspi;
+  uint8_t txData[3]={0x01,0x80,0};
+  uint8_t rxData[3]={0};
+  uint16_t adcValue;
+  uint8_t counts;
+
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,20 +99,46 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
+
   /* USER CODE BEGIN 2 */
+
+
+  HAL_TIM_PWM_Start(&htim, TIM_CHANNEL_1);
+  /*send clock signal */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 0);
+
+  	  HAL_SPI_TransmitReceive(hspi, txData, rxData, 3, 1000);
+
+
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 1);
+
+  	  //rxData[1] contains 2 useful bits, txData[2] contains 8 useful, lower order bits
+
+  	  adcValue = ((rxData[1] & 0x03) << 8) | rxData[2];
+
+
+  	  counts = TIM_1MS + (adcValue/ADC_MAX)*(TIM_2MS - TIM_1MS);
+
+  	  _HAL_TIM_SET_COMPARE(&htim, TIM_CHANNEL_1, counts);
+
+
+	  TIM1->CCR1 = 20;
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-}
+
 
 /**
   * @brief System Clock Configuration
