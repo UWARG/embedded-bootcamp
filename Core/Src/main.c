@@ -131,7 +131,7 @@ int main(void)
   	  _HAL_TIM_SET_COMPARE(&htim, TIM_CHANNEL_1, counts);
 
 
-	  TIM1->CCR1 = 20;
+
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
