@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,6 +46,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+	// To access Channel 0 of ADC MCP3004
+	uint8_t transmit_data[] = {0x01, 0x80, 0x00};
+
+	// store receive bits of DV from ADC
+	uint8_t receive_data[3] = {};
 
 /* USER CODE END PV */
 
@@ -87,14 +94,42 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
+	  // STEP 1: Coding ADC Communication
+	  //CS of SPI should be low when sampling the analog voltage
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  HAL_SPI_TransmitReceive(&hspi1, transmit_data, receive_data, sizeof(receive_data) ,100);
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // STEP 2: Converting ADC value to PWM Signal
+
+	  // Access the 10bit DV from receive_data
+	  uint8_t rd_1 = receive_data[1];
+	  uint16_t DV = (rd_1 & 0x03) << 8 | receive_data[2];
+
+
+	  // 1)Change the 10 bit DV we get from the ADC to the number of counts of On time
+	  uint16_t duty_cycle = (DV / 1023) + 1;
+
+
+	  // 2) Set the Compare Register value of timer to the ADC value and
+	  //	output High if counter is below compare register
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +157,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +213,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
