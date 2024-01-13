@@ -40,17 +40,14 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define MAX_ADC 1023
+#define MIN_TIC_COUNT 3277
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-	// To access Channel 0 of ADC MCP3004
-	uint8_t transmit_data[] = {0x01, 0x80, 0x00};
-
-	// store receive bits of DV from ADC
-	uint8_t receive_data[3] = {};
 
 /* USER CODE END PV */
 
@@ -72,6 +69,11 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	// To access Channel 0 of ADC MCP3004
+	const uint8_t transmit_data[] = {0x01, 0x80, 0x00};
+
+	// store receive bits of DV from ADC
+	uint8_t receive_data[3] = {};
 
   /* USER CODE END 1 */
 
@@ -98,6 +100,11 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  //Set the CS line to high, do not sample any voltage here
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  //Start to run PWM signal for timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -121,11 +128,12 @@ int main(void)
 
 
 	  // 1)Change the 10 bit DV we get from the ADC to the number of counts of On time
-	  uint16_t duty_cycle = (DV / 1023) + 1;
+	  uint16_t duty_cycle = (MIN_TIC_COUNT * DV / MAX_ADC) + MIN_TIC_COUNT;
 
 
-	  // 2) Set the Compare Register value of timer to the ADC value and
-	  //	output High if counter is below compare register
+	  // 2) Set the Compare Register value of timer to the ADC counts value and
+	  //	output High if counter is below compare register, when it reaches the compare
+	  // register (ccr) output low
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
 
