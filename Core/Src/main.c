@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,7 +58,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+#define MAX_ADC_VALUE 1023
 /* USER CODE END 0 */
 
 /**
@@ -87,7 +90,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //CS default high
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); //PWM on Channel 1
+
+  uint8_t txData[3] = {0x01, 0x80, 0x00};
+  uint8_t rxData[3] = {0};
 
   /* USER CODE END 2 */
 
@@ -95,6 +105,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //CS low start communication
+	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, 1000);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //CS high end communication
+
+	  uint16_t adc_value = 0;
+	  adc_value = (rxData[1] << 8) | rxData[2]; //conversion of ADC value to counts
+
+	  uint16_t pwm_value = 0;
+	  pwm_value = ((float)adc_value/MAX_ADC_VALUE)*3000 + 3000;
+
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
