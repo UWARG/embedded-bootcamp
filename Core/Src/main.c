@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TXRX_SIZE 3
+#define TXRX_TIMEOUT 1000
+#define ADC_MAX 1023
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +49,14 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+const uint8_t START_BIT = 0b00000001;
+const uint8_t START_CH0 = 0b10000000; // select single-ended CH0; last 4 bits are don't cares
+
+const uint8_t TX_BUFFER[TXRX_SIZE] = {START_BIT, START_CH0, 0}; // 0 is a don't care
+uint8_t rx_buffer[TXRX_SIZE] = {0, 0, 0}; // store incoming bits
+
+const float PWM_MIN = 0.05; // min PWM duty cycle
+const float PWM_MAX = 0.10; // max PWM duty cycle
 
 /* USER CODE END PV */
 
@@ -87,18 +100,33 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // set CS high
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // start PWM on CH1
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // set CS (PB8) low for start of packets
+	  // full duplex mode -> HAL_SPI_TransmitReceive
+	  HAL_SPI_TransmitReceive(&hspi1, TX_BUFFER, rx_buffer, TXRX_SIZE, TXRX_TIMEOUT);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // set CS (PB8) pin high for end of packets
+
+	  // convert rx_buffer into ADC value for timer
+	  uint16_t adc_val = ((rx_buffer[1] & 0b00000011) << 8) | rx_buffer[2];
+	  // compute PWM value
+	  uint16_t pwm_val = ((adc_val / 1.0) / ADC_MAX) * ((PWM_MAX - PWM_MIN) * htim1.Init.Period)
+						  + (PWM_MIN * htim1.Init.Period);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_val);
+	  HAL_Delay(10); // prevents overloading the ADC
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_Delay(10); // prevents overloading the ADC
   }
   /* USER CODE END 3 */
 }
@@ -123,6 +151,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -178,5 +207,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
