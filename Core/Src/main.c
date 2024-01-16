@@ -19,12 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+extern SPI_HandleTypeDef hspi1;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,6 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define DATA_SIZE	3
+#define TIME_OUT	50
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,7 +91,25 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // start bit, select ADC, single-ended, CH0, 0
+  uint8_t tx_data[3] = {0x1, 0x80, 0x0};
+
+  //receiving data buffer
+  uint8_t rx_data[3] = {0};
+
+  //max ADC output is (2^10 - 1).
+  uint16_t max_adc_val = 1023;
+
+  //processed data
+  uint16_t adc_val = 0;
+  uint16_t pulse_ticks;
+
+  //start timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,7 +117,25 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+  	  // Start communication
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  if(HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, DATA_SIZE, TIME_OUT) != HAL_OK) {
+		  Error_Handler();
+	  }
+  	  adc_val = ((rx_data[1] & 0x03) << 8) | rx_data[2];
+
+  	  //Stop communication
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  	  //convert adc to pulse ticks from 0.05 to 0.1
+  	  pulse_ticks = (0.05*htim1.Init.Period) + ((adc_val / max_adc_val)*((0.1 - 0.05)*htim1.Init.Period));
+
+  	  // Change timer output by setting the compare register.
+  	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_ticks);
+
+	  HAL_Delay(10);
+	  /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
