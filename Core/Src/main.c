@@ -93,12 +93,37 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Initializing Values
+  const uint8_t transmit_val[3] = {0x1, 0x8, 0x0};
+  const uint8_t receive_val[3] = {};
+  const uint16_t max_adc = 1023;
+  const uint16_t min_pwn_val = 3277; // 5% of counter period (65535)
+
+  // Starting PWM timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 // Toggling Pins
+	 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, RESET);
+	 HAL_SPI_TransmitReceive(&hspi1, transmit_val, receive_val, 3, 100);
+	 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, SET);
+
+
+	 // Converting ADC to PWM
+	 uint16_t ADC_val = ((receive_val[1] & 0x3) << 8) | receive_val[2];
+
+	 uint16_t PWM_val = min_pwn_val + (max_adc*min_pwn_val)/max_adc;
+
+	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_val);
+
+	 HAL_Delay(10);
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
