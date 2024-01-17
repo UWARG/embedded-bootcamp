@@ -94,10 +94,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // Initializing Values
-  const uint8_t transmit_val[3] = {0x1, 0x8, 0x0};
-  const uint8_t receive_val[3] = {};
-  const uint16_t max_adc = 1023;
-  const uint16_t min_pwn_val = 3277; // 5% of counter period (65535)
+  uint8_t transmit_val[3] = {0x1, 0x8, 0x0};
+  uint8_t receive_val[3] = {};
+  const uint16_t MAX_ADC = 1023;
+  const uint16_t MIN_PWM = 3000; // 5% of counter period (60,000)
 
   // Starting PWM timer
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -117,7 +117,7 @@ int main(void)
 	 // Converting ADC to PWM
 	 uint16_t ADC_val = ((receive_val[1] & 0x3) << 8) | receive_val[2];
 
-	 uint16_t PWM_val = min_pwn_val + (max_adc*min_pwn_val)/max_adc;
+	 uint16_t PWM_val = MIN_PWM + (ADC_val*MIN_PWM)/MAX_ADC;
 
 	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_val);
 
