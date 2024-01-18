@@ -93,12 +93,28 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  const int MAX_ADC_VAL = 1024;
+  uint8_t dataIn[3] = {0};
+  const int DATA_OUT[3] = {0b00000001, 0b10000000, 0b00000000};
+  uint16_t adcVal = 0;
+  uint16_t counterVal = 0;
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1, DATA_OUT, dataIn, 3, 10);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	adcVal = ((dataIn[1] & 0b11) << 8) + dataIn[2];
+	counterVal = round((3000 * ( adcVal / MAX_ADC_VAL ))) + 3000;
+
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counterVal);
 	HAL_Delay(10);
     /* USER CODE END WHILE */
 
