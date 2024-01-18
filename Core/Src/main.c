@@ -112,7 +112,8 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	adcVal = ((dataIn[1] & 0b11) << 8) + dataIn[2];
-	counterVal = round((3000 * ( adcVal / MAX_ADC_VAL ))) + 3000;
+	scalingFactor = 3000;
+	counterVal = (scalingFactor * ( adcVal / MAX_ADC_VAL )) + scalingFactor;
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counterVal);
 	HAL_Delay(10);
