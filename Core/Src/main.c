@@ -55,6 +55,7 @@ const uint32_t SPI_COMM_TIMEOUT = 1000 / 50;
 const uint16_t PWM_COUNTER_PERIOD = 6000;
 const uint16_t MIN_PULSE_WIDTH = PWM_COUNTER_PERIOD / 20; // 5% of counter period
 const uint16_t MAX_PULSE_WIDTH = PWM_COUNTER_PERIOD / 10; // 10% of counter period
+const uint16_t PWM_RANGE = MAX_PULSE_WIDTH - MIN_PULSE_WIDTH;
 
 // Parameters for ADC communication
 const uint16_t ADC_PACKET_LEN = 3;  // Length of an SPI packet transmission with ADC
@@ -64,12 +65,9 @@ const uint8_t ADC_TX_BYTES[] = {
         0x00,   // No data
 };
 
-const uint16_t ADC_RX_MASK  = 0x03FF;
-
-// Parameters for ADC readings
-const uint16_t ADC_MAX_READING = ADC_RX_MASK;
+const uint16_t ADC_RX_MASK = 0x03FF;
 const uint16_t ADC_READING_LEN = 10; // Length of reading in bits, used for scaling
-
+                                     // Equiv. to # of set bits in `ADC_RX_MASK`
 
 /* USER CODE END PV */
 
@@ -152,14 +150,12 @@ int main(void) {
         // Masking ADC output to avoid taking any values not part of measurement
         adc_out &= ADC_RX_MASK;
 
-        // Linear interpolation
-        // There's probably some assembly instruction that will multiply two 16 uint16_t to a uint32_t
-        // If this was x86 there'd be an instruction that multiplies two pairs of 16 bit numbers into a 32 bit number,
-        // adds the products, then shifts back to a 16 bit
-        uint16_t pulse_width =
-                (uint16_t) ((uint32_t) (ADC_MAX_READING - adc_out)
-                        * MIN_PULSE_WIDTH + (uint32_t) adc_out * MAX_PULSE_WIDTH)
-                        >> ADC_READING_LEN;
+        // Linearly interpolating between min & max pwm values
+        uint16_t pulse_width = (
+                // Next line <=> (adc_out / max adc reading) * PWM_RANGE
+                // Done this way to avoid rounding errors in above divisions
+                ((uint32_t) adc_out * PWM_RANGE) >> ADC_READING_LEN
+        ) + MIN_PULSE_WIDTH;
 
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_width);
 
