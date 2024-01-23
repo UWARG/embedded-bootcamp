@@ -57,15 +57,19 @@ const uint16_t MIN_PULSE_WIDTH = PWM_COUNTER_PERIOD / 20; // 5% of counter perio
 const uint16_t MAX_PULSE_WIDTH = PWM_COUNTER_PERIOD / 10; // 10% of counter period
 
 // Parameters for ADC communication
-const uint16_t ADC_TX_BYTES = 0x8000;
+const uint16_t ADC_PACKET_LEN = 3;  // Length of an SPI packet transmission with ADC
+const uint8_t ADC_TX_BYTES[] = {
+        0x01,   // Start bit
+        0x80,   // Single channel mode, CH0
+        0x00,   // No data
+};
+
 const uint16_t ADC_RX_MASK  = 0x03FF;
 
 // Parameters for ADC readings
 const uint16_t ADC_MAX_READING = ADC_RX_MASK;
 const uint16_t ADC_READING_LEN = 10; // Length of reading in bits, used for scaling
 
-// To hold output of ADC
-uint16_t adc_out;
 
 /* USER CODE END PV */
 
@@ -124,16 +128,27 @@ int main(void) {
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
+        // To hold output of ADC
+        uint8_t adc_bytes[ADC_PACKET_LEN];
+        uint16_t adc_out;
+
         // Setting CS low to signal start of SPI packet
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
         // I should probably check the return value here
-        HAL_SPI_TransmitReceive(&hspi1, (uint8_t*) &ADC_TX_BYTES,
-                (uint8_t*) &adc_out, 2, SPI_COMM_TIMEOUT);
+        HAL_SPI_TransmitReceive(
+                &hspi1,
+                &ADC_TX_BYTES,
+                &adc_bytes,
+                ADC_PACKET_LEN,
+                SPI_COMM_TIMEOUT
+        );
 
         // Setting CS high to signal end of SPI packet
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
+        // Moving appropriate received bytes
+        adc_out = (adc_bytes[1] << 8) + adc_bytes[2];
         // Masking ADC output to avoid taking any values not part of measurement
         adc_out &= ADC_RX_MASK;
 
