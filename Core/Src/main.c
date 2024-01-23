@@ -57,8 +57,8 @@ const uint16_t MIN_PULSE_WIDTH = PWM_COUNTER_PERIOD / 20; // 5% of counter perio
 const uint16_t MAX_PULSE_WIDTH = PWM_COUNTER_PERIOD / 10; // 10% of counter period
 
 // Parameters for ADC communication
-const uint16_t ADC_TX_BYTES = 0b1000000000000000;
-const uint16_t ADC_RX_MASK = 0b0000001111111111;
+const uint16_t ADC_TX_BYTES = 0x8000;
+const uint16_t ADC_RX_MASK  = 0x03FF;
 
 // Parameters for ADC readings
 const uint16_t ADC_MAX_READING = ADC_RX_MASK;
