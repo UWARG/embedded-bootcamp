@@ -6,19 +6,20 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,7 +57,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -65,6 +66,15 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+	/**when I tried declaring the constants using
+	 *
+	#define MAX_ADC = 1023
+	#define DUTY_CYCLE_RANGE = 3000
+	I was given some "syntax" errors
+	 */
+	int MAX_ADC = 1023;
+	int DUTY_CYCLE_RANGE = 3000;
 
   /* USER CODE END 1 */
 
@@ -87,7 +97,20 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  //chip select set to default high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  //initialize PWM in channel 1
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  //Same as {0b00000001, 0b10000000, 0b00000000}; from datasheet binary -> hex
+  const uint8_t transmit_data[3] = {0x01, 0x80, 0x00};
+  const uint8_t recieve_data[3] = {0};
+
 
   /* USER CODE END 2 */
 
@@ -97,6 +120,30 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
+	  //chip select is low to start transmission - data is read from ADC using SPI
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  //timeout timing to 100ms - seemed like a reasonable value
+	  HAL_SPI_TransmitRecieve(&hspi1, transmit_Data, recieve_data, sizeof(transmit_data), 100);
+
+	  //chip select pulled high to end communication line
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  //combine the bits from the second and third bit into one 16bit integer (only 10 bits to be used)
+	  uint16_t bit_combine = recieve_data[1] << 8 | recieve_data[2];
+
+	  // Calculate the ratio of the received value to the maximum possible value to scale
+	  //the raw ADC value to a floating-point number between 0 and 1
+	  float adcRatio = (float)(bit_combine)/(MAX_ADC);
+
+	  // Convert the ratio into a PWM (Pulse Width Modulation) duty cycle value
+	  uint16_t pwmConversion = (adcRatio * DUTY_CYCLE_RANGE) + DUTY_CYCLE_RANGE;
+
+	  // Set the duty cycle using the HAL function
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmConversion);
+
+	  //from bootcamp instructions
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -122,6 +169,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -157,6 +205,9 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+
+
+	  HAL_Delay(10);
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -177,5 +228,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
