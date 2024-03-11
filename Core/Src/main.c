@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -66,6 +68,10 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	char uart_buf[50];
+    int uart_buf_len;
+    char uart_buf_fail[50];
+    int uart_buf_len_fail;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,8 +93,38 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+#include <stdio.h>
+#include "stm32f0xx_hal_tim.h"
 
+
+  //Defined important macros in the code for message length, adc max value etc.
+  #define MESSAGE_LEN 3
+#define ADC_MAX_VAL 1023
+#define COUNTER_PERIOD 40000
+#define DUTY_CYCLE_MINIMA 1000
+#define DUTY_CYCLE_MAXIMA 2000
+#define TIMEOUT_DELAY 50
+
+
+  //Signals start of the program
+  uart_buf_len = sprintf(uart_buf, "Begun \r\n");
+  HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
+
+
+  //Defined important messages and statuses
+  const uint8_t TRANSMIT_MESSAGE[MESSAGE_LEN] = {0x00, 0x80, 0x00};
+  uint8_t receive_message[MESSAGE_LEN];
+  HAL_StatusTypeDef status;
+
+
+  //Starts PWM
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  //Defines message for failure outside of while loop
+  uart_buf_len_fail = sprintf(uart_buf_fail, "Failure 300 \r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +134,38 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  //Sets CS to low to initiate communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  //SPI communication to external ADC with max Delay 50 ms; status is returned. For some reason it discards the const qualifier for TRANSMIT_MESSAGE
+	  status = HAL_SPI_TransmitReceive(&hspi1, TRANSMIT_MESSAGE, receive_message, 3, TIMEOUT_DELAY);
+
+
+	  //Alerts if status is not successful with earlier defined failure message
+	  if(status != HAL_OK){
+		  HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf_fail, uart_buf_len_fail, 100);
+	  }
+
+	  //Takes B9 to B1 which are the 10 relevant bits and converts to 10 bit ADC and adds bit 0 contained in the third byte
+	  uint16_t adc_value = ((uint16_t)(receive_message[1] & 0x03) << 8) | receive_message[2];
+
+	  //Sets CS to high to end communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  //Normalizes the ADC value to something between 0 and 1
+	  float adc_normalized = (float)(adc_value)/(ADC_MAX_VAL);
+
+	  //Ensures that the duty cycle is between 1ms and 2ms based on the normalized adc value
+	  uint16_t compare_value = ((uint16_t)((adc_normalized*(DUTY_CYCLE_MAXIMA - DUTY_CYCLE_MINIMA))+DUTY_CYCLE_MINIMA));
+
+
+	  //COmpares the timer value with a pre-established value, if lower the instruction is executed
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
+
+
+	  //Delay between different iterations
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +190,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +246,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
