@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,7 +89,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+HAL_TIM_Base_Start(&htim1);
+
+
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -98,6 +107,39 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+		//Start the chip select pin high then toggle it low
+		HAL_GPIO_WritePin (GPIOPB,GPIO_Pin8,1);
+		HAL_Delay(10);
+		HAL_GPIO_TogglePin (GPIOPB,GPIO_Pin8);
+
+		unit8_t pTxData = 10000000;
+		unit8_t pRxData [2];
+
+
+		HAL_Delay(10);
+		HAL_SPI_TransmitReceive (hspi1, uint8_t *pTxData, *pRxData, 11000, 100000);
+		HAL_Delay(10);
+		HAL_GPIO_TogglePin (GPIOPB,GPIO_Pin8);
+		HAL_Delay(10);
+
+		//theoretically we have a adc value now in pRxData [last 10 indexes]
+		//MSB
+		//theoretical max is 1111111111 = 1023
+		//Start tim1 only once
+		//ADC to counts
+		//5-10% duty cycle -> 3000-6000 -> 0-0.33v or 0-330mv
+		//So 1023 = 6000 and 0 = 3000
+
+
+		spiIn = pRxData [1] << 8 | pRxData[0];
+
+		count = (6000 * spiIn / 1023)+ 3000;
+
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, count);
+
+
+
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +164,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -143,6 +186,11 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+
+
+
+
 
 /* USER CODE END 4 */
 
@@ -177,5 +225,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
