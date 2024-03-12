@@ -91,12 +91,30 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
+
+
   /* USER CODE BEGIN 2 */
 
-HAL_TIM_Base_Start(&htim1);
+  //Start the PWM timer
+  HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
+  //Constants for Clock and ADC output
+  const int CLK_COUNT_PERIOD = 60000;
+  const int MAX_ADC_VAL = 1023;
+  const int MIN_DUTY_CYC = 3000;
+  const int DUTY_CYC_RANGE = 3000;
+  const int TIMEOUT = 100;
 
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  const int EIGHT_BIT_FRAMES = 3;
+
+  //Select the channel and single/differential mode
+  //Send a 00000001 10000000 00000000 binary (CH0) -> 0x01 0x80 0x00 hex
+  const unit8_t TX_DATA [EIGHT_BIT_FRAMES] = {0x01,0x80,0x00};
+  unit8_t rx_data[EIGHT_BIT_FRAMES];
+
+  //Start the Chip select high
+  HAL_GPIO_WritePin (GPIOPB,GPIO_Pin8,1);
 
   /* USER CODE END 2 */
 
@@ -108,35 +126,35 @@ HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
     /* USER CODE BEGIN 3 */
 
-		//Start the chip select pin high then toggle it low
-		HAL_GPIO_WritePin (GPIOPB,GPIO_Pin8,1);
-		HAL_Delay(10);
+		//Bring the Chip select down to low (start)
+		HAL_GPIO_WritePin (GPIOPB,GPIO_Pin8,0);
+
+		//Transmit receive function to send the transmit selection signal and receive the ADC output from POT
+		HAL_SPI_TransmitReceive(&hspi1, TX_DATA, rx_data, sizeof(EIGHT_BIT_FRAMES), TIMEOUT);
+
+		//Theoretically we have a ADC value now in rx_data [last 10 indexes] 2 from index 1 and 8 from index 2
+			//MSB
+			//theoretical max is 1111111111 = 1023
+			//Start tim1 only once already started
+			//ADC to counts
+			//5-10% duty cycle -> 3000-6000 -> 0-0.33v or 0-330mv
+			//So 1023 = 6000 and 0 = 3000
+
+		//Bring CS up to high after transmit and receive (end)
 		HAL_GPIO_TogglePin (GPIOPB,GPIO_Pin8);
 
-		unit8_t pTxData = 10000000;
-		unit8_t pRxData [2];
 
+		//Use bit shift to get the 10 bit adc value and convert to integer
+		int adc_value = (int)(rx_data [1] << 8 | rx_data[2]);
 
+		//Get the pwm on count using adc ratio and the range of duty cycle
+		unit16_t pwm_count = (unit16_t)(( DUTY_CYC_RANGE * (adc_value / MAX_ADC_VAL))+ MIN_DUTY_CYC);
+
+		//Set the timer 1 compare count
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_count);
+
+		//added time delay
 		HAL_Delay(10);
-		HAL_SPI_TransmitReceive (hspi1, uint8_t *pTxData, *pRxData, 11000, 100000);
-		HAL_Delay(10);
-		HAL_GPIO_TogglePin (GPIOPB,GPIO_Pin8);
-		HAL_Delay(10);
-
-		//theoretically we have a adc value now in pRxData [last 10 indexes]
-		//MSB
-		//theoretical max is 1111111111 = 1023
-		//Start tim1 only once
-		//ADC to counts
-		//5-10% duty cycle -> 3000-6000 -> 0-0.33v or 0-330mv
-		//So 1023 = 6000 and 0 = 3000
-
-
-		spiIn = pRxData [1] << 8 | pRxData[0];
-
-		count = (6000 * spiIn / 1023)+ 3000;
-
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, count);
 
 
 
