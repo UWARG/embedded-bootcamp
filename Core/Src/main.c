@@ -19,9 +19,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
+#define DATASIZE 0x03
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -87,17 +90,44 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
+
+  // Starts PWM
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  uint8_t DataReceived[DATASIZE] = {0};
+  uint8_t DataTransmitted[DATASIZE] = {0};
+  uint16_t bit_mask = 0b0000001111111111;
+
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // Sets CS line to low
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // Uses appropriate SPI protocol to transmit and receive ADC values
+	  HAL_SPI_TransmitReceive(&hspi1, DataTransmitted, DataReceived, sizeof(DataTransmitted), 24);
     /* USER CODE END WHILE */
 
+	  // Delay between processes to ensure that MCU doesnt overload
+	  HAL_Delay(10);
+
     /* USER CODE BEGIN 3 */
+
+	  // Taking the 10 LSB's (B1 to B9) to read from
+	  uint16_t adc_value = DataReceived[1] & bit_mask;
+
+	  // Converting ADC value to number of counts
+	  uint16_t On_Counts = (adc_value * (2^10)) / 3;
+
+	  // Uses the compare register to compare timer value with the adc_value, and executes if its lower than the timer value
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, On_Counts);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +152,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +208,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
