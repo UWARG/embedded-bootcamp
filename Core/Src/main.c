@@ -148,7 +148,7 @@ int main(void)
 		int adc_value = (int)(rx_data [1] << 8 | rx_data[2]);
 
 		//Get the pwm on count using adc ratio and the range of duty cycle
-		unit16_t pwm_count = (unit16_t)(( DUTY_CYC_RANGE * (adc_value / MAX_ADC_VAL))+ MIN_DUTY_CYC);
+		unit16_t pwm_count = (unit16_t)((DUTY_CYC_RANGE * ((float) adc_value / (float)MAX_ADC_VAL))+ MIN_DUTY_CYC);
 
 		//Set the timer 1 compare count
 		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_count);
