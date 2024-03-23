@@ -37,6 +37,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define MAX_ADC 1023
+#define DUTY_CYCLE_RANGE 3000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -101,15 +103,15 @@ int main(void)
   // Starts PWM
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
-  uint8_t DataReceived[DATASIZE] = {0};
-  uint8_t DataTransmitted[DATASIZE] = {0};
-  uint16_t bit_mask = 0b0000001111111111;
+  uint8_t DataReceived[DATASIZE] = {0x00, 0x80, 0x00};
+  uint8_t DataTransmitted[DATASIZE] = {0x00};
+
 
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 	  // Sets CS line to low
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // Uses appropriate SPI protocol to transmit and receive ADC values
 	  HAL_SPI_TransmitReceive(&hspi1, DataTransmitted, DataReceived, sizeof(DataTransmitted), 24);
@@ -120,11 +122,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	  // Sets CS line back to high
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
 	  // Taking the 10 LSB's (B1 to B9) to read from
-	  uint16_t adc_value = DataReceived[1] & bit_mask;
+	  uint16_t adc_value = ((DataReceived[1] << 8) | DataReceived[2]);
 
 	  // Converting ADC value to number of counts
-	  uint16_t On_Counts = (adc_value * (2^10)) / 3;
+	  uint16_t On_Counts = ((DUTY_CYCLE_RANGE * ( adc_value / MAX_ADC))+ DUTY_CYCLE_RANGE);
 
 	  // Uses the compare register to compare timer value with the adc_value, and executes if its lower than the timer value
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, On_Counts);
