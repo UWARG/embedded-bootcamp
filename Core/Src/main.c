@@ -24,6 +24,7 @@
 #include "usart.h"
 #include "gpio.h"
 
+
 #define DATASIZE 0x03
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -103,8 +104,8 @@ int main(void)
   // Starts PWM
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
-  uint8_t DataReceived[DATASIZE] = {0x00, 0x80, 0x00};
-  uint8_t DataTransmitted[DATASIZE] = {0x00};
+  uint8_t DataTransmitted[DATASIZE] = {0x01, 0x80, 0x00};
+  uint8_t DataReceived[DATASIZE] = {0x00};
 
 
   /* USER CODE BEGIN WHILE */
@@ -115,12 +116,6 @@ int main(void)
 
 	  // Uses appropriate SPI protocol to transmit and receive ADC values
 	  HAL_SPI_TransmitReceive(&hspi1, DataTransmitted, DataReceived, sizeof(DataTransmitted), 24);
-    /* USER CODE END WHILE */
-
-	  // Delay between processes to ensure that MCU doesnt overload
-	  HAL_Delay(10);
-
-    /* USER CODE BEGIN 3 */
 
 	  // Sets CS line back to high
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -129,10 +124,15 @@ int main(void)
 	  uint16_t adc_value = ((DataReceived[1] << 8) | DataReceived[2]);
 
 	  // Converting ADC value to number of counts
-	  uint16_t On_Counts = ((DUTY_CYCLE_RANGE * ( adc_value / MAX_ADC))+ DUTY_CYCLE_RANGE);
+	  uint16_t On_Counts = ((DUTY_CYCLE_RANGE * ( (float) adc_value / (float) MAX_ADC))+ DUTY_CYCLE_RANGE);
 
 	  // Uses the compare register to compare timer value with the adc_value, and executes if its lower than the timer value
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, On_Counts);
+
+    /* USER CODE END WHILE */
+	  HAL_Delay(10);
+
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
