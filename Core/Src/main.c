@@ -39,14 +39,15 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define MAX_POT_READING (1023)
+#define FIVE_PERCENT_OF_COUNTER_Period (2400)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 MCP3008_SPI spi_mcp3004;
-uint16_t adc0;
+uint16_t readingFromPot;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,8 +103,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  adc0 = MCP3008_Read_Channel(&spi_mcp3004, 0);
-	  TIM1->CCR1 = ((adc0 * 2400) / 1023) + 2400;
+	  readingFromPot = MCP3008_Read_Channel(&spi_mcp3004, 0); //get reading
+	  TIM1->CCR1 = ((readingFromPot * FIVE_PERCENT_OF_COUNTER_Period) / MAX_POT_READING) + FIVE_PERCENT_OF_COUNTER_Period;	//translate reading to servo and change width of pwm signal
   }
   /* USER CODE END 3 */
 }

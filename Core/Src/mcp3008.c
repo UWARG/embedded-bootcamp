@@ -24,10 +24,10 @@ uint16_t MCP3008_Read_Channel(MCP3008_SPI* spi, uint8_t channel){
 
 	// Declare data that we will send
 	uint8_t pTxData[3] = {0};
-	pTxData[0] = ((0x01 << 7)|		  // start bit
-		     (1 << 6)|			// SGL
-		     ((channel & 0x07) << 3)); 	// channel number
-	pTxData[1] = 0x00;
+	pTxData[0] = (0x01 << 7);		  // start bit
+
+	pTxData[1] = (1 << 7)|			// SGL
+				 ((channel & 0x07) << 4); 	// channel number, channel is just 0 so this line will evaluate to 0 either way
 	pTxData[2] = 0x00;
 
 	// Data that we will get
@@ -39,5 +39,5 @@ uint16_t MCP3008_Read_Channel(MCP3008_SPI* spi, uint8_t channel){
 	HAL_GPIO_WritePin(spi->CS_PORT, spi->CS_PIN, GPIO_PIN_SET);
 
 	// Compute the ADC
-return 0x3FF & ((pRxData[0] & 0x01) << 9 | (pRxData[1] & 0xFF) << 1 | (pRxData[2] & 0x80) >> 7);
+return 0x3FF & ((pRxData[1] & 0xFF) << 8 | (pRxData[2] & 0xFF));
 }
