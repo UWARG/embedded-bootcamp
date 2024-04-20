@@ -24,10 +24,10 @@ uint16_t MCP3008_Read_Channel(MCP3008_SPI* spi, uint8_t channel){
 
 	// Declare data that we will send
 	uint8_t pTxData[3] = {0};
-	pTxData[0] = (0x01 << 7);		  // start bit
+	pTxData[0] = (0x01);		  // start bit
 
 	pTxData[1] = (1 << 7)|			// SGL
-				 ((channel & 0x07) << 4); 	// channel number, channel is just 0 so this line will evaluate to 0 either way
+				 (0); 	// channel number, D1 and D0 are 0 when selecting channel 0, everything else can just be 0.
 	pTxData[2] = 0x00;
 
 	// Data that we will get
