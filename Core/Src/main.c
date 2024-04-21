@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define DUTY_CYCLE_MIN 0.05			//5%
+#define DUTY_CYCLE_MAX 0.1			//10%
+#define ADC_RESOLUTION (1 << 10)	//10-bit
+#define PERIOD 60000				//Configured in ioc
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,6 +94,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +104,34 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  uint8_t transmit_data[] = {1, 128, 0};	//MCU 1st transmission data: 00000001; MCU 2nd transmission data for single ended CH0: 10000000; 3rd transmission data "don't care" bits
+	  uint8_t receive_data[3];
+	  uint16_t shifted_receive_data_index_1;
+	  uint16_t adc_value;
+	  uint16_t counts;
+
+	  //Bring CS pin to low
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  //Transmit and receive data via SPI
+	  HAL_SPI_TransmitReceive(&hspi1, transmit_data, receive_data, sizeof(transmit_data), HAL_MAX_DELAY);
+
+	  //Bit shift receive_data[1] into uint16 variable in preparation to combine receive_data[1] and receive_data[2]
+	  shifted_receive_data_index_1 = receive_data[1] << 8;
+
+	  //Process ADC value from receive_data
+	  adc_value = shifted_receive_data_index_1 + (receive_data[2]);	// (0...00000011 << 8) + 11111111 = 0...1100000000  + 11111111 = 0...1111111111, 1 being a relevant bit
+
+	  //Scale adc_value to min and max pwm count value
+	  counts = (PERIOD * DUTY_CYCLE_MIN) + ((adc_value / (ADC_RESOLUTION - 1)) * PERIOD * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN)); //Min PWM count value + normalized adc_value within 5%-10%
+
+	  //Compare counts to timer counter and set state to HIGH if timer counter < counts, LOW otherwise
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
+
+	  //Bring CS pin back to high
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
