@@ -97,14 +97,15 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  //Start PWM Timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint8_t transmit_data[] = {1, 128, 0};	//MCU 1st transmission data: 00000001; MCU 2nd transmission data for single ended CH0: 10000000; 3rd transmission data "don't care" bits
+	  const uint8_t transmit_data[] = {0x01, 0x80, 0x00};	//MCU 1st transmission data: 00000001; MCU 2nd transmission data for single ended CH0: 10000000; 3rd transmission data "don't care" bits
 	  uint8_t receive_data[3];
 	  uint16_t shifted_receive_data_index_1;
 	  uint16_t adc_value;
@@ -116,6 +117,9 @@ int main(void)
 	  //Transmit and receive data via SPI
 	  HAL_SPI_TransmitReceive(&hspi1, transmit_data, receive_data, sizeof(transmit_data), HAL_MAX_DELAY);
 
+	  //Bring CS pin back to high
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
 	  //Bit shift receive_data[1] into uint16 variable in preparation to combine receive_data[1] and receive_data[2]
 	  shifted_receive_data_index_1 = receive_data[1] << 8;
 
@@ -123,13 +127,10 @@ int main(void)
 	  adc_value = shifted_receive_data_index_1 + (receive_data[2]);	// (0...00000011 << 8) + 11111111 = 0...1100000000  + 11111111 = 0...1111111111, 1 being a relevant bit
 
 	  //Scale adc_value to min and max pwm count value
-	  counts = (PERIOD * DUTY_CYCLE_MIN) + ((adc_value / (ADC_RESOLUTION - 1)) * PERIOD * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN)); //Min PWM count value + normalized adc_value within 5%-10%
+	  counts = (PERIOD * DUTY_CYCLE_MIN) + (((float)adc_value / (ADC_RESOLUTION - 1)) * PERIOD * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN)); //Min PWM count value + normalized adc_value within 5%-10%
 
 	  //Compare counts to timer counter and set state to HIGH if timer counter < counts, LOW otherwise
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
-
-	  //Bring CS pin back to high
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
