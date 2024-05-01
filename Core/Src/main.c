@@ -105,7 +105,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	  /* USER CODE BEGIN 3 */
-	  uint8_t transmit_data[]={0x01,0x80,0x00};
+	  const uint8_t transmit_data[3]={0x01,0x80,0x00};
 	  uint8_t receive_data[3];
 	  uint16_t adc_value; //received data is 3 bytes, first and second bytes needs to be kept
 	  uint16_t counts;
@@ -125,7 +125,7 @@ int main(void)
 
 	  //calculate count
 	  //count=period*cycle + normalized ADC value range
-	  counts = (PERIOD * DUTY_CYCLE_MIN) + ((float)adc_value / ADC_RESOLUTION-1) * PERIOD * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN);
+	  counts = (PERIOD * DUTY_CYCLE_MIN) + ((float)adc_value / (ADC_RESOLUTION-1)) * PERIOD * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN);
 
 	  //Compare counts to timer counter and set state to HIGH if timer counter < counts, otherwise set state to LOW
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
