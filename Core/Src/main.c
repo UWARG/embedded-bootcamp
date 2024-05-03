@@ -124,7 +124,7 @@ int main(void)
 	  uint8_t rx_buf[ADC_BUF_SIZE] = {0};
 
 	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET); // reset CS pin to latch
-	  HAL_SPI_TransmitReceive(&hspi1, tx_buf, rx_buf, ADC_BUF_SIZE * sizeof(uint8_t), HAL_MAX_DELAY); // NOTE: will block indefinitely until successful
+	  HAL_SPI_TransmitReceive(&hspi1, tx_buf, rx_buf, ADC_BUF_SIZE, HAL_MAX_DELAY); // NOTE: will block indefinitely until successful
 	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET); // set CS pin to unlatch
 
 	  /* convert ADC data to a PWM signal */
