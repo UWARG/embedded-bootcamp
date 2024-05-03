@@ -48,9 +48,13 @@
 #define ADC_CH2					0x02
 #define ADC_CH3					0x03
 
-#define ADC_BUF_SIZE			0x03 		// tx/rx buffer sizes in bytes
+#define ADC_BUF_SIZE			0x03 						// tx/rx buffer sizes in bytes
 
-#define ADC_MAX					0x3FF 		// largest 10-bit unsigned int
+#define ADC_MAX					0x3FF 						// largest 10-bit unsigned int
+
+#define PWM_TIM_PERIOD			0xEA60						// PWM timer period in counts
+#define PWM_MIN_SET				0.05 * PWM_TIM_PERIOD
+#define PWM_MAX_SET				0.10 * PWM_TIM_PERIOD
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -104,6 +108,8 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,16 +117,23 @@ int main(void)
   while (1)
   {
 	  /* receive data from the ADC */
-	  uint8_t tx_buf[3];
-	  tx_buf[0] = 0x01;
-	  tx_buf[1] = ADC_SINGLE | ADC_CH0;
-	  tx_buf[2] = 0x00; // not necessary, but it's bad practice to send garbage data
+	  uint8_t tx_buf[ADC_BUF_SIZE] = {0};
+	  tx_buf[0] = 0x01; // start bit
+	  tx_buf[1] = ADC_SINGLE | ADC_CH0; // channel select byte
 
-	  uint8_t rx_buf[3];
+	  uint8_t rx_buf[ADC_BUF_SIZE] = {0};
 
-	  HAL_SPI_TransmitReceive(&hspi1, &tx_buf, &rx_buf, ADC_BUF_SIZE, HAL_MAX_DELAY); // NOTE: will block indefinitely until successful
+	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET); // reset CS pin to latch
+	  HAL_SPI_TransmitReceive(&hspi1, tx_buf, rx_buf, ADC_BUF_SIZE * sizeof(uint8_t), HAL_MAX_DELAY); // NOTE: will block indefinitely until successful
+	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET); // set CS pin to unlatch
 
+	  /* convert ADC data to a PWM signal */
+	  uint16_t adc_data = ( (rx_buf[1] & 0x03) << 0x08 ) | rx_buf[2]; //save buffer contents to a 10-bit uint
 
+	  float adc_data_norm = (float) adc_data / ADC_MAX; // normalize ADC data range to (0, 1)
+	  uint16_t cmp = (uint16_t) (adc_data_norm * (PWM_MAX_SET - PWM_MIN_SET) + PWM_MIN_SET);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cmp);
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
