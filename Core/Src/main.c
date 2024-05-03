@@ -40,7 +40,17 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define ADC_SINGLE				0x08
+#define ADC_DIFF				0x00
 
+#define ADC_CH0					0x00
+#define ADC_CH1					0x01
+#define ADC_CH2					0x02
+#define ADC_CH3					0x03
+
+#define ADC_BUF_SIZE			0x03 		// tx/rx buffer sizes in bytes
+
+#define ADC_MAX					0x3FF 		// largest 10-bit unsigned int
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -100,6 +110,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /* receive data from the ADC */
+	  uint8_t tx_buf[3];
+	  tx_buf[0] = 0x01;
+	  tx_buf[1] = ADC_SINGLE | ADC_CH0;
+	  tx_buf[2] = 0x00; // not necessary, but it's bad practice to send garbage data
+
+	  uint8_t rx_buf[3];
+
+	  HAL_SPI_TransmitReceive(&hspi1, &tx_buf, &rx_buf, ADC_BUF_SIZE, HAL_MAX_DELAY); // NOTE: will block indefinitely until successful
+
+
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
