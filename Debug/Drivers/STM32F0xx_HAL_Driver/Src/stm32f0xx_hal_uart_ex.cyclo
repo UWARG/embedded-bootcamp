@@ -4,7 +4,8 @@
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:383:19:HAL_UARTEx_StopModeWakeUpSourceConfig	4
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:440:19:HAL_UARTEx_EnableStopMode	2
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:459:19:HAL_UARTEx_DisableStopMode	2
-../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:496:19:HAL_UARTEx_ReceiveToIdle	24
-../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:637:19:HAL_UARTEx_ReceiveToIdle_IT	10
-../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:715:19:HAL_UARTEx_ReceiveToIdle_DMA	10
-../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:790:13:UARTEx_Wakeup_AddressConfig	1
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:496:19:HAL_UARTEx_ReceiveToIdle	23
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:635:19:HAL_UARTEx_ReceiveToIdle_IT	9
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:712:19:HAL_UARTEx_ReceiveToIdle_DMA	9
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:791:29:HAL_UARTEx_GetRxEventType	1
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c:816:13:UARTEx_Wakeup_AddressConfig	1
