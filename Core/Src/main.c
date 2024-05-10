@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,7 +89,18 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  uint8_t RxData[3];
+  uint8_t TxData[3] = {0x01, 0x80, 0x00};
+  uint16_t ADC_Value;
+  float PWM_DutyCycle; //
+  uint8_t PWM_DutyCycle_Count;
+  const uint16_t PERIOD = 0xfa00; // 64000, our period, in hexadecimal
 
   /* USER CODE END 2 */
 
@@ -95,9 +108,27 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // Pulling CS line high
+	  HAL_SPI_TransmitReceive( &hspi1, RxData, TxData, sizeof(TxData), 500);
+	  // Above is ADC communication, 500ms was just a random number I thought was reasonable
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // Pulling CS line low
+
+	  // Below is combining the necessary 10 bits of data we need into 1.
+	  ADC_Value = RxData[1] << 8;
+	  ADC_Value |= RxData[2];
+
+	  // Convert to a counter
+	  // ADC Value 0 means PWM is 5%, ADC value 1023 means PWM is 10%
+	  PWM_DutyCycle = ADC_Value/(0x3ff);
+	  PWM_DutyCycle_Count = (PERIOD*0.05*(1+PWM_DutyCycle));
+
+	  // Configuring counter in which PWM will operate (e.g. at what counts it's on)
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_DutyCycle_Count);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
