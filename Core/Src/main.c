@@ -98,8 +98,8 @@ int main(void)
   // Set CS Pin to low on idle
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-  uint8_t RxData[3];
-  uint8_t TxData[3] = {0x01, 0x80, 0x00};
+  uint8_t RecData[3];
+  uint8_t TransData[3] = {0x01, 0x80, 0x00};
   uint16_t ADCValue;
   float PWMDutyCycle;
   uint8_t DutyCycleValue;
@@ -113,12 +113,12 @@ int main(void)
     /* USER CODE END WHILE */
 	  // Enabled ADC Communication 100ms delay
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive( &hspi1, RxData, TxData, sizeof(TxData), 100);
+	  HAL_SPI_TransmitReceive( &hspi1, RecData, TransData, sizeof(TransData), 100);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  ADCValue = RxData[1];
+	  ADCValue = RecData[1];
 	  ADCValue = ADCValue << 8;
-	  ADCValue |= RxData[2];
+	  ADCValue |= RecData[2];
 
 	  PWMDutyCycle = ADCValue/(0x3ff) + 1;
 	  DutyCycleValue = 63999*0.05*PWMDutyCycle;
