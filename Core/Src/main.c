@@ -93,15 +93,40 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Start Timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  // Set CS Pin to low on idle
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  uint8_t RxData[3];
+  uint8_t TxData[3] = {0x01, 0x80, 0x00};
+  uint16_t ADCValue;
+  float PWMDutyCycle;
+  uint8_t DutyCycleValue;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_Delay(10);
-	  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
+	  // Enabled ADC Communication 100ms delay
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive( &hspi1, RxData, TxData, sizeof(TxData), 100);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
+	  ADCValue = RxData[1];
+	  ADCValue = ADCValue << 8;
+	  ADCValue |= RxData[2];
+
+	  PWMDutyCycle = ADCValue/(0x3ff) + 1;
+	  DutyCycleValue = 63999*0.05*PWMDutyCycle;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, DutyCycleValue);
+
+
+	  //
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
