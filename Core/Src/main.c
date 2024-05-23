@@ -19,12 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,13 +44,21 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+SPI_HandleTypeDef hspi1;
+TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
+const uint8_t ADC_START = 0b0000001;
+const uint8_t ADC_CONFIG = 0b10000000;
+const uint16_t PERIOD = 64000;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_SPI1_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -65,7 +75,16 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  char spi_rcv_buf[20];
 
+  uint8_t spi_tx_buf[] = {ADC_START, ADC_CONFIG, ADC_START};
+  uint16_t size = sizeof(spi_tx_buf);
+
+  float dutyCycle;
+  uint8_t ccrValue;
+  uint8_t newAdcValue;
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,6 +106,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,8 +116,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	HAL_DELAY(50);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+    HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)spi_tx_buf, (uint8_t *)spi_rcv_buf, size, HAL_MAX_DELAY);
 
+    uint16_t adcValue = ((spi_rcv_buf[1] & 0b11) << 8);
+    adcValue |= spi_rcv_buf[2];
+
+    newAdcValue = ADC_Value/(0b1111111111);
+    // d of 0 is 5% and d of 1 is 10%
+    duty_cycle = 0.05 + newAdcValue * (0.1 - 0.05);
+
+    ccrValue = duty_cycle * PERIOD;
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 500);
+    /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -177,5 +211,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
