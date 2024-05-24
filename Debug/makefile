@@ -60,8 +60,8 @@ all: main-build
 main-build: 2021-Firmware-Bootcamp.elf secondary-outputs
 
 # Tool invocations
-2021-Firmware-Bootcamp.elf 2021-Firmware-Bootcamp.map: $(OBJS) $(USER_OBJS) D:\allan\WARG\STM32F072RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "2021-Firmware-Bootcamp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"D:\allan\WARG\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="2021-Firmware-Bootcamp.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+2021-Firmware-Bootcamp.elf 2021-Firmware-Bootcamp.map: $(OBJS) $(USER_OBJS) D:\allan\embedded-bootcamp\STM32F072RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "2021-Firmware-Bootcamp.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"D:\allan\embedded-bootcamp\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="2021-Firmware-Bootcamp.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
