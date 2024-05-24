@@ -46,7 +46,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+  const uint8_t TxBuffer[3] = {0b00000001, 0b10000000, 0b00000000};
+  const uint16_t PERIOD = 64000;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -95,10 +96,9 @@ int main(void)
 
   // Start Timer
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // Bring cs to high on default
 
   uint8_t RxBuffer[3];
-  uint8_t TxBuffer[3] = {0b00000001, 0b10000000, 0b00000000};
-  uint16_t period = 64000;
   uint16_t ADCValue;
   float newADCValue;
   float dutyCycle;
@@ -127,7 +127,7 @@ int main(void)
 	dutyCycle = 0.05 + newADCValue * 0.05;
 
 	// Calculate the compare value for the timer
-	pwmValue = dutyCycle * period;
+	pwmValue = dutyCycle * PERIOD;
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmValue);
   }
