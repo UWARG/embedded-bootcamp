@@ -54,7 +54,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void setTimerPulseValue(uint16_t pulse);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -70,7 +70,12 @@ void Error_Handler(void);
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
+#define CS_Pin GPIO_PIN_8
+#define CS_GPIO_Port GPIOB
+
 /* USER CODE BEGIN Private defines */
+#define MAX_10_BIT 1023U
+#define PULSE_RANGE 3200U
 
 /* USER CODE END Private defines */
 
@@ -79,5 +84,3 @@ void Error_Handler(void);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

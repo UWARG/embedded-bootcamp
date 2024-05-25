@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,7 +46,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+const uint8_t START = 0b00000001;//start bit
+const uint8_t CONFIG[2] = {0b10000000, 0x00};//single-ended channel 0 SPI followed by 12 0 bits
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,7 +68,8 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint8_t spi_buf[2]; //buffer to hold digital potentiometer 8-bit values
+	uint16_t potentiometer_digital_value; //combined potentiometer 16-bit value
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,7 +91,19 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // Start PWM signal on channel 1
+  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
+  {
+	  // PWM Generation Error
+	  Error_Handler();
+  }
+
+  //set CS pin high
+  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
@@ -95,6 +111,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_SPI_Transmit(&hspi1, (uint8_t *)&START, 1, 100);
+	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&CONFIG, spi_buf, 2, 100);
+	  potentiometer_digital_value = (spi_buf[0] << 8) | spi_buf[1];
+	  potentiometer_digital_value = PULSE_RANGE + (potentiometer_digital_value/(double)MAX_10_BIT)*PULSE_RANGE;
+	  setTimerPulseValue(potentiometer_digital_value);
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +144,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -144,6 +167,12 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+void setTimerPulseValue(uint16_t pulse)
+{
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
+}
+
+
 /* USER CODE END 4 */
 
 /**
@@ -157,6 +186,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  HAL_Delay(10);
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -177,5 +207,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
