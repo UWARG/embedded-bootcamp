@@ -95,6 +95,9 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  //default pulse 3200, 5% of 64000
+  setTimerPulseValue(3200);
+
   // Start PWM signal on channel 1
   if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
   {
@@ -102,7 +105,7 @@ int main(void)
 	  Error_Handler();
   }
 
-  //set CS pin high
+  //set CS pin high default
   HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
@@ -111,10 +114,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //set CS pin low to signal start of spi comms
+	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET);
 	  HAL_SPI_Transmit(&hspi1, (uint8_t *)&START, 1, 100);
 	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&CONFIG, spi_buf, 2, 100);
+	  //set CS pin high to signal end of spi comms
+	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
 	  potentiometer_digital_value = (spi_buf[0] << 8) | spi_buf[1];
-	  potentiometer_digital_value = PULSE_RANGE + (potentiometer_digital_value/(double)MAX_10_BIT)*PULSE_RANGE;
+	  potentiometer_digital_value = PULSE_RANGE + (potentiometer_digital_value/(float)MAX_10_BIT)*PULSE_RANGE;
 	  setTimerPulseValue(potentiometer_digital_value);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
