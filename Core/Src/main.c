@@ -49,6 +49,8 @@
 const uint8_t ADC_START = 0b0000001;
 const uint8_t ADC_CONFIG = 0b10000000;
 const uint16_t PERIOD = 64000;
+const uint8_t spi_tx_buf[] = {ADC_START, ADC_CONFIG, ADC_START};
+const uint16_t ADC_MAX_VAL = 1023;
 
 /* USER CODE END PV */
 
@@ -70,16 +72,12 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  char spi_rcv_buf[20];
-
-  uint8_t spi_tx_buf[] = {ADC_START, ADC_CONFIG, ADC_START};
-  uint16_t size = sizeof(spi_tx_buf);
+  uint8_t spi_rcv_buf[3];
 
   float dutyCycle;
   uint8_t ccrValue;
-  uint8_t newAdcValue;
+  float newAdcValue;
 
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -103,7 +101,12 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
+
   /* USER CODE BEGIN 2 */
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccrValue);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
@@ -111,20 +114,23 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	HAL_DELAY(50);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)spi_tx_buf, (uint8_t *)spi_rcv_buf, size, HAL_MAX_DELAY);
+    HAL_SPI_TransmitReceive(&hspi1, spi_tx_buf, spi_rcv_buf, sizeof(spi_tx_buf), HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
 
     uint16_t adcValue = ((spi_rcv_buf[1] & 0b11) << 8);
     adcValue |= spi_rcv_buf[2];
 
-    newAdcValue = ADC_Value/(0b1111111111);
+    newAdcValue = ADC_Value/ADC_MAX_VAL;
     // d of 0 is 5% and d of 1 is 10%
-    duty_cycle = 0.05 + newAdcValue * (0.1 - 0.05);
+    duty_cycle = 0.05 + newAdcValue * 0.05;
 
     ccrValue = duty_cycle * PERIOD;
 
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 500);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccrValue);
+
+    HAL_DELAY(50);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
