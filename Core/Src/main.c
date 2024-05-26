@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -64,6 +66,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,17 +90,33 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	  uint8_t RxData[3];
+	  uint8_t TxData[3] = {0x01, 0x80, 0x00};
   while (1)
   {
     /* USER CODE END WHILE */
+	  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_RESET); //Set CS to Low
+	  HAL_SPI_TransmitReceive(&hspi1, RxData, TxData, 3, 1000);
+	  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_SET); //Set CS to High
 
+	  ADC_output = (RxData[1] & 0x03 << 8) | RxData[2];
+
+	  float ADC_norm = ADC_output / 1023; //ADC ranges from 0 to 2^10-1
+	  float PWM_input = (0.05 + ADC_norm*0.05)*64000; //Input = (5%+ normalized ADC value * 5%) * entire period, so it ranges from 5% to 10% of the entire period
+
+	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_input);
+
+	  Hal_Delay(10);
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +141,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +197,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
