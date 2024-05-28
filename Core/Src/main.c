@@ -46,8 +46,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-const uint8_t START = 0b00000001;//start bit
-const uint8_t CONFIG[2] = {0b10000000, 0x00};//single-ended channel 0 SPI followed by 12 0 bits
+const uint8_t CONFIG[3] = {0b00000001, 0b10000000, 0x00};//ADC input commands: start bit, single-ended channel 0 SPI, followed by 12 0 bits
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,7 +67,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t spi_buf[2]; //buffer to hold digital potentiometer 8-bit values
+	uint8_t spi_buf[3]; //buffer to hold digital potentiometer 8-bit values
 	uint16_t potentiometer_digital_value; //combined potentiometer 16-bit value
   /* USER CODE END 1 */
 
@@ -95,8 +94,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  //default pulse 3200, 5% of 64000
-  setTimerPulseValue(3200);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PULSE_RANGE);
 
   // Start PWM signal on channel 1
   if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
@@ -116,13 +114,12 @@ int main(void)
   {
 	  //set CS pin low to signal start of spi comms
 	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET);
-	  HAL_SPI_Transmit(&hspi1, (uint8_t *)&START, 1, 100);
-	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&CONFIG, spi_buf, 2, 100);
+	  HAL_SPI_TransmitReceive(&hspi1, CONFIG, spi_buf, sizeof(CONFIG), 100);
 	  //set CS pin high to signal end of spi comms
 	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
-	  potentiometer_digital_value = (spi_buf[0] << 8) | spi_buf[1];
+	  potentiometer_digital_value = (spi_buf[1] << 8) | spi_buf[2];
 	  potentiometer_digital_value = PULSE_RANGE + (potentiometer_digital_value/(float)MAX_10_BIT)*PULSE_RANGE;
-	  setTimerPulseValue(potentiometer_digital_value);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, potentiometer_digital_value);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
@@ -173,12 +170,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-void setTimerPulseValue(uint16_t pulse)
-{
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
-}
-
 
 /* USER CODE END 4 */
 

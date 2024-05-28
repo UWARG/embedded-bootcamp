@@ -1,4 +1,3 @@
-../Core/Src/main.c:68:5:main	2
-../Core/Src/main.c:138:6:SystemClock_Config	4
-../Core/Src/main.c:177:6:setTimerPulseValue	1
-../Core/Src/main.c:189:6:Error_Handler	1
+../Core/Src/main.c:67:5:main	2
+../Core/Src/main.c:135:6:SystemClock_Config	4
+../Core/Src/main.c:180:6:Error_Handler	1

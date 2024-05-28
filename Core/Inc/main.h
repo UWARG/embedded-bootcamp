@@ -54,7 +54,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void setTimerPulseValue(uint16_t pulse);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -75,6 +75,7 @@ void setTimerPulseValue(uint16_t pulse);
 
 /* USER CODE BEGIN Private defines */
 #define MAX_10_BIT 1023U
+//default pulse and pulse range 3200, 5% of 64000
 #define PULSE_RANGE 3200U
 
 /* USER CODE END Private defines */
