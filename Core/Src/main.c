@@ -101,7 +101,6 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
-
   /* USER CODE BEGIN 2 */
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccrValue);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
