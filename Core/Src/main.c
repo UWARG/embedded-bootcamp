@@ -119,10 +119,10 @@ int main(void)
 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
 
-    uint16_t adcValue = ((spi_rcv_buf[1] & 0b11) << 8);
+    float adcValue = ((spi_rcv_buf[1] & 0b11) << 8);
     adcValue |= spi_rcv_buf[2];
 
-    newAdcValue = ADC_Value/ADC_MAX_VAL;
+    newAdcValue = adcValue/ADC_MAX_VAL;
     // d of 0 is 5% and d of 1 is 10%
     duty_cycle = 0.05 + newAdcValue * 0.05;
 
