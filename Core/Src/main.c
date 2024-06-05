@@ -100,24 +100,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	  uint8_t RxData[3];
 	  uint8_t TxData[3] = {0x01, 0x80, 0x00};
-  while (1)
-  {
-    /* USER CODE END WHILE */
-	  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_RESET); //Set CS to Low
-	  HAL_SPI_TransmitReceive(&hspi1, RxData, TxData, 3, 1000);
-	  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_SET); //Set CS to High
+	  while (1)
+	  {
+	    /* USER CODE END WHILE */
+		  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_RESET); //Set CS to Low
+		  HAL_SPI_TransmitReceive(&hspi1, RxData, TxData, 3, 1000);
+		  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_SET); //Set CS to High
 
-	  ADC_output = (RxData[1] & 0x03 << 8) | RxData[2];
+		  uint16_t ADC_output = (RxData[1] & 0x03 << 8) | RxData[2];
 
-	  float ADC_norm = ADC_output / 1023; //ADC ranges from 0 to 2^10-1
-	  float PWM_input = (0.05 + ADC_norm*0.05)*64000; //Input = (5%+ normalized ADC value * 5%) * entire period, so it ranges from 5% to 10% of the entire period
+		  float ADC_norm = ADC_output / 1023; //ADC ranges from 0 to 2^10-1
+		  float PWM_input = (0.05 + ADC_norm*0.05)*64000; //Input = (5%+ normalized ADC value * 5%) * entire period, so it ranges from 5% to 10% of the entire period
 
-	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_input);
+		 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_input);
 
-	  Hal_Delay(10);
-    /* USER CODE BEGIN 3 */
+		  HAL_Delay(10);
+	    /* USER CODE BEGIN 3 */
 
-  }
+	  }
   /* USER CODE END 3 */
 }
 
