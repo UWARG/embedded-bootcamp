@@ -36,6 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+const uint8_t TxData[3] = {0x01, 0x80, 0x00};
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,6 +47,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t RxData[3];
 
 /* USER CODE END PV */
 
@@ -98,8 +100,6 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	  uint8_t RxData[3];
-	  uint8_t TxData[3] = {0x01, 0x80, 0x00};
 	  while (1)
 	  {
 	    /* USER CODE END WHILE */
@@ -109,7 +109,7 @@ int main(void)
 
 		  uint16_t ADC_output = (RxData[1] & 0x03 << 8) | RxData[2];
 
-		  float ADC_norm = ADC_output / 1023; //ADC ranges from 0 to 2^10-1
+		  float ADC_norm = ADC_output / 1023.0; //ADC ranges from 0 to 2^10-1
 		  float PWM_input = (0.05 + ADC_norm*0.05)*64000; //Input = (5%+ normalized ADC value * 5%) * entire period, so it ranges from 5% to 10% of the entire period
 
 		 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_input);
