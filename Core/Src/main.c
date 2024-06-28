@@ -104,7 +104,7 @@ int main(void)
 	  {
 	    /* USER CODE END WHILE */
 		  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_RESET); //Set CS to Low
-		  HAL_SPI_TransmitReceive(&hspi1, RxData, TxData, 3, 1000);
+		  HAL_SPI_TransmitReceive(&hspi1, TxData, RxData, 3, 1000);
 		  HAL_GPIO_WritePin(GPIOB,  GPIO_PIN_8, GPIO_PIN_SET); //Set CS to High
 
 		  uint16_t ADC_output = (RxData[1] & 0x03 << 8) | RxData[2];

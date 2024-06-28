@@ -3816,7 +3816,7 @@ int main(void)
  8001de0:	2200      	movs	r2, #0
  8001de2:	0019      	movs	r1, r3
  8001de4:	f000 fe28 	bl	8002a38 <HAL_GPIO_WritePin>
-		  HAL_SPI_TransmitReceive(&hspi1, RxData, TxData, 3, 1000);
+		  HAL_SPI_TransmitReceive(&hspi1, TxData, RxData, 3, 1000);
  8001de8:	4a2e      	ldr	r2, [pc, #184]	@ (8001ea4 <main+0xe8>)
  8001dea:	492f      	ldr	r1, [pc, #188]	@ (8001ea8 <main+0xec>)
  8001dec:	482f      	ldr	r0, [pc, #188]	@ (8001eac <main+0xf0>)
@@ -3834,14 +3834,14 @@ int main(void)
  8001e04:	f000 fe18 	bl	8002a38 <HAL_GPIO_WritePin>
 
 		  uint16_t ADC_output = (RxData[1] & 0x03 << 8) | RxData[2];
- 8001e08:	4b27      	ldr	r3, [pc, #156]	@ (8001ea8 <main+0xec>)
+ 8001e08:	4b26      	ldr	r3, [pc, #152]	@ (8001ea4 <main+0xe8>)
  8001e0a:	785b      	ldrb	r3, [r3, #1]
  8001e0c:	b21a      	sxth	r2, r3
  8001e0e:	23c0      	movs	r3, #192	@ 0xc0
  8001e10:	009b      	lsls	r3, r3, #2
  8001e12:	4013      	ands	r3, r2
  8001e14:	b21a      	sxth	r2, r3
- 8001e16:	4b24      	ldr	r3, [pc, #144]	@ (8001ea8 <main+0xec>)
+ 8001e16:	4b23      	ldr	r3, [pc, #140]	@ (8001ea4 <main+0xe8>)
  8001e18:	789b      	ldrb	r3, [r3, #2]
  8001e1a:	b21b      	sxth	r3, r3
  8001e1c:	4313      	orrs	r3, r2
@@ -3909,8 +3909,8 @@ int main(void)
  8001e9c:	e79d      	b.n	8001dda <main+0x1e>
  8001e9e:	46c0      	nop			@ (mov r8, r8)
  8001ea0:	48000400 	.word	0x48000400
- 8001ea4:	08005380 	.word	0x08005380
- 8001ea8:	20000028 	.word	0x20000028
+ 8001ea4:	20000028 	.word	0x20000028
+ 8001ea8:	08005380 	.word	0x08005380
  8001eac:	2000002c 	.word	0x2000002c
  8001eb0:	408ff800 	.word	0x408ff800
  8001eb4:	9999999a 	.word	0x9999999a
