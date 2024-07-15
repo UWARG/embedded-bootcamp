@@ -24,7 +24,6 @@
 #include "usart.h"
 #include "gpio.h"
 
-#define MAX_ADC 1023
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -111,17 +110,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, DataOut, DataIn, 3, 10);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-
-	  adcVal = ((DataIn[1] & 0b11) << 8) + DataIn[2];
-
-	  pwmVal = (0.05 + (adcVal / MAX_ADC) * 0.05) * PERIOD;
-
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmVal);
-
-	  HAL_Delay(10);
 
     /* USER CODE BEGIN 3 */
   }
