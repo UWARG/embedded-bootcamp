@@ -54,3 +54,7 @@ dkms.conf
 .mxproject
 build/
 .dep/
+/Debug/
+.metadeta/
+.settings/
+.vscode/
