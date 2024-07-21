@@ -40,6 +40,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define COMMS_LENGTH 3
 
 /* USER CODE END PM */
 
@@ -48,12 +49,6 @@
 /* USER CODE BEGIN PV */
 const uint16_t PERIOD = 64000;
 const uint16_t ADC_MAX_VALUE = 1023; // 2^10 - 1
-
-// {ADC start, CH0, don't care}
-uint8_t tx_data[3] = {0b0000001, 0b1000000, 0b0000000};
-uint8_t rx_data[3] = {};
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,6 +95,13 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // {ADC start, CH0, don't care}
+  uint8_t tx_data[COMMS_LENGTH] = {0b0000001, 0b1000000, 0b0000000};
+  uint8_t rx_data[COMMS_LENGTH] = {};
+
+  // Start the timer once
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,11 +119,13 @@ int main(void)
     // Gives a 16 bit value (MSB) where only 10 bits are relevant (0x3FF = 0b1111111111)
     uint16_t adc_rx_value = (rx_data[1] << 8 | rx_data[1]) && 0x3FF;
 
-    // TODO: Use adc_rx_value to calulate duty cycle
+    // Use adc_rx_value to calculate duty cycle
+    // D_min + (ADC/ADC_MAX) * (D_max - D_min)
+    float duty_cycle = (float) (0.05 * (1 + adc_rx_value/ADC_MAX_VALUE));
+    uint16_t on_counts = (uint16_t) (duty_cycle * PERIOD);
 
-
-    // TODO: Last param
-    // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, );
+    // Set compare reg
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, on_counts);
     
     // To ensure the MCU doesn't overload the ADC
     HAL_Delay(10);
