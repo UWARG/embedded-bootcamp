@@ -21,6 +21,8 @@
 #include "main.h"
 #include "usart.h"
 #include "gpio.h"
+#include "tim.h"
+#include "spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -38,6 +40,10 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define LENGTH_OF_MESSAGE 3
+#define MESSAGE_TIMEOUT 100
+#define COUNT_RANGE 1000 // max count is 2000 and min count is 1000
+#define ADC_MAX 1023 // range of ADC
 
 /* USER CODE END PM */
 
@@ -66,6 +72,10 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+  uint8_t transmitted[LENGTH_OF_MESSAGE] = {0x01, 0x80, 0x00};
+  uint8_t recieved[LENGTH_OF_MESSAGE];
+  HAL_StatusTypeDef interim;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,7 +97,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // start PWM
 
   /* USER CODE END 2 */
 
@@ -96,8 +110,23 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // low CS
+	 interim = HAL_SPI_TransmitRecieve(&hspi1, transmitted, recieved, LENGTH_OF_MESSAGE, MESSAGE_TIMEOUT);
 
+	 if (interim != HAL_OK){
+		 Error_Handler(); // in case an error is thrown or something
+	 }
+
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //high CS
+
+
+	 uint16_t adcValue = (recieved[1] << 8 | recieved[2]); // combined the extra bit so that there's only 10
+
+	 uint16_t PWM = COUNT_RANGE + ((float)adcValue * COUNT_RANGE / (float)ADC_MAX); // convert to PWM counts
+
+	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM);
     /* USER CODE BEGIN 3 */
+	 HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
