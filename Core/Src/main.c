@@ -109,22 +109,23 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // low CS
+	  interim = HAL_SPI_TransmitRecieve(&hspi1, transmitted, recieved, LENGTH_OF_MESSAGE, MESSAGE_TIMEOUT);
+
+	  if (interim != HAL_OK){
+	  	Error_Handler(); // in case an error is thrown or something
+	  }
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //high CS
+
+
+	  uint16_t adcValue = (recieved[1] << 8 | recieved[2]); // combined the extra bit so that there's only 10
+
+	  uint16_t PWM = COUNT_RANGE + ((float)adcValue * COUNT_RANGE / (float)ADC_MAX); // convert to PWM counts
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM);
     /* USER CODE END WHILE */
-	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // low CS
-	 interim = HAL_SPI_TransmitRecieve(&hspi1, transmitted, recieved, LENGTH_OF_MESSAGE, MESSAGE_TIMEOUT);
 
-	 if (interim != HAL_OK){
-		 Error_Handler(); // in case an error is thrown or something
-	 }
-
-	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //high CS
-
-
-	 uint16_t adcValue = (recieved[1] << 8 | recieved[2]); // combined the extra bit so that there's only 10
-
-	 uint16_t PWM = COUNT_RANGE + ((float)adcValue * COUNT_RANGE / (float)ADC_MAX); // convert to PWM counts
-
-	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM);
     /* USER CODE BEGIN 3 */
 	 HAL_Delay(10);
   }
