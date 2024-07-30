@@ -96,7 +96,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // {ADC start, CH0, don't care}
-  uint8_t tx_data[COMMS_LENGTH] = {0b0000001, 0b1000000, 0b0000000};
+  uint8_t tx_data[COMMS_LENGTH] = {0x01, 0x80, 0x00};
   uint8_t rx_data[COMMS_LENGTH] = {};
 
   // Start the timer once
@@ -117,11 +117,11 @@ int main(void)
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
     // Gives a 16 bit value (MSB) where only 10 bits are relevant (0x3FF = 0b1111111111)
-    uint16_t adc_rx_value = (rx_data[1] << 8 | rx_data[1]) && 0x3FF;
+    uint16_t adc_rx_value = (rx_data[1] << 8 | rx_data[2]) && 0x3FF;
 
     // Use adc_rx_value to calculate duty cycle
     // D_min + (ADC/ADC_MAX) * (D_max - D_min)
-    float duty_cycle = (float) (0.05 * (1 + adc_rx_value/ADC_MAX_VALUE));
+    float duty_cycle = (float) (0.05 * (1 + (float) adc_rx_value/ (float) ADC_MAX_VALUE));
     uint16_t on_counts = (uint16_t) (duty_cycle * PERIOD);
 
     // Set compare reg
