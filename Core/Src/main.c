@@ -19,10 +19,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "tim.h"
-#include "spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -70,6 +70,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   uint8_t transmitted[LENGTH_OF_MESSAGE] = {0x01, 0x80, 0x00};
@@ -98,7 +99,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
-  MX_TIM2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // start PWM
@@ -110,7 +111,7 @@ int main(void)
   while (1)
   {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // low CS
-	  interim = HAL_SPI_TransmitRecieve(&hspi1, transmitted, recieved, LENGTH_OF_MESSAGE, MESSAGE_TIMEOUT);
+	  interim = HAL_SPI_TransmitReceive(&hspi1, transmitted, recieved, LENGTH_OF_MESSAGE, MESSAGE_TIMEOUT);
 
 	  if (interim != HAL_OK){
 	  	Error_Handler(); // in case an error is thrown or something
@@ -152,6 +153,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -207,5 +209,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
