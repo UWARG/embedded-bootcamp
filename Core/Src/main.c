@@ -42,7 +42,7 @@
 /* USER CODE BEGIN PM */
 #define LENGTH_OF_MESSAGE 3
 #define MESSAGE_TIMEOUT 100
-#define COUNT_RANGE 1000 // max count is 2000 and min count is 1000
+#define COUNT_RANGE 3200 // max count is 6400 and min count is 3200
 #define ADC_MAX 1023 // range of ADC
 
 /* USER CODE END PM */
@@ -102,6 +102,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1000);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // start PWM
 
   /* USER CODE END 2 */
