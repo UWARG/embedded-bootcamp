@@ -19,7 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usart.h"
+#include "spi.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -34,6 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define CS_PIN GPIO_PIN_4
+#define CS_PORT GPIOB
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,7 +53,8 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint8_t Read_ADC(uint8_t channel);
+void Set_PWM_DutyCycle(uint16_t adc_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -86,7 +90,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +100,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  uint16_t adc_value = Read_ADC(0);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -110,7 +118,6 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -134,16 +141,27 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2;
-  PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
 }
 
 /* USER CODE BEGIN 4 */
+uint8_t Read_ADC (uint8_t channel){
+	uint8_t controlByte = 0x01;
+	controlByte |= (channel & 0x07) << 4;
 
+	uint8_t receivedData[2] = {0};
+	uint8_t transmitData[3] = {controlByte, 0x00, 0x00};
+	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_RESET); //start transmission going low
+	HAL_SPI_TransmitReceive(&hspi1, transmitData, receivedData, 3, HAL_MAX_DELAY);
+	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
+
+    uint16_t result = ((receivedData[1] & 0x03) << 8) | receivedData[2];
+    return result;
+
+}
+
+void Set_PWM_DutyCycle(uint16_t adc_value) {
+
+}
 /* USER CODE END 4 */
 
 /**
