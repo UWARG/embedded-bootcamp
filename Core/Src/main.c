@@ -53,8 +53,8 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-uint8_t Read_ADC(uint8_t channel);
-void Set_PWM_DutyCycle(uint16_t adc_value);
+uint8_t readADC(uint8_t channel);
+void setPWMDutyCycle(uint16_t adc_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,15 +93,15 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint16_t adc_value = Read_ADC(0);
-
+	  uint16_t adc_value = readADC(0);
+	  setPWMDutyCycle(adc_value);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
@@ -144,7 +144,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint8_t Read_ADC (uint8_t channel){
+uint8_t readADC (uint8_t channel){
 	uint8_t controlByte = 0x01;
 	controlByte |= (channel & 0x07) << 4;
 
@@ -159,8 +159,16 @@ uint8_t Read_ADC (uint8_t channel){
 
 }
 
-void Set_PWM_DutyCycle(uint16_t adc_value) {
+void setPWMDutyCycle(uint16_t adc_value) {
+	uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim1);
+	uint32_t min_duty_cycle = 0.05 * period;
+	uint32_t max_duty_cycle = 0.10 * period;
 
+
+	uint32_t compare_value = min_duty_cycle + ((adc_value * (max_duty_cycle - min_duty_cycle)) / 1023);
+
+
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
 }
 /* USER CODE END 4 */
 
