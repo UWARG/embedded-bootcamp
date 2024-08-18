@@ -93,6 +93,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
@@ -145,16 +146,26 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 uint8_t readADC (uint8_t channel){
-	uint8_t controlByte = 0x01;
-	controlByte |= (channel & 0x07) << 4;
+
 
 	uint8_t receivedData[2] = {0};
-	uint8_t transmitData[3] = {controlByte, 0x00, 0x00};
+
+    uint8_t start_bit = 0x01;
+    uint8_t sglDiff = 1;      // singleended
+    uint8_t D2 = (channel >> 2) & 0x01;  // extract bit 2 of channel
+    uint8_t D1 = (channel >> 1) & 0x01;  // bit 1
+    uint8_t D0 = channel & 0x01;
+
+    uint8_t transmitData[3];
+    transmitData[0] = start_bit; //start
+    transmitData[1] = (SGL_DIFF << 7) | (D2 << 6) | (D1 << 5) | (D0 << 4); //combine
+    transmitData[2] = 0x00;      //dummy byte
+
 	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_RESET); //start transmission going low
 	HAL_SPI_TransmitReceive(&hspi1, transmitData, receivedData, 3, HAL_MAX_DELAY);
 	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
 
-    uint16_t result = ((receivedData[1] & 0x03) << 8) | receivedData[2];
+	uint16_t result = ((receivedData[1] & 0x0F) << 8) | receivedData[2];
     return result;
 
 }
