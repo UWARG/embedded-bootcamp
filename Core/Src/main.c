@@ -145,7 +145,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint8_t readADC (uint8_t channel){
+uint16_t readADC (uint8_t channel){
 
 
 	uint8_t receivedData[2] = {0};
@@ -158,7 +158,7 @@ uint8_t readADC (uint8_t channel){
 
     uint8_t transmitData[3];
     transmitData[0] = start_bit; //start
-    transmitData[1] = (SGL_DIFF << 7) | (D2 << 6) | (D1 << 5) | (D0 << 4); //combine
+    transmitData[1] = (sglDiff << 7) | (D2 << 6) | (D1 << 5) | (D0 << 4); //combine
     transmitData[2] = 0x00;      //dummy byte
 
 	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_RESET); //start transmission going low
