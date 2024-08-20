@@ -69,7 +69,7 @@ void setPWMDutyCycle(uint16_t adc_value);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -93,6 +93,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1000);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
