@@ -170,7 +170,7 @@ uint16_t readADC (uint8_t channel){
 	HAL_SPI_TransmitReceive(&hspi1, transmitData, receivedData, 3, HAL_MAX_DELAY);
 	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
 
-	uint16_t result = ((receivedData[1] & 0x0F) << 8) | receivedData[2];
+	uint16_t result = ((receivedData[1] & 0x03) << 8) | receivedData[2];
     return result;
 
 }
