@@ -1,5 +1,5 @@
 ../Core/Src/main.c:69:5:main	1
-../Core/Src/main.c:117:6:SystemClock_Config	3
-../Core/Src/main.c:147:9:readADC	1
-../Core/Src/main.c:162:6:setPWMDutyCycle	1
-../Core/Src/main.c:179:6:Error_Handler	1
+../Core/Src/main.c:118:6:SystemClock_Config	3
+../Core/Src/main.c:148:10:readADC	2
+../Core/Src/main.c:177:6:setPWMDutyCycle	1
+../Core/Src/main.c:194:6:Error_Handler	1

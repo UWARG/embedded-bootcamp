@@ -35,7 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CS_PIN GPIO_PIN_4
+#define CS_PIN GPIO_PIN_8
 #define CS_PORT GPIOB
 /* USER CODE END PD */
 
@@ -53,7 +53,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-uint8_t readADC(uint8_t channel);
+uint16_t readADC(uint8_t channel);
 void setPWMDutyCycle(uint16_t adc_value);
 /* USER CODE END PFP */
 
@@ -69,7 +69,7 @@ void setPWMDutyCycle(uint16_t adc_value);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -146,9 +146,13 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 uint16_t readADC (uint8_t channel){
+	if (channel > 7) { //check input
+		while(1){
 
+		}
+	}
 
-	uint8_t receivedData[2] = {0};
+	uint8_t receivedData[3] = {0};
 
     uint8_t start_bit = 0x01;
     uint8_t sglDiff = 1;      // singleended
