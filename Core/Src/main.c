@@ -99,6 +99,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /* TODO: send stuff to ADC */
+
+	  /* TODO: read stuff from ADC */
+
+	  /* TODO: control motor */
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
