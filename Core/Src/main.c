@@ -92,7 +92,8 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0.05 * __HAL_TIM_GET_AUTORELOAD(&htim1));
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,9 +111,15 @@ int main(void)
 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); /* CS high (end transmit) */
 
-    /* TODO: convert ADC output to PWM signal */
+    /* get last 10 out of 24 bits received from ADC */
+    uint16_t adc_output = ((rx_data[1] & 0x03) << 8) | rx_data[2];
 
-    /* TODO: control motor */
+    /* max ADC output is 2^10 - 1 = 1023 */
+    /* 5-10% duty cycle with period = 60000, so values range from 3000-6000 */
+    uint16_t adc_compare = (1 + (adc_output / 1023)) * 0.05 * __HAL_TIM_GET_AUTORELOAD(&htim1);
+
+    /* set compare register */
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_compare);
 
     HAL_Delay(10);
     /* USER CODE END WHILE */
