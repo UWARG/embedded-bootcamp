@@ -99,13 +99,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /* TODO: send stuff to ADC */
+    /* pot on CH0 of MCP3004 (single input), send bits [1 1 x 0 0] (start, sgl/diff, d2, d1, d0)*/
+    uint8_t tx_data[3] = {0x1, 0x1 << 7, 0x0}; /* pad with zeroes to fit 8 bits */
+    uint8_t rx_data[3] = {0};
 
-	  /* TODO: read stuff from ADC */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); /* CS low (start transmit) */
 
-	  /* TODO: control motor */
+    /* full duplex mode, use transmit+receive */
+    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY);
 
-	  HAL_Delay(10);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); /* CS high (end transmit) */
+
+    /* TODO: convert ADC output to PWM signal */
+
+    /* TODO: control motor */
+
+    HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
