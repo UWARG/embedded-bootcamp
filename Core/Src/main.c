@@ -118,7 +118,8 @@ int main(void)
 	  adc_data = ((rx_data[1] & 0x3) << 8) | rx_data[2];
 	  /*Max number of 10 bits is 2^10-1 = 1023. Scale it down to the range of 0-1*/
 	  /*Duty cycle of 5-10%, scale it to the range of 0-0.05 and add 0.05*/
-	  adc_val = 0.05 + adc_data / 1023.0 * 0.05;
+	  /*Multiply it by the counter period*/
+	  adc_val = (0.05 + adc_data / 1023.0 * 0.05) * 64000;
 	  /*Compare register*/
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_val);
 	  HAL_Delay(10);
