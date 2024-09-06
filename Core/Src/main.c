@@ -92,21 +92,34 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  /*Pull CS line high*/
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  /*Start timer*/
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  /*Pot connected to CH0 on ADC*/
+  /*Start Single/Diff D2 D1 D0*/
+  /*1          1       X  0  0*/
   uint8_t tx_data[3] = {0x1, 0x1 << 7, 0x0};
   uint8_t rx_data[3] = {0x0, 0x0, 0x0};
+  uint16_t adc_data = {0x0};
+  float adc_val = {0.0};
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /*Pull CS line low to start transmit*/
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  HAL_SPI_TransmitReceive(&hspi1,tx_data, rx_data, sizeof(tx_data), HAL_MAX_DELAY);
+	  /*Pull CS line high to end transmit*/
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	  uint16_t adc_data = ((rx_data[1] & 0x3) << 8) | rx_data[2];
-	  float adc_val = 0.05 + adc_data / 1023.0 * 0.05;
+	  /*Get last 10 bits of the 24 bits*/
+	  adc_data = ((rx_data[1] & 0x3) << 8) | rx_data[2];
+	  /*Max number of 10 bits is 2^10-1 = 1023. Scale it down to the range of 0-1*/
+	  /*Duty cycle of 5-10%, scale it to the range of 0-0.05 and add 0.05*/
+	  adc_val = 0.05 + adc_data / 1023.0 * 0.05;
+	  /*Compare register*/
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_val);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
