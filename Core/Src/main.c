@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -50,7 +52,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t getADCVal(uint8_t channel);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -64,6 +66,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,7 +90,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  TIM1->CCR1 = 1024-1;
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,6 +102,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_Delay(10);
+
+	  uint16_t adc_val = getADCVal(0);
+
+	  // Convert ADC to PWM Value
+	  uint8_t max_pwm = TIM1->ARR * 0.05;
+	  uint8_t min_pwm = TIM1->ARR * 0.1;
+	  uint16_t pwm_val = min_pwm + (adc_val * (max_pwm - min_pwm)) / (1024-1);
+
+	  // Move Servo motor
+	  TIM1->CCR1 = pwm_val;
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +141,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -143,7 +163,30 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t getADCVal(uint8_t channel) {
+	uint8_t tx_buffer[3];
+	uint8_t rx_buffer[3];
+	uint16_t value;
 
+	uint8_t D0 = channel & 0x1;
+	uint8_t D1 = (channel >> 1) & 0x1;
+	uint8_t D2 = (channel >> 2) & 0x1;
+
+	tx_buffer[0] = 0x1; 											// Start Bit
+	tx_buffer[1] = (0x1 << 7) | (D2 << 6) | (D1 << 5) | (D0 << 4);	// Single-Ended, D2, D1, D0
+	tx_buffer[2] = 0x00;											// Dummy Byte
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1, tx_buffer, rx_buffer, 3, HAL_MAX_DELAY);  // Poll until successful
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	// rx_buffer[0] is null
+	// rx_buffer[1] holds  ? ? ? ? ? 0 B9 B8
+	// rx_buffer[2] holds B7 ... B0
+	value = rx_buffer[2] | ((rx_buffer[1] & 0x3) << 8);
+
+	return value;
+}
 /* USER CODE END 4 */
 
 /**
@@ -177,5 +220,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
