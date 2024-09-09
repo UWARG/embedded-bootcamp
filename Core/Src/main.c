@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,7 +89,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_START(&hspi1, TIM_CHANNEL1);	// Start PWM
 
   /* USER CODE END 2 */
 
@@ -95,6 +101,37 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /*
+	  Because communication with the
+	  MCP3004/3008 devices may not need multiples of
+	  eight clocks, it will be necessary to provide more clocks
+	  than are required. This is usually done by sending
+	  ‘leading zeros’ before the start bit.
+	  */
+
+	  uint8_t data_transmitted[3] = {0b00000001, 0b10000000, 0b00000000};	// {ADC start bit, CH0, Don't Cares}
+	  uint8_t data_received[3] = {0};
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);   // CS -> LOW (initiate SPI communication)
+
+	  HAL_SPI_TransmitReceive(&hspi1, data_transmitted, data_received, 3, HAL_MAX_DELAY);	// full duplex mode (transit & receive data simultaneously
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);   // CS -> HIGH (stop SPI communication)
+
+
+	  uint16_t adc_output = ((data_received[1] & 0x03) << 8 | data_received[2]); // Only last 10 bits are useful
+
+
+	  uint32_t period = _HAL_TIM_GET_AUTORELOAD(&hspi1); // period = 64000 w/ a 5-10% duty cycle
+	  uint32_t min_cycle = period * 0.05;
+	  uint32_t max_cycle = period * 0.1;
+
+	  // Max ADC output is 1023 (2^10 - 1)
+	  uint16_t adc_to_pwm = (1 + (adc_output / 1023)) * (max_cycle - min_cycle);
+
+	  _HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, adc_to_pwm);
+0
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
