@@ -95,14 +95,15 @@ int main(void)
   /*Pull CS line high*/
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /*Start timer*/
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0.05 * 64000);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /*Pot connected to CH0 on ADC*/
   /*Start Single/Diff D2 D1 D0*/
   /*1          1       X  0  0*/
   uint8_t tx_data[3] = {0x1, 0x1 << 7, 0x0};
   uint8_t rx_data[3] = {0x0, 0x0, 0x0};
-  uint16_t adc_data = {0x0};
-  float adc_val = {0.0};
+  uint16_t adc_data = 0x0;
+  float adc_val = 0.0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
