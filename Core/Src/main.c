@@ -93,7 +93,8 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_PWM_START(&hspi1, TIM_CHANNEL1);	// Start PWM
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1000);
+  HAL_TIM_PWM_START(&htim1, TIM_CHANNEL_1);	// Start PWM
 
   /* USER CODE END 2 */
 
@@ -122,15 +123,15 @@ int main(void)
 	  uint16_t adc_output = ((data_received[1] & 0x03) << 8 | data_received[2]); // Only last 10 bits are useful
 
 
-	  uint32_t period = _HAL_TIM_GET_AUTORELOAD(&hspi1); // period = 64000 w/ a 5-10% duty cycle
+	  uint32_t period = _HAL_TIM_GET_AUTORELOAD(&htim1); // period = 64000 w/ a 5-10% duty cycle
 	  uint32_t min_cycle = period * 0.05;
 	  uint32_t max_cycle = period * 0.1;
 
 	  // Max ADC output is 1023 (2^10 - 1)
-	  uint16_t adc_to_pwm = (1 + (adc_output / 1023)) * (max_cycle - min_cycle);
+	  uint32_t adc_to_pwm = (1 + (adc_output / 1023)) * (max_cycle - min_cycle);
 
-	  _HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, adc_to_pwm);
-0
+	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_to_pwm);
+
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
