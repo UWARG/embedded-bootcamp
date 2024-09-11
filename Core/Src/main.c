@@ -93,7 +93,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  TIM1->CCR1 = 1024-1;
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
@@ -107,12 +107,12 @@ int main(void)
 	  uint16_t adc_val = getADCVal(0);
 
 	  // Convert ADC to PWM Value
-	  uint8_t max_pwm = TIM1->ARR * 0.05;
-	  uint8_t min_pwm = TIM1->ARR * 0.1;
-	  uint16_t pwm_val = min_pwm + (adc_val * (max_pwm - min_pwm)) / (1024-1);
+	  uint8_t max_pwm = __HAL_TIM_GET_COMPARE(&htim1, TIM_CHANNEL_1) * 0.05;
+	  uint8_t min_pwm = __HAL_TIM_GET_COMPARE(&htim1, TIM_CHANNEL_1) * 0.1;
+	  uint16_t pwm_val = min_pwm + (adc_val * (max_pwm - min_pwm)) / 65535;
 
 	  // Move Servo motor
-	  TIM1->CCR1 = pwm_val;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_val);
 
     /* USER CODE END WHILE */
 
