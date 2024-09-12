@@ -52,7 +52,12 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+uint8_t read_bit(uint8_t data, int bit);
+uint8_t set_bit(uint8_t data, int bit);
+uint8_t unset_bit(uint8_t data, int bit);
+void write_bit(uint8_t *data, int bit, bool value);
 
+void write_chip_select(GPIO_PinState state);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,13 +98,41 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  uint8_t receiver_buffer[3];
+  uint8_t transceiver_buffer[3];
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	write_bit(transceiver_buffer, 0, 0); // set the start bit to 0 (datasheet implies its a DNC?)
+	write_bit(transceiver_buffer, 1, 1); // set the SGL/DIFF bit to single-ended mode
+
+	// set the D bits to access channel 0
+	write_bit(transceiver_buffer, 2, 0);
+	write_bit(transceiver_buffer, 3, 0);
+	write_bit(transceiver_buffer, 4, 0);
+
+	// set the chip select pin, receive and transmit data, unset the chip select pin
+	write_chip_select(GPIO_PIN_SET);
+	HAL_SPI_TransmitReceive(&hspi1, transceiver_buffer, receiver_buffer, 3, 10);
+	write_chip_select(GPIO_PIN_RESET);
+
+	// ensure that the 7th bit is null, as per the data sheet
+	if (read_bit(receiver_buffer, 6) != 0) {
+		Error_Handler();
+	}
+
+	// convert the remaining input bits into an integer, MSB first
+	int adc_output = 0;
+	for (int i = 0; i < 10; i++) {
+		int bit_index = i + 7;
+		adc_output = adc_output << 1 + read_bit(receiver_buffer, bit_index);
+	}
+
+	HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -149,7 +182,32 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint8_t read_bit(uint8_t data, int bit) {
+	return (data >> bit) & 1;
+}
 
+uint8_t set_bit(uint8_t data, int bit) {
+	return data | (1 << bit);
+}
+
+uint8_t unset_bit(uint8_t data, int bit) {
+	return data & ~(1 << bit);
+}
+
+void write_bit(uint8_t *data, int bit, bool value) {
+	int bit_index = bit % 8;
+	int byte_index = bit / 8;
+	uint8_t *byte = data + byte_index;
+	if (value) {
+		*byte = set_bit(*byte, bit_index);
+	} else {
+		*byte = unset_bit(*byte, bit_index);
+	}
+}
+
+void write_chip_select(GPIO_PinState state) {
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, state);
+}
 /* USER CODE END 4 */
 
 /**
