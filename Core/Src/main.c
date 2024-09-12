@@ -58,6 +58,8 @@ uint8_t unset_bit(uint8_t data, int bit);
 void write_bit(uint8_t *data, int bit, bool value);
 
 void write_chip_select(GPIO_PinState state);
+void set_duty_cycle(int duty_cycle);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -130,6 +132,14 @@ int main(void)
 		int bit_index = i + 7;
 		adc_output = adc_output << 1 + read_bit(receiver_buffer, bit_index);
 	}
+
+	// largest unsigned value representable with 10 bits = 2**10 - 1
+	double max_adc = 1023.0;
+
+	// linearly map a value in the range [0, max_adc] to the range [5, 10]
+	int duty_cycle = (int) (adc_output / max_adc * 5 + 5);
+
+	set_duty_cycle(duty_cycle);
 
 	HAL_Delay(10);
 
@@ -207,6 +217,11 @@ void write_bit(uint8_t *data, int bit, bool value) {
 
 void write_chip_select(GPIO_PinState state) {
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, state);
+}
+
+// 0 <= duty_cycle <= 100
+void set_duty_cycle(int duty_cycle) {
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
 }
 /* USER CODE END 4 */
 
