@@ -104,3 +104,29 @@ Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/chand
 
 !ENTRY com.st.stm32cube.ide.mcu.debug.launch 2 0 2024-07-13 22:48:24.469
 !MESSAGE Won't launch debug session since we failed to locate the binary.
+!SESSION 2024-09-10 21:25:10.027 -----------------------------------------------
+eclipse.buildId=Version 1.13.2
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_CA
+Framework arguments:  -keyring /Users/chandisecherine/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/chandisecherine/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2024-09-10 21:25:16.476
+!MESSAGE Log4j2 initialized with config file /Users/chandisecherine/STM32CubeIDE/workspace_1.13.2/onboarding/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2024-09-10 21:25:22.015
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2024-09-15 14:42:49.143 -----------------------------------------------
+eclipse.buildId=Version 1.13.2
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_CA
+Framework arguments:  -keyring /Users/chandisecherine/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/chandisecherine/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2024-09-15 14:42:59.087
+!MESSAGE Log4j2 initialized with config file /Users/chandisecherine/STM32CubeIDE/workspace_1.13.2/onboarding/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2024-09-15 14:43:06.774
+!MESSAGE Started RMI Server, listening on port 41337
