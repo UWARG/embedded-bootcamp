@@ -21,6 +21,10 @@
 #include "main.h"
 #include "usart.h"
 #include "gpio.h"
+#include "stm32f0xx.h"
+#include "stm32f0xx_hal.h"
+#define ADC_MAX_VALUE 1023
+#define TIMER_MAX_COUNT 1000
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -95,9 +99,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /*
+	  HAL_StatusTypeDef  HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout);//receive data
+	  HAL_StatusTypeDef  HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout);//send data
+	  uint32_t adcValue = HAL_ADC_GetValue(&hadc1); //Read the ADC Value
+	  uint32_t pwmValue = (adcValue * timerPeriod) / 4095; //Map the ADC Value to PWM Duty Cycle
+	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, pwmValue);// Update the PWM Duty Cycle
+	  */
+	  int adc_value = read_adc(); // Function to read ADC value
+	  int timer_count = (adc_value * TIMER_MAX_COUNT) / ADC_MAX_VALUE;
+	  set_timer(timer_count); // Function to set the timer count
+
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
