@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -42,8 +44,17 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+//TIM_HandleTypeDef htim1;
+//SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
+
+// reading from channel 0
+uint8_t adc_transmit[3] = {0x1, 0x10000000, 0x0};
+
+uint8_t adc_receive[3];
+uint32_t adc_value = 0;
+uint32_t pwm_value = 0;
 
 /* USER CODE END PV */
 
@@ -55,6 +66,35 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void read_adc_spi(void) {
+
+	// setting CS to low
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	// setting up full duplex communication
+	HAL_SPI_TransmitReceive(&hspi1, adc_transmit, adc_receive, 1, HAL_MAX_DELAY);
+
+	// setting CS to high
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	// reading last 10 bits from the ADC (relevant data)
+	adc_value = ((adc_receive[1] & 0x3) << 8) | adc_receive[2];
+}
+
+void convert_ADC_To_PWM(void) {
+
+	// 2000 - 1000 is the max pwm value - min pwm value
+	// 1023 => largest value for 10 bits
+	pwm_value = ((adc_value * (2000 - 1000)) / 1023) + 1000;
+
+	// set the compare register to the pwm_value
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+
+
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -87,7 +127,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // starting PWM signal
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,9 +140,15 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_Delay(10);
+	  read_adc_spi();
+	  convert_ADC_To_PWM();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+
   }
   /* USER CODE END 3 */
 }
