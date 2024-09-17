@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -42,9 +44,14 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+//SPI_HandleTypeDef hspi1;
+//TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t adc_tx_data[3] = {0x1, 0x10000000, 0x0};  // Reading from channel 0
+uint8_t adc_rx_data[3];     // Data received from ADC
+uint32_t adc_value = 0;      // 10-bit ADC value
+uint32_t pwm_value = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,6 +62,26 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void read_adc_spi(void) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);  // Set CS low
+
+    HAL_SPI_TransmitReceive(&hspi1, adc_tx_data, adc_rx_data, 1, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);  // Set CS high
+
+
+    adc_value = ((adc_rx_data[1] & 0x03) << 8) | adc_rx_data[2]; // get only 10 last bits (refer to datasheet
+}
+
+void adc_to_pwm() {
+
+    pwm_value = ((adc_value * (2000 - 1000)) / 1023) + 1000;
+    // 1023 -> 2000 (2ms) AND 0 -> 1000 (1ms)
+    // highest value you can get with 10 bits is 1023
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+}
+
 
 /* USER CODE END 0 */
 
@@ -87,7 +114,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,6 +125,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_Delay(10);
+
+	  read_adc_spi();
+
+	  adc_to_pwm();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
