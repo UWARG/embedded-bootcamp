@@ -101,6 +101,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   while (1)
   {
 	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, dataSize, timeout);
