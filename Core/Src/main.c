@@ -96,6 +96,16 @@ int main(void)
   // the 7 MSB of the first byte are zeroed so that the final bit can act as the start bit and the received data is nicely byte aligned
   // the second byte is structured as SGL/DIFF D2 D1 D0 X X X X, with the 0s indicating single-ended mode and selecting channel 0
   uint8_t transceiver_buffer[3] = {0b00000001, 0b00000000, 0};
+
+  // set the chip select line high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  // set ccr to 5% duty cycle
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (int) (64000 * 0.05f));
+
+  // start PWM generation
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
