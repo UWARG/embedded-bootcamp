@@ -101,22 +101,16 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-	uint8_t receiver_buffer[3];
-	uint8_t transceiver_buffer[3];
+  uint8_t receiver_buffer[3] = {0, 0, 0};
+  // the 7 MSB of the first byte are zeroed so that the final bit can act as the start bit and the received data is nicely byte aligned
+  // the second byte is structured as SGL/DIFF D2 D1 D0 X X X X, with the 0s indicating single-ended mode and selecting channel 0
+  uint8_t transceiver_buffer[3] = {0b00000001, 0b00000000, 0};
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1)
 	{
-		write_bit(transceiver_buffer, 0, 0); // set the start bit to 0 (datasheet implies its a DNC?)
-		write_bit(transceiver_buffer, 1, 1); // set the SGL/DIFF bit to single-ended mode
-
-		// set the D bits to access channel 0
-		write_bit(transceiver_buffer, 2, 0);
-		write_bit(transceiver_buffer, 3, 0);
-		write_bit(transceiver_buffer, 4, 0);
-
 		// set the chip select pin, receive and transmit data, unset the chip select pin
 		write_chip_select(GPIO_PIN_SET);
 		if (HAL_SPI_TransmitReceive(&hspi1, transceiver_buffer, receiver_buffer, 3, 10) != HAL_OK) {
