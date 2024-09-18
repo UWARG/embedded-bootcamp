@@ -52,12 +52,6 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-uint8_t read_bit(uint8_t data, int bit);
-uint8_t set_bit(uint8_t data, int bit);
-uint8_t unset_bit(uint8_t data, int bit);
-void write_bit(uint8_t *data, int bit, bool value);
-bool read_bit_from(uint8_t *data, int bit);
-
 void write_chip_select(GPIO_PinState state);
 void set_duty_cycle(int duty_cycle);
 
@@ -124,11 +118,7 @@ int main(void)
 		}
 
 		// convert the remaining input bits into an integer, MSB first
-		int adc_output = 0;
-		for (int i = 0; i < 10; i++) {
-			int bit_index = i + 7;
-			adc_output = (adc_output << 1) + read_bit_from(receiver_buffer, bit_index);
-		}
+		int adc_output = ((int) (receiver_buffer[1] & 0b11)) << 8 | receiver_buffer[2];
 
 		// largest unsigned value representable with 10 bits = 2**10 - 1
 		double max_adc = 1023.0;
@@ -189,37 +179,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint8_t read_bit(uint8_t data, int bit) {
-	return (data >> bit) & 1;
-}
-
-uint8_t set_bit(uint8_t data, int bit) {
-	return data | (1 << bit);
-}
-
-uint8_t unset_bit(uint8_t data, int bit) {
-	return data & ~(1 << bit);
-}
-
-void write_bit(uint8_t *data, int bit, bool value) {
-	int bit_index = bit % 8;
-	int byte_index = bit / 8;
-	uint8_t *byte = data + byte_index;
-	if (value) {
-		*byte = set_bit(*byte, bit_index);
-	} else {
-		*byte = unset_bit(*byte, bit_index);
-	}
-}
-
-bool read_bit_from(uint8_t *data, int bit) {
-	int bit_index = bit % 8;
-	int byte_index = bit / 8;
-	uint8_t *byte = data + byte_index;
-	return read_bit(*byte, bit_index);
-}
-
-
 void write_chip_select(GPIO_PinState state) {
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, state);
 }
