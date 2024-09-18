@@ -110,39 +110,39 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1)
-	{
-		// unset the chip select pin, receive and transmit data, set the chip select pin
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-		if (HAL_SPI_TransmitReceive(&hspi1, transceiver_buffer, receiver_buffer, 3, 10) != HAL_OK) {
-			Error_Handler();
-		}
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  while (1)
+  {
+	// unset the chip select pin, receive and transmit data, set the chip select pin
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	if (HAL_SPI_TransmitReceive(&hspi1, transceiver_buffer, receiver_buffer, 3, 10) != HAL_OK) {
+		Error_Handler();
+	}
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-		// ensure that the 6th MSB bit of the second data byte is null, as per the data sheet
-		if (!(receiver_buffer[1] >> 2 & 1)) {
-			Error_Handler();
-		}
+	// ensure that the 6th MSB bit of the second data byte is null, as per the data sheet
+	if (!(receiver_buffer[1] >> 2 & 1)) {
+		Error_Handler();
+	}
 
-		// convert the remaining input bits into an integer, MSB first
-		int adc_output = ((int) (receiver_buffer[1] & 0b11)) << 8 | receiver_buffer[2];
+	// convert the remaining input bits into an integer, MSB first
+	int adc_output = ((int) (receiver_buffer[1] & 0b11)) << 8 | receiver_buffer[2];
 
-		// largest unsigned value representable with 10 bits = 2**10 - 1
-		float max_adc = 1023.0;
+	// largest unsigned value representable with 10 bits = 2**10 - 1
+	float max_adc = 1023.0;
 
-		// linearly map a value in the range [0, max_adc] to the range [0.05, 0.1]
-		float duty_cycle_percentage = adc_output / max_adc * 0.05f + 0.05f;
-		int duty_cycle = (int) (duty_cycle_percentage * 64000);
+	// linearly map a value in the range [0, max_adc] to the range [0.05, 0.1]
+	float duty_cycle_percentage = adc_output / max_adc * 0.05f + 0.05f;
+	int duty_cycle = (int) (duty_cycle_percentage * 64000);
 
-		// set the duty cycle of the tim1 counter
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
+	// set the duty cycle of the tim1 counter
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
 
-		HAL_Delay(10);
+	HAL_Delay(10);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	}
+  }
   /* USER CODE END 3 */
 }
 
