@@ -112,14 +112,14 @@ int main(void)
 	while (1)
 	{
 		// set the chip select pin, receive and transmit data, unset the chip select pin
-		write_chip_select(GPIO_PIN_SET);
+		write_chip_select(GPIO_PIN_RESET);
 		if (HAL_SPI_TransmitReceive(&hspi1, transceiver_buffer, receiver_buffer, 3, 10) != HAL_OK) {
 			Error_Handler();
 		}
-		write_chip_select(GPIO_PIN_RESET);
+		write_chip_select(GPIO_PIN_SET);
 
-		// ensure that the 7th bit is null, as per the data sheet
-		if (read_bit_from(receiver_buffer, 6) != 0) {
+		// ensure that the 6th MSB bit of the second data byte is null, as per the data sheet
+		if (!(receiver_buffer[1] >> 2 & 1)) {
 			Error_Handler();
 		}
 
