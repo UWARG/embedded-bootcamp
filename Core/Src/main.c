@@ -93,10 +93,12 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  uint8_t *txData;
-  uint8_t *rxData;
-  uint16_t dataSize = 0;
-  uint32_t timeout = 0;
+  uint8_t inputData[3] = {0x01, 0x80, 0x00};
+  uint8_t outputData[3] = {0};
+  uint16_t dataSize = 3;
+  uint32_t timeout = 0; // ms
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -104,8 +106,13 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   while (1)
   {
-	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, dataSize, timeout);
+	  // HAL_SPI_TransmitReceive(&hspi1, txData, rxData, dataSize, timeout);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, inputData, outputData, dataSize, timeout);
+	  uint16_t adcData = outputData[2] | outputData[1] << 8;
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 	  HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
