@@ -118,10 +118,11 @@ int main(void)
 		int adc_output = ((int) (receiver_buffer[1] & 0b11)) << 8 | receiver_buffer[2];
 
 		// largest unsigned value representable with 10 bits = 2**10 - 1
-		double max_adc = 1023.0;
+		float max_adc = 1023.0;
 
-		// linearly map a value in the range [0, max_adc] to the range [5, 10]
-		int duty_cycle = (int) (adc_output / max_adc * 5 + 5);
+		// linearly map a value in the range [0, max_adc] to the range [0.05, 0.1]
+		float duty_cycle_percentage = adc_output / max_adc * 0.05f + 0.05f;
+		int duty_cycle = (int) (duty_cycle_percentage * 64000);
 
 		// set the duty cycle of the tim1 counter
 		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
