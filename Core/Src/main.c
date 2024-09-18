@@ -52,9 +52,6 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void write_chip_select(GPIO_PinState state);
-void set_duty_cycle(int duty_cycle);
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -105,12 +102,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	while (1)
 	{
-		// set the chip select pin, receive and transmit data, unset the chip select pin
-		write_chip_select(GPIO_PIN_RESET);
+		// unset the chip select pin, receive and transmit data, set the chip select pin
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 		if (HAL_SPI_TransmitReceive(&hspi1, transceiver_buffer, receiver_buffer, 3, 10) != HAL_OK) {
 			Error_Handler();
 		}
-		write_chip_select(GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 		// ensure that the 6th MSB bit of the second data byte is null, as per the data sheet
 		if (!(receiver_buffer[1] >> 2 & 1)) {
@@ -126,7 +123,8 @@ int main(void)
 		// linearly map a value in the range [0, max_adc] to the range [5, 10]
 		int duty_cycle = (int) (adc_output / max_adc * 5 + 5);
 
-		set_duty_cycle(duty_cycle);
+		// set the duty cycle of the tim1 counter
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
 
 		HAL_Delay(10);
 
@@ -179,14 +177,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void write_chip_select(GPIO_PinState state) {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, state);
-}
-
-// 0 <= duty_cycle <= 100
-void set_duty_cycle(int duty_cycle) {
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
-}
 /* USER CODE END 4 */
 
 /**
