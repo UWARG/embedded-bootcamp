@@ -58,8 +58,8 @@ uint8_t receive [] = {0,0,0};
 uint16_t adc_val = 0;
 
 float adc_max_val = 1023;
-float min_range = 56470 * 0.05;
-float max_range = 56470 * 0.1;
+float min_range = 65536 * 0.05;
+float max_range = 65536 * 0.1;
 
 uint16_t adc_on_counts = 0;
 
@@ -108,7 +108,8 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(GPIOB, cs_pin, GPIO_PIN_SET);
+  HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1, min_range);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,27 +120,28 @@ int main(void)
 	  //ADC Communication
 
 	  //need to bring CS line from high then back to low to obtain data
-	  HAL_GPIO_WritePin(GPIOB, cs_pin, GPIO_PIN_SET);
 	  HAL_GPIO_WritePin(GPIOB, cs_pin, GPIO_PIN_RESET);
 
 	  //send and receive data; will transmit and receive data from the 8 bit sets created
 	  // each set is 8 bits
 	  // frequency is 50 Hz which is 20 ms
-	  HAL_SPI_TransmitReceive(&hspi1, transmit, receive, 8, 20);
+	  HAL_SPI_TransmitReceive(&hspi1, transmit, receive, 3, HAL_MAX_DELAY);
 
 	  //set pin back to low to stop data
-	  HAL_GPIO_WritePin(GPIOB, cs_pin, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(GPIOB, cs_pin, GPIO_PIN_SET);
 
-	  adc_val = (receive[1] | 0b0000000000)<<8  | receive[2];
+	  adc_val = (receive[1] & 0b00000011)<<8  | receive[2];
 
 	  //converting ADC to PWM
 
 	  //convert ADC to counts
 	  adc_on_counts = ((adc_val/adc_max_val)*(max_range - min_range)) + min_range;
 
+	  //start pwm signal generation
+	  HAL_TIM_PWM_Start (&htim1, TIM_CHANNEL_1);
 
 	  //set the compare register
-	  HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1, adc_val);
+	  HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1, adc_on_counts);
 
 
 
