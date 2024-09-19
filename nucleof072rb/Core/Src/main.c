@@ -19,11 +19,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include <stdint.h>
 
 /* USER CODE END Includes */
 
@@ -64,6 +68,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,7 +92,19 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // ADC receives one byte at a time: start bit, input channel configuration (0x80 = single-ended input mode and read from CH0), don't care
+  uint8_t tx[3] = {0x1, 0x80, 0x0};
+  uint8_t rx[3];
+
+  // Push CS high (ADC active low)
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  // Start MCU timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -97,6 +114,26 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
+	  // Pull chip select low to begin communication with ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // Send and receive data from ADC60000
+	  HAL_SPI_TransmitReceive(&hspi1, tx, rx, sizeof(tx), 0); // What goes in timeout?
+
+	  // Push chip select high to end communication with ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // First byte is unknown. The last two bits of the second byte appended with all bits of the third byte is the conversion result
+	  uint16_t conv = (((uint16_t)rx[1] & 0x03) << 8) | ((uint16_t)rx[2] & 0xFF);
+
+	  // Result of 0 means 5% duty cycle (1ms on), 1 << 10 - 1 means 10% duty cycle (2ms on)
+	  uint16_t duty_cycle = 0.05 * (1 + conv / (1 << 10 - 1));
+	  uint16_t num_on_counts = 60000 * duty_cycle; // Counter period = 60000
+
+	  // Write number of "on" counts to timer compare register to send PWM signal to motor
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, num_on_counts);
+
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -122,6 +159,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +215,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
