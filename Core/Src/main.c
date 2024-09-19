@@ -19,12 +19,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_hal.h"
-#define ADC_MAX_VALUE 1023
-#define TIMER_MAX_COUNT 1000
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -91,7 +89,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_SPI2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
 
   /* USER CODE END 2 */
 
@@ -106,9 +108,10 @@ int main(void)
 	  uint32_t pwmValue = (adcValue * timerPeriod) / 4095; //Map the ADC Value to PWM Duty Cycle
 	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, pwmValue);// Update the PWM Duty Cycle
 	  */
-	  int adc_value = read_adc(); // Function to read ADC value
-	  int timer_count = (adc_value * TIMER_MAX_COUNT) / ADC_MAX_VALUE;
-	  set_timer(timer_count); // Function to set the timer count
+	  uint8_t pRTxData=0;
+	  HAL_SPI_TransmitReceive(SPI1, 0, pRTxData, 1, 1000);
+	  uint32_t pwm=0;
+	  pwm=((pRTxData  * (2000 - 1000)) / 1023) + 1000;
 
 
 
