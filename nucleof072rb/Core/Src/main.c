@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,18 +89,52 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  uint16_t MAX_ADC_VALUE = 1023; // max num from 10bits
+  // uint16_t COUNTER_PERIOD = 64000;
+  uint16_t MAX_CYCLE_COUNTS = 3200; // 10% of counter period
+  uint16_t MIN_CYCLE_COUNTS = 6400; // 5% of counter period
 
+  uint8_t transmission_data_buffer[3] = {0b00000001, 0b10000000, 0};
+  uint8_t reception_data_buffer[3] = {0, 0, 0};
+
+  HAL_TIM_PWM_Start(&hspi1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  // Pull down CS line to start SPI communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // Get the data
+	  HAL_SPI_TransmitReceive(&hspi1, transmission_data_buffer, reception_data_buffer, 3, 0);
+
+	  // Pull up CS line to stop SPI communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+
+	  // Get the 10 bits of useful data at the end of the 3 bytes using funny bitwise operations
+	  uint16_t received_data =
+			  ((reception_data_buffer[1] << 8) | reception_data_buffer[2]) & 0b0000001111111111;
+
+	  // Map ADC value to PWM counts
+	  uint16_t pwm_high_counts = ((float)received_data/MAX_ADC_VALUE)*
+			  (MAX_CYCLE_COUNTS-MIN_CYCLE_COUNTS) + MIN_CYCLE_COUNTS;
+
+	  // Do the weird timer thing
+	  __HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, pwm_high_counts);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+  HAL_TIM_PWM_Stop(&hspi1, TIM_CHANNEL_1);
   /* USER CODE END 3 */
 }
 
