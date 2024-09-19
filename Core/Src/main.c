@@ -96,22 +96,30 @@ int main(void)
   uint8_t inputData[3] = {0x01, 0x80, 0x00};
   uint8_t outputData[3] = {0};
   uint16_t dataSize = 3;
-  uint32_t timeout = 0; // ms
+  uint32_t timeout = 10; // ms
 
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Start with CS pin set or it may not work apparently
+  HAL_Delay(10);
   while (1)
   {
-	  // HAL_SPI_TransmitReceive(&hspi1, txData, rxData, dataSize, timeout);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, inputData, outputData, dataSize, timeout);
-	  uint16_t adcData = outputData[2] | outputData[1] << 8;
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);  // CS pin low
+	  HAL_SPI_TransmitReceive(&hspi1, inputData, outputData, dataSize, timeout); // Ask for analog data as 3 bytes
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // CS pin high before next SPI read
+
+	  uint16_t adcData = outputData[2] | ((outputData[1] & 0x03) << 8);  // Filter out the ADC data (only first 10 bits)
+
+	  // counts should range from 5% to 10% of the total period or from 3200 to 6400
+	  uint16_t pwmCounts = (adcData*25)/8 + 3200;  // convert the 0-1023 range ADC data to 3200-6396
+	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,pwmCounts); // Set amount of counts
+
 	  HAL_Delay(10);
+
 
     /* USER CODE END WHILE */
 
