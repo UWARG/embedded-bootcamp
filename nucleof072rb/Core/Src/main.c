@@ -127,7 +127,7 @@ int main(void)
 			  (MAX_CYCLE_COUNTS-MIN_CYCLE_COUNTS) + MIN_CYCLE_COUNTS;
 
 	  // Do the weird timer thing
-	  __HAL_TIM_SET_COMPARE(&hspi1, TIM_CHANNEL_1, pwm_high_counts);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_high_counts);
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
