@@ -100,7 +100,7 @@ int main(void)
   uint8_t transmission_data_buffer[3] = {0b00000001, 0b10000000, 0};
   uint8_t reception_data_buffer[3] = {0, 0, 0};
 
-  HAL_TIM_PWM_Start(&hspi1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -134,7 +134,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
   }
-  HAL_TIM_PWM_Stop(&hspi1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 3 */
 }
 
