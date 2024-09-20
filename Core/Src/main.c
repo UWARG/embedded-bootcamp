@@ -97,8 +97,8 @@ int main(void)
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0.05 * 64000); /*set compare register value to 5% duty cycle time*/
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); /*start the timer*/
   /* takes in 3 bytes of data format found in figures 6-1 and 6-2*/
-  uint8_t data_transmit[3] = {1, 128, 0}; /*This connects to channel 0 where D2 D1 D0 are x00 respectively*/
-  uint8_t data_receive[3] = {0, 0, 0}; /*set up received bits array*/
+  const uint8_t data_transmit[3] = {0x1, 0x80, 0x0}; /*This connects to channel 0 where D2 D1 D0 are x00 respectively*/
+  uint8_t data_receive[3] = {0x0, 0x0, 0x0}; /*set up received bits array*/
 
   /* USER CODE END 2 */
 
@@ -112,11 +112,11 @@ int main(void)
 
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); /*pull cs high to end transmission*/
 
-	uint16_t adc_relevant_val = ((data_receive[1] & 3) << 8) | data_receive[2]; /*Only retrieve the last 10 bits*/
+	uint16_t adc_relevant_val = ((data_receive[1] & 0x11) << 8) | data_receive[2]; /*Only retrieve the last 10 bits*/
 
-	float adc_config = (((adc_relevant_val/1023)*0.05)+0.05) *64000; /*Normalize these bits to be between 0.05 and 0.1 (the duty cycle)*/
+	float adc_config = ((((float)adc_relevant_val/1023)*0.05)+0.05) *64000; /*Normalize these bits to be between 0.05 and 0.1 (the duty cycle)*/
 
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_config); /*Compare counter value with the compare register value*/
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint32_t)adc_config); /*Compare counter value with the compare register value*/
 
 	HAL_Delay(10);
     /* USER CODE END WHILE */
