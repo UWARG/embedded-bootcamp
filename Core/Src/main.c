@@ -108,8 +108,8 @@ int main(void)
   {
 
 	  //Get ADC value to set duty cyle between 5 and 10 %
-	  uint16_t ADC_value = ADC_handle();
-	  uint16_t duty_count = 0.05*MAX_COUNTER + (ADC_value /  0x3F)*0.05*MAX_COUNTER;
+	  uint16_t adc_value = ADC_handle();
+	  uint16_t duty_count = 0.05*MAX_COUNTER + (adc_value /  0x3F)*0.05*MAX_COUNTER;
 
 
 	//Set duty cyle for PWM
@@ -176,11 +176,11 @@ uint16_t ADC_handle(void){
 
 	//Pull Chip select pin low to start connection
 	HAL_GPIO_WritePin(GPIOB, CS_PIN, 0);
-	uint8_t startByte = 0x01;
+	uint8_t start_byte = 0x01;
 
 	//send start bit
 	uint8_t garbage;
-	HAL_SPI_TransmitReceive(&hspi1, &startByte, &garbage, 1, 100);
+	HAL_SPI_TransmitReceive(&hspi1, &start_byte, &garbage, 1, 100);
 
 
 	uint8_t send[2], receive[2];

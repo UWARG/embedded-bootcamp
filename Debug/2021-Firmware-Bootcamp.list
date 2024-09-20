@@ -39,13 +39,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_line   00011b47  00000000  00000000  0003274d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00096da1  00000000  00000000  00044294  2**0
+ 18 .debug_str    00096da2  00000000  00000000  00044294  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000db035  2**0
+ 19 .comment      00000043  00000000  00000000  000db036  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000032c0  00000000  00000000  000db078  2**2
+ 20 .debug_frame  000032c0  00000000  00000000  000db07c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 00000059  00000000  00000000  000de338  2**0
+ 21 .debug_line_str 00000059  00000000  00000000  000de33c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -3476,12 +3476,12 @@ int main(void)
   {
 
 	  //Get ADC value to set duty cyle between 5 and 10 %
-	  uint16_t ADC_value = ADC_handle();
+	  uint16_t adc_value = ADC_handle();
  8001b24:	1dbc      	adds	r4, r7, #6
  8001b26:	f000 f895 	bl	8001c54 <ADC_handle>
  8001b2a:	0003      	movs	r3, r0
  8001b2c:	8023      	strh	r3, [r4, #0]
-	  uint16_t duty_count = 0.05*MAX_COUNTER + (ADC_value /  0x3F)*0.05*MAX_COUNTER;
+	  uint16_t duty_count = 0.05*MAX_COUNTER + (adc_value /  0x3F)*0.05*MAX_COUNTER;
  8001b2e:	1dbb      	adds	r3, r7, #6
  8001b30:	881b      	ldrh	r3, [r3, #0]
  8001b32:	213f      	movs	r1, #63	@ 0x3f
@@ -3674,7 +3674,7 @@ uint16_t ADC_handle(void){
  8001c60:	2200      	movs	r2, #0
  8001c62:	0019      	movs	r1, r3
  8001c64:	f000 fda6 	bl	80027b4 <HAL_GPIO_WritePin>
-	uint8_t startByte = 0x01;
+	uint8_t start_byte = 0x01;
  8001c68:	210d      	movs	r1, #13
  8001c6a:	187b      	adds	r3, r7, r1
  8001c6c:	2201      	movs	r2, #1
@@ -3682,7 +3682,7 @@ uint16_t ADC_handle(void){
 
 	//send start bit
 	uint8_t garbage;
-	HAL_SPI_TransmitReceive(&hspi1, &startByte, &garbage, 1, 100);
+	HAL_SPI_TransmitReceive(&hspi1, &start_byte, &garbage, 1, 100);
  8001c70:	230c      	movs	r3, #12
  8001c72:	18fa      	adds	r2, r7, r3
  8001c74:	1879      	adds	r1, r7, r1
