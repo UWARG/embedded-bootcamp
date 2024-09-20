@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define CS_PIN GPIO_PIN_8
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,7 +90,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  uint8_t rdata;
+
+  uint8_t tdata;
+
 
   /* USER CODE END 2 */
 
@@ -95,6 +104,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
+
+
+
+
+	  HAL_delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -143,7 +160,22 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t ADC_handle(void){
+	HAL_GPIO_Write(GPIOB, CS_PIN, 0);
+	uint8_t startByte, garbage = 1;
 
+	HAL_SPI_TransmitReceive(&hspi1, &startByte, &garbage, 1, 100);
+
+	uint8_t send[2], receive[2];
+	send[0]= 0;
+	send[0] |= (1<<7);
+	HAL_SPI_TransmitReceive(&hspi1, send, receive, 1, 100);
+	receive[0] &= 0x03;
+	uint16_t result = (receive[0]<<8)|receive[1];
+
+	return result;
+
+}
 /* USER CODE END 4 */
 
 /**
