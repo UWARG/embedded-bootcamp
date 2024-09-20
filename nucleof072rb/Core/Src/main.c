@@ -92,10 +92,10 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  uint16_t MAX_ADC_VALUE = 1023; // max num from 10bits
+  const uint16_t MAX_ADC_VALUE = 1023; // max num from 10bits
   // uint16_t COUNTER_PERIOD = 64000;
-  uint16_t MAX_CYCLE_COUNTS = 3200; // 10% of counter period
-  uint16_t MIN_CYCLE_COUNTS = 6400; // 5% of counter period
+  const uint16_t MAX_CYCLE_COUNTS = 6400; // 10% of counter period
+  const uint16_t MIN_CYCLE_COUNTS = 3200; // 5% of counter period
 
   uint8_t transmission_data_buffer[3] = {0b00000001, 0b10000000, 0};
   uint8_t reception_data_buffer[3] = {0, 0, 0};
