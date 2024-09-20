@@ -37,6 +37,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define CS_PIN GPIO_PIN_8
+#define MAX_COUNTER 65535
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,7 +54,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t ADC_handle(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,11 +94,12 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t rdata;
 
-  uint8_t tdata;
+  //Set intial duty cycle for PWM
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (0.05 * MAX_COUNTER));
 
-
+  //Start PWM
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -105,17 +107,27 @@ int main(void)
   while (1)
   {
 
+	  //Get ADC value to set duty cyle between 5 and 10 %
+	  uint16_t ADC_value = ADC_handle();
+	  uint16_t duty_count = 0.05*MAX_COUNTER + (ADC_value /  0x3F)*0.05*MAX_COUNTER;
 
 
+	//Set duty cyle for PWM
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_count);
 
 
+	  //So MCU does not outpace ADC
+	  HAL_Delay(10);
 
-	  HAL_delay(10);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+
+  //End connection
+  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 3 */
 }
 
@@ -161,20 +173,32 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 uint16_t ADC_handle(void){
-	HAL_GPIO_Write(GPIOB, CS_PIN, 0);
-	uint8_t startByte, garbage = 1;
 
+	//Pull Chip select pin low to start connection
+	HAL_GPIO_WritePin(GPIOB, CS_PIN, 0);
+	uint8_t startByte = 0x01;
+
+	//send start bit
+	uint8_t garbage;
 	HAL_SPI_TransmitReceive(&hspi1, &startByte, &garbage, 1, 100);
 
+
 	uint8_t send[2], receive[2];
-	send[0]= 0;
-	send[0] |= (1<<7);
-	HAL_SPI_TransmitReceive(&hspi1, send, receive, 1, 100);
+	send[0] = (1<<7);
+
+	//Set channel to 0 and receive result of conversion
+	HAL_SPI_TransmitReceive(&hspi1, send, receive, 2, 100);
+
+	//Mask extra bits
 	receive[0] &= 0x03;
-	uint16_t result = (receive[0]<<8)|receive[1];
+
+	//Join 10 bit integer result into 16bit int
+	uint16_t result = (receive[0]<<8)| receive[1];
+
+	//Pull CS pin high to end connection
+	HAL_GPIO_WritePin(GPIOB, CS_PIN, 1);
 
 	return result;
-
 }
 /* USER CODE END 4 */
 
