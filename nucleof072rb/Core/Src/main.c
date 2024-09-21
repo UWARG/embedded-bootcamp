@@ -48,7 +48,7 @@
 //TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
-uint8_t adc_tx_data[3] = {0x1, 0x10000000, 0x0};  // Reading from channel 0
+uint8_t adc_tx_data[3] = {0x1, 0x80, 0x0};  // Reading from channel 0
 uint8_t adc_rx_data[3];     // Data received from ADC
 uint32_t adc_value = 0;      // 10-bit ADC value
 uint32_t pwm_value = 0;
@@ -65,7 +65,7 @@ void SystemClock_Config(void);
 void read_adc_spi(void) {
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);  // Set CS low
 
-    HAL_SPI_TransmitReceive(&hspi1, adc_tx_data, adc_rx_data, 1, HAL_MAX_DELAY);
+    HAL_SPI_TransmitReceive(&hspi1, adc_tx_data, adc_rx_data, 3, HAL_MAX_DELAY);
 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);  // Set CS high
 
@@ -75,7 +75,7 @@ void read_adc_spi(void) {
 
 void adc_to_pwm() {
 
-    pwm_value = ((adc_value * (2000 - 1000)) / 1023) + 1000;
+    pwm_value = ((adc_value * (6000 - 3000)) / 1023) + 3000;
     // 1023 -> 2000 (2ms) AND 0 -> 1000 (1ms)
     // highest value you can get with 10 bits is 1023
 
