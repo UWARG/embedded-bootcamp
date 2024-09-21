@@ -128,7 +128,7 @@ int main(void)
 
 
 
-g
+
 	  // take last 10 bits and store it as an integer
 	  uint16_t adc_meaningful_data = ((reception[1] & 0b011) << 8 | reception[2]);
 
