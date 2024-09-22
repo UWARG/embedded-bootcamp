@@ -93,12 +93,11 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   const uint16_t MAX_ADC_VALUE = 1023; // max num from 10bits
-  // uint16_t COUNTER_PERIOD = 64000;
-  const uint16_t MAX_CYCLE_COUNTS = 6400; // 10% of counter period
-  const uint16_t MIN_CYCLE_COUNTS = 3200; // 5% of counter period
+  const uint16_t MAX_CYCLE_COUNTS = 6400; // 10% of counter period 0.1 * 64000
+  const uint16_t MIN_CYCLE_COUNTS = 3200; // 5% of counter period 0.05 * 64000
 
-  uint8_t transmission_data_buffer[3] = {0b00000001, 0b10000000, 0};
-  uint8_t reception_data_buffer[3] = {0, 0, 0};
+  uint8_t transmission_data_buffer[3] = {0x01, 0x80, 0x00};
+  uint8_t reception_data_buffer[3] = {0x00, 0x00, 0x00};
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
@@ -120,7 +119,7 @@ int main(void)
 
 	  // Get the 10 bits of useful data at the end of the 3 bytes using funny bitwise operations
 	  uint16_t received_data =
-			  ((reception_data_buffer[1] << 8) | reception_data_buffer[2]) & 0b0000001111111111;
+			  ((reception_data_buffer[1] << 8) | reception_data_buffer[2]) & 0x03FF;
 
 	  // Map ADC value to PWM counts
 	  uint16_t pwm_high_counts = ((float)received_data/MAX_ADC_VALUE)*
