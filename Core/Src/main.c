@@ -92,10 +92,10 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t transmit_data[3] = {0x01, 0x80, 0x00};
+  const uint8_t transmit_data[3] = {0x01, 0x80, 0x00};
   uint8_t receive_data[3] = {0x0, 0x0, 0x0};
   uint16_t adc_value;
-  float adc_norm;
+  uint32_t adc_norm;
 
   // Pull CS line high to end transmission.
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -107,7 +107,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 	  // Pull CS line low to start transmission.
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  // ADC requires full duplex mode SPI communication.
@@ -117,11 +116,12 @@ int main(void)
 
 	  // Concatenate 10 bits of raw data from ADC stored in receive_data. Normalize ADC value to be in between 0.05 to 1.
 	  adc_value = ((receive_data[1] & 0x03) << 8) | receive_data[2];
-	  adc_norm = ((adc_value / 1023)*0.05) + 0.05;
+	  adc_norm = (((adc_value / 1023.0)*0.05) + 0.05) * 64000;
 
 	  // Compares counter value to register.
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adc_norm);
 	  HAL_Delay(10);
+    /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
