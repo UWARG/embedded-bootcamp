@@ -94,13 +94,18 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Set CS to low before doing anything
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
+  const float COUNTER_PERIOD = 64000;
+  const float MIN_DUTY_CYCLE = 0.05;
+  const float MAX_DUTY_CYCLE = 0.1;
 
   // Start using PWM
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   // set PWM comparison to the lowest duty cycle
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 32000);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (COUNTER_PERIOD * 0.05));
 
   /* USER CODE END 2 */
 
@@ -114,8 +119,8 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // array to hold the bits to transmit to the adc
-	  //                         start bit , use CHO   , don't care
-	  uint8_t transmission[3] = {0b00000001, 0b10000000, 0b00000000};
+	  //                   start bit, CHO, don't care
+	  uint8_t transmission[3] = {0x1, 0x8, 0x0};
 
 	  // array to hold the received bits from the adc
 	  uint8_t reception[3];
@@ -133,11 +138,11 @@ int main(void)
 	  uint16_t adc_meaningful_data = ((reception[1] & 0b011) << 8 | reception[2]);
 
 	  // store the largest 10 bit number (1024 - 1)
-	  float largest_10_bit = 1023;
+	  const float LARGEST_10_BIT = 1023;
 
 	  // convert the adc's SPI  signal into a PWM output signal
-	  uint32_t pwm_output =  ((adc_meaningful_data / largest_10_bit) + 1) *
-			  ((64000 * 0.1) - (64000 * 0.05));
+	  uint32_t pwm_output =  ((adc_meaningful_data / LARGEST_10_BIT) + 1) *
+			  ((COUNTER_PERIOD * MAX_DUTY_CYCLE) - (COUNTER_PERIOD * MIN_DUTY_CYCLE));
 
 	  // compare the counter value to the initialized register
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_output);
