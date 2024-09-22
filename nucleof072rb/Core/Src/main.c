@@ -95,6 +95,8 @@ int main(void)
   const uint16_t MAX_ADC_VALUE = 1023; // max num from 10bits
   const uint16_t MAX_CYCLE_COUNTS = 6400; // 10% of counter period 0.1 * 64000
   const uint16_t MIN_CYCLE_COUNTS = 3200; // 5% of counter period 0.05 * 64000
+  const uint16_t BYTE_COUNT = 3; // number of bytes to transmit/receive at once
+  const uint32_t TIMEOUT = 11; // ms before the communication times out
 
   uint8_t transmission_data_buffer[3] = {0x01, 0x80, 0x00};
   uint8_t reception_data_buffer[3] = {0x00, 0x00, 0x00};
@@ -114,7 +116,7 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  // Get the data
-	  HAL_SPI_TransmitReceive(&hspi1, transmission_data_buffer, reception_data_buffer, 3, 0);
+	  HAL_SPI_TransmitReceive(&hspi1, transmission_data_buffer, reception_data_buffer, BYTE_COUNT, TIMEOUT);
 
 	  // Pull up CS line to stop SPI communication
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
