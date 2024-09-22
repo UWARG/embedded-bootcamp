@@ -94,8 +94,8 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  // Set CS to low before doing anything
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+  // set CS to high before doing anything
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   const float COUNTER_PERIOD = 64000;
   const float MIN_DUTY_CYCLE = 0.05;
@@ -128,7 +128,7 @@ int main(void)
 	  // initialize full duplex mode for SPI
 	  HAL_SPI_TransmitReceive(&hspi1, transmission, reception, 1, HAL_MAX_DELAY);
 
-	  // set CS to low
+	  // set CS to high
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 
