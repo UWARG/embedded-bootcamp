@@ -99,6 +99,9 @@ int main(void)
   uint8_t transmission_data_buffer[3] = {0x01, 0x80, 0x00};
   uint8_t reception_data_buffer[3] = {0x00, 0x00, 0x00};
 
+  // Make sure CS line starts high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
@@ -114,7 +117,7 @@ int main(void)
 	  HAL_SPI_TransmitReceive(&hspi1, transmission_data_buffer, reception_data_buffer, 3, 0);
 
 	  // Pull up CS line to stop SPI communication
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 
 	  // Get the 10 bits of useful data at the end of the 3 bytes using funny bitwise operations
