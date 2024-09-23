@@ -96,6 +96,8 @@ int main(void)
   /* Pull CS line to default high to ADC (pin 8) */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
+  /* Set value of CCR */
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0.05 * 64000);
   /* Start timer */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* Transmit data bits */
@@ -128,7 +130,7 @@ int main(void)
 	  adcData = ((rxData[1] & 0x3) << 8) | rxData[2];
 
 	  /* Scale ADC data between 5% and 10% duty cycle */
-	  adcValue = (adcData / 1023.0)*(0.1 - 0.05) + 0.05;
+	  adcValue = (adcData / 1023.0)*(0.05) + 0.05;
 	  /* Set duty cycle */
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, adcValue * 64000);
 
