@@ -96,13 +96,16 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  const uint16_t counter_period = 60000;
+  const uint16_t HAL_TIMEOUT = 0; // No poll
+  const uint16_t COUNTER_PERIOD = 60000;
+  const uint16_t ADC_MAX_VALUE = 1023;
+  const float MIN_DUTY_CYCLE = 0.05;
 
   // ADC receives one byte at a time: start bit, input channel configuration (0x80 = single-ended input mode and read from CH0), don't care
   uint8_t tx[3] = {0x1, 0x80, 0x0};
-  uint8_t rx[3];
+  uint8_t rx[3] = {0x0, 0x0, 0x0};
 
-  // Push CS high (ADC active low)
+  // Push ADC chip select high
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   // Start MCU timer
@@ -119,8 +122,8 @@ int main(void)
 	  // Pull chip select low to begin communication with ADC
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-	  // Send and receive data from ADC60000
-	  HAL_SPI_TransmitReceive(&hspi1, tx, rx, sizeof(tx), 0); // What goes in timeout?
+	  // Send and receive data from ADC
+	  HAL_SPI_TransmitReceive(&hspi1, tx, rx, sizeof(tx), HAL_TIMEOUT); // What goes in timeout?
 
 	  // Push chip select high to end communication with ADC
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
@@ -128,9 +131,9 @@ int main(void)
 	  // First byte is unknown. The last two bits of the second byte appended with all bits of the third byte is the conversion result
 	  const uint16_t conv = (((uint16_t)rx[1] & 0x03) << 8) | ((uint16_t)rx[2] & 0xFF);
 
-	  // Result of 0 means 5% duty cycle (1ms on), 1 << 10 - 1 means 10% duty cycle (2ms on)
-	  const uint16_t duty_cycle = 0.05 * (1 + (float)conv / ((1 << 10) - 1));
-	  const uint16_t num_on_counts = counter_period * duty_cycle; // Counter period = 60000
+	  // Result of 0 means 5% duty cycle (1ms on), 1023 means 10% duty cycle (2ms on)
+	  const uint16_t duty_cycle = MIN_DUTY_CYCLE * (1 + (float)conv / ADC_MAX_VALUE);
+	  const uint16_t num_on_counts = COUNTER_PERIOD * duty_cycle; // Counter period = 60000
 
 	  // Write number of "on" counts to timer compare register to send PWM signal to motor
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, num_on_counts);
