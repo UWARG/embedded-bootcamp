@@ -26,7 +26,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#define ADC_MAX_VALUE 1023
+#define PWM_MIN_DUTY_CYCLE 0.05
+#define PWM_MAX_DUTY_CYCLE 0.10
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,10 +110,14 @@ int main(void)
 	  uint32_t pwmValue = (adcValue * timerPeriod) / 4095; //Map the ADC Value to PWM Duty Cycle
 	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, pwmValue);// Update the PWM Duty Cycle
 	  */
-	  uint8_t pRTxData=0;
-	  HAL_SPI_TransmitReceive(SPI1, 0, pRTxData, 1, 1000);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); // CS low
+	  uint8_t pRTxData[3];
+	  uint8_t txData[10] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A};
+	  HAL_SPI_TransmitReceive(SPI1, txData, pRTxData, 1, 1000);
 	  uint32_t pwm=0;
-	  pwm=((pRTxData  * (2000 - 1000)) / 1023) + 1000;
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // CS high
+	  set_pwm_from_adc(pRTxData);
+
 
 
 
@@ -165,7 +171,21 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void set_pwm_from_adc(uint16_t adc_value) {
+    // Ensure the ADC value is within the 10-bit range
+    if (adc_value > ADC_MAX_VALUE) {
+        adc_value = ADC_MAX_VALUE;
+    }
 
+    // Calculate the duty cycle (5% to 10%)
+    float duty_cycle = PWM_MIN_DUTY_CYCLE + ((float)adc_value / ADC_MAX_VALUE) * (PWM_MAX_DUTY_CYCLE - PWM_MIN_DUTY_CYCLE);
+
+    // Calculate the compare value for the timer
+    uint32_t compare_value = (uint32_t)(duty_cycle * __HAL_TIM_GET_AUTORELOAD(&htim1));
+
+    // Set the compare register value
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
+}
 /* USER CODE END 4 */
 
 /**
