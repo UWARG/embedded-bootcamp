@@ -174,8 +174,8 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 uint16_t ADC_handle(void){
 
-	//Pull Chip select pin low to start connection
-	HAL_GPIO_WritePin(GPIOB, CS_PIN, 0);
+	//Pull Chip select pin low to start transaction
+	HAL_GPIO_WritePin(GPIOB, CS_PIN, GPIO_PIN_RESET);
 	uint8_t start_byte = 0x01;
 
 	//send start bit
@@ -196,7 +196,7 @@ uint16_t ADC_handle(void){
 	uint16_t result = (receive[0]<<8)| receive[1];
 
 	//Pull CS pin high to end connection
-	HAL_GPIO_WritePin(GPIOB, CS_PIN, 1);
+	HAL_GPIO_WritePin(GPIOB, CS_PIN, GPIO_PIN_SET);
 
 	return result;
 }
