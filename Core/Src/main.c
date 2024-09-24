@@ -38,6 +38,8 @@
 /* USER CODE BEGIN PD */
 #define CS_PIN GPIO_PIN_8
 #define MAX_COUNTER 65535
+#define TEN_BIT_LIMIT 0x3F
+#define ADC_PERCENTAGE 0.05
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -109,7 +111,7 @@ int main(void)
 
 	  //Get ADC value to set duty cyle between 5 and 10 %
 	  uint16_t adc_value = ADC_handle();
-	  uint16_t duty_count = 0.05*MAX_COUNTER + (adc_value /  0x3F)*0.05*MAX_COUNTER;
+	  uint16_t duty_count = ADC_PERCENTAGE * MAX_COUNTER + (adc_value / TEN_BIT_LIMIT)* ADC_PERCENTAGE *MAX_COUNTER;
 
 
 	//Set duty cyle for PWM
@@ -178,22 +180,18 @@ uint16_t ADC_handle(void){
 	HAL_GPIO_WritePin(GPIOB, CS_PIN, GPIO_PIN_RESET);
 	uint8_t start_byte = 0x01;
 
-	//send start bit
-	uint8_t garbage;
-	HAL_SPI_TransmitReceive(&hspi1, &start_byte, &garbage, 1, 100);
-
-
-	uint8_t send[2], receive[2];
-	send[0] = (1<<7);
+	uint8_t send[3], receive[3];
+	send[0] = 0x01; //Start byte
+	send[1] = (1<<7);
 
 	//Set channel to 0 and receive result of conversion
-	HAL_SPI_TransmitReceive(&hspi1, send, receive, 2, 100);
+	HAL_SPI_TransmitReceive(&hspi1, send, receive, 3, 300);
 
 	//Mask extra bits
-	receive[0] &= 0x03;
+	receive[1] &= 0x03;
 
 	//Join 10 bit integer result into 16bit int
-	uint16_t result = (receive[0]<<8)| receive[1];
+	uint16_t result = (receive[1]<<8)| receive[2];
 
 	//Pull CS pin high to end connection
 	HAL_GPIO_WritePin(GPIOB, CS_PIN, GPIO_PIN_SET);
