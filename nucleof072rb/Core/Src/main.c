@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,7 +46,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t pTData[3] = {0x01, 0x80, 0x00};
+uint8_t pRData[3];
+uint16_t size = 3;
+uint32_t timeout = HAL_MAX_DELAY;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,6 +80,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  //HAL_SPI_init(&hspi1);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,6 +93,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_SPI2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +104,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
+			  /* size = 24 */
+			  /*
+			   * control bits:
+			   * 	single/diff = 1
+			   * 	D2 = x (doesn't matter)
+			   * 	D1 = 0
+			   * 	D0 = 0
+			   *
+			   */
+	  HAL_SPI_TransmitReceive(&hspi1, pTData, pRData, size, timeout);
+
+	  __HAL_TIM_SET_COMPARE();
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
