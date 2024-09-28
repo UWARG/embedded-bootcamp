@@ -19,8 +19,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdlib.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -44,12 +47,18 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t pT_data[3] = {0x01, 0x80, 0x00};
+uint8_t pR_data[3];
+uint16_t size = 3;
+uint32_t timeout = HAL_MAX_DELAY;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+double ADCToPWM(int ADC_val);
+void decToBinary(long decimal_val, int* fill_array);
+int binaryArrayToDecimal(int binary[], int size);
 
 /* USER CODE END PFP */
 
@@ -65,7 +74,6 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -75,6 +83,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  //HAL_SPI_init(&hspi1);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,18 +96,69 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_SPI2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+  	GPIO_InitTypeDef GPIO_InitStruct = {0};
+  	GPIO_InitStruct.Pin = GPIO_PIN_8;
+  	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  	GPIO_InitStruct.Pull = GPIO_PULLUP;
+  	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+	  HAL_SPI_TransmitReceive(&hspi1, pT_data, pR_data, size, timeout);
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+
+
+	  /* We fill this array with the first 8 bits received from the ADC that contain USEFUL DATA
+	   * (this is technically the second byte if we're coutning the useless byte received at the start
+	   * NOTE: These bits still need to be parsed through for the useful ones. Only the last 2 bits
+	   * contain useful data so they must be extracted */
+	  int first_8_bits[8];
+
+
+	  /* We fill this array with the last 8 bits received from the ADC */
+	  int last_8_bits[8];
+
+	  /* Converts the decimal notations of the bytes into binary */
+	  decToBinary((int)pR_data[1], first_8_bits);
+	  decToBinary((int)pR_data[2], last_8_bits);
+
+
+	  int ADC_binary[10];
+	  /* We extract all the useful bits and put them into one array
+	   * We are using LSB first so we fill the ADC_binary array from last index to first
+	   */
+	  for(int i = 0; i < 2; i++) {
+		  ADC_binary[9-i] = first_8_bits[6+i];
+	  }
+
+	  for(int i = 0; i < 8; i++) {
+		  ADC_binary[7-i] = last_8_bits[i];
+	  }
+
+
+	  /* We convert the full binary info into a decimal number that we can convert into our desired PWM signal */
+	  int ADC_val = binaryArrayToDecimal(ADC_binary, 10);
+
+	  /* Set compare register */
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ADCToPWM(ADC_val));
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+
   /* USER CODE END 3 */
 }
 
@@ -143,6 +203,39 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+double ADCToPWM(int ADC_val) {
+	return ((ADC_val / 1023) * 3000) + 3000;
+}
+
+void decToBinary(long decimal_val, int fill_array[]) {
+	int curVal = decimal_val;
+	int i = 0;
+
+	while (curVal > 0) {
+		if (decimal_val % 2 == 0) {
+			fill_array[i] = 0;
+		}
+		else {
+			fill_array[i] = 1;
+		}
+		curVal = curVal / 2;
+		i++;
+	}
+}
+
+int binaryArrayToDecimal(int binary[], int size) {
+    int decimalValue = 0;
+
+    // Iterate through the binary array
+    for (int i = 0; i < size; i++) {
+        // Calculate the contribution of each bit
+        decimalValue = decimalValue * 2 + binary[i];
+    }
+
+    return decimalValue;
+}
+
 
 /* USER CODE END 4 */
 
