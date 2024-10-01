@@ -97,28 +97,24 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // CS high
+  TIM1->CCR1 = TIM1->ARR / 10;
+  HAL_TIM_PWM_Init(&htim1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//Pwm start
-
+  uint8_t pRTxData[3];
+  uint8_t txData[3] = {0x1, 0x90, 0x03}; //using CH1 so 10010000
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /*
-	  HAL_StatusTypeDef  HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout);//receive data
-	  HAL_StatusTypeDef  HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout);//send data
-	  uint32_t adcValue = HAL_ADC_GetValue(&hadc1); //Read the ADC Value
-	  uint32_t pwmValue = (adcValue * timerPeriod) / 4095; //Map the ADC Value to PWM Duty Cycle
-	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, pwmValue);// Update the PWM Duty Cycle
-	  */
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  uint8_t pRTxData[3];
-	  uint8_t txData[3] = {0x01, 0x02, 0x03}; // some random number due to it doesn't matter
+
 	  HAL_SPI_TransmitReceive(SPI1, txData, pRTxData, 3, TIMEOUT);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // CS high
 	  uint16_t adc_needed=((pRTxData[1]) << 8 | pRTxData[2])&0x03FF;//10 last data
 	  uint32_t pwm=0;
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // CS high
+
 	    // Calculate the duty cycle (5% to 10%)
 	  float duty_cycle = PWM_MIN_DUTY_CYCLE + ((float)adc_needed / ADC_MAX_VALUE) * (PWM_MAX_DUTY_CYCLE - PWM_MIN_DUTY_CYCLE);
 
