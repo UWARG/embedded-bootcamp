@@ -6,56 +6,60 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PWM_MIN 3000
+#define PWM_MAX 6000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t pT_data[3] = {0x01, 0x80, 0x00};
+uint8_t pR_data[3];
+uint16_t size = 3;
+uint32_t timeout = HAL_MAX_DELAY;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+double ADCToPWM(int ADC_val);
+void decToBinary(long decimal_val, int* fill_array);
+int binaryArrayToDecimal(int binary[], int size);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -64,8 +68,8 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
 
+  /* USER CODE BEGIN 1 */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -74,31 +78,63 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+      HAL_SPI_TransmitReceive(&hspi1, pT_data, pR_data, size, timeout);
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
+
+      /* Process ADC data */
+      int first_8_bits[8];
+      int last_8_bits[8];
+
+      /* Convert received bytes to binary */
+      decToBinary((int)pR_data[1], first_8_bits);
+      decToBinary((int)pR_data[2], last_8_bits);
+
+      int ADC_binary[10];
+      /* Extract useful bits */
+      for(int i = 0; i < 2; i++) {
+          ADC_binary[9-i] = first_8_bits[6+i];
+      }
+      for(int i = 0; i < 8; i++) {
+          ADC_binary[7-i] = last_8_bits[i];
+      }
+
+      /* Convert binary to decimal */
+      int ADC_val = binaryArrayToDecimal(ADC_binary, 10);
+      /* Set compare register for TIM2 */
+      __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, ADCToPWM(ADC_val)); // Use htim2
+      HAL_Delay(10);
+  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
   /* USER CODE END 3 */
 }
 
@@ -122,6 +158,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -143,7 +180,35 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+double ADCToPWM(int ADC_val) {
+    return (ADC_val * (PWM_MAX - PWM_MIN) / 1023) + PWM_MIN;
+}
 
+void decToBinary(long decimal_val, int fill_array[]) {
+    int curVal = decimal_val;
+    int i = 0;
+
+    while (curVal > 0) {
+        fill_array[i] = curVal % 2;
+        curVal = curVal / 2;
+        i++;
+    }
+
+    // Reverse the array for proper order
+    for (int j = 0; j < i / 2; j++) {
+        int temp = fill_array[j];
+        fill_array[j] = fill_array[i - j - 1];
+        fill_array[i - j - 1] = temp;
+    }
+}
+
+int binaryArrayToDecimal(int binary[], int size) {
+    int decimalValue = 0;
+    for (int i = 0; i < size; i++) {
+        decimalValue = (decimalValue << 1) | binary[i];
+    }
+    return decimalValue;
+}
 /* USER CODE END 4 */
 
 /**
@@ -177,5 +242,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
