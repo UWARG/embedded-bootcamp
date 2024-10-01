@@ -1,0 +1,6 @@
+../Core/Src/main.c:69:5:main	168	static
+../Core/Src/main.c:148:6:SystemClock_Config	112	static
+../Core/Src/main.c:181:8:ADCToPWM	16	static
+../Core/Src/main.c:185:6:decToBinary	32	static
+../Core/Src/main.c:203:5:binaryArrayToDecimal	24	static
+../Core/Src/main.c:216:6:Error_Handler	8	static,ignoring_inline_asm

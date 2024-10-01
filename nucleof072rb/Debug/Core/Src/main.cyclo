@@ -1,0 +1,6 @@
+../Core/Src/main.c:69:5:main	3
+../Core/Src/main.c:148:6:SystemClock_Config	4
+../Core/Src/main.c:181:8:ADCToPWM	1
+../Core/Src/main.c:185:6:decToBinary	6
+../Core/Src/main.c:203:5:binaryArrayToDecimal	2
+../Core/Src/main.c:216:6:Error_Handler	1
