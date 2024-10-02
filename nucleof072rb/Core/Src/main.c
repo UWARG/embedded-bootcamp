@@ -25,8 +25,14 @@
 #define PWM_MIN 3200
 #define PWM_MAX 6400
 
+
+
+// i just did some small changes mostly 
+
+
+
 /* Private variables ---------------------------------------------------------*/
-uint8_t pT_data[3] = {0x01, 0x80, 0x00};
+uint8_t pT_data[3] = {0x01, 0x80, 0x00};  // nothing changed here lol
 uint8_t pR_data[3];
 uint16_t size = 3;
 uint32_t timeout = HAL_MAX_DELAY;
@@ -34,15 +40,9 @@ uint32_t timeout = HAL_MAX_DELAY;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 double ADCToPWM(uint32_t ADC_val);
-void TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin); // Function prototype
 
 /* USER CODE BEGIN 0 */
 /* USER CODE END 0 */
-
-/* Toggle function definition */
-void TogglePin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
-    HAL_GPIO_TogglePin(GPIOx, GPIO_Pin);
-}
 
 /**
   * @brief  The application entry point.
@@ -60,25 +60,31 @@ int main(void)
     MX_SPI1_Init();
     MX_TIM2_Init();  // Changed to use TIM2
 
+    /* Start the PWM output */
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+
     /* Main loop */
     while (1)
     {
-        TogglePin(GPIOB, GPIO_PIN_8);  // Use the toggle function here
+        // Set CS low before transmission
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // i used write instead of toggle here
         HAL_SPI_TransmitReceive(&hspi1, pT_data, pR_data, size, timeout);
-        TogglePin(GPIOB, GPIO_PIN_8);  // Use the toggle function again
+        // Set CS high after transmission
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
         /* Process ADC data */
-        uint32_t ADC_val = ((pR_data[1] & 0x03) << 8) | pR_data[2]; // Extract bits using bitwise operations
+        uint32_t ADC_val = ((pR_data[1] & 0x03) << 8) | pR_data[2]; 
 
         /* Set compare register for TIM2 */
-        __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, ADCToPWM(ADC_val)); // Changed to use htim2
+        __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, ADCToPWM(ADC_val));
+
         HAL_Delay(10);
     }
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
+  * @brief 
+  * @retval 
   */
 void SystemClock_Config(void)
 {
@@ -104,7 +110,7 @@ void SystemClock_Config(void)
     {
         Error_Handler();
     }
-    
+
     PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2;
     PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
@@ -120,8 +126,8 @@ double ADCToPWM(uint32_t ADC_val) {
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
+  * @brief  
+  * @retval 
   */
 void Error_Handler(void)
 {
