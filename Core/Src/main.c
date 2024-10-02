@@ -97,7 +97,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // CS high
-  TIM1->CCR1 = TIM1->ARR / 10;
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2); //period of 20ms so 10% should be 2
   HAL_TIM_PWM_Init(&htim1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//Pwm start
   uint8_t pRTxData[3];
