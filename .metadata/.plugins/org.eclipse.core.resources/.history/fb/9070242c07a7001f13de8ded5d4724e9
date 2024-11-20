@@ -70,6 +70,7 @@ void write_motor(TIM_HandlerTypeDef* htim, uint16_t* adc_result);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	HAL_StatusTypeDef res;
 	uint16_t recieve_res;
   /* USER CODE END 1 */
 
@@ -96,9 +97,10 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-	__HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, 3000);
+	res = HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	res = HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
 
   /* USER CODE END 2 */
 
@@ -107,10 +109,7 @@ int main(void)
 	while (1)
 	{
     /* USER CODE END WHILE */
-		get_potadc(&hspi1, recieve_res);
-		write_motor(&htim1, recieve_res);
 
-		HAL_Delay(10);
     /* USER CODE BEGIN 3 */
 	}
   /* USER CODE END 3 */
@@ -169,7 +168,12 @@ HAL_StatusTypeDef get_potadc(SPI_HandleTypeDef* hspi, uint16_t* adc_result) {
 		return HAL_ERROR;
 	}
 
-	res = HAL_SPI_TransmitRecieve(hspi, init_data, recieve_data, 3, HAL_MAX_DELAY);
+	res = HAL_SPI_Transmit(hspi, init_data, 3, HAL_MAX_DELAY);
+	if (res != HAL_OK) {
+		return HAL_ERROR;
+	}
+
+	res = HAL_SPI_Transmit(hspi, recieve_data, 3, HAL_MAX_DELAY);
 	if (res != HAL_OK) {
 		return HAL_ERROR;
 	}
@@ -179,15 +183,17 @@ HAL_StatusTypeDef get_potadc(SPI_HandleTypeDef* hspi, uint16_t* adc_result) {
 		return HAL_ERROR;
 	}
 
-	*adc_result = ((recieve_data[1]&0x2) << 8) | (recieve_data[2]) ;
+	*adc_result = recieve_data[2];
+	recieve_data[1] &= 0x2;
+	*adc_result |= recieve_data[1] << 8;
+
 	return HAL_OK;
 
 }
 
 void write_motor(TIM_HandlerTypeDef* htim, uint16_t* adc_result) {
 
-	// approximately 6000, which is 10% duty cycle
-	uint16_t counter_thres = 3000 + adc_result * 3;
+	uint16_t counter_thres = 6554 + (adc_result * 7);
 	__HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, counter_thres);
 
 }

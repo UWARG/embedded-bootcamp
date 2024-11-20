@@ -1,0 +1,52 @@
+2024-11-20 00:06:04,783 [INFO] NvicIntPanel:101 - NVIC parent = com.st.microxplorer.plugins.ip.nvic.MultiNvicIntPanel[,0,0,0x0,invalid,layout=javax.swing.BoxLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=9,maximumSize=,minimumSize=,preferredSize=]
+2024-11-20 00:06:57,100 [INFO] NvicIntPanel:101 - NVIC parent = com.st.microxplorer.plugins.ip.nvic.MultiNvicIntPanel[,0,0,0x0,invalid,layout=javax.swing.BoxLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=9,maximumSize=,minimumSize=,preferredSize=]
+2024-11-20 00:12:28,399 [INFO] UtilMem:75 - End SaveConfig() Used Memory: 748000616 Bytes (1073741824)
+2024-11-20 00:12:30,253 [INFO] UtilMem:75 - End SaveConfig() Used Memory: 773280976 Bytes (1073741824)
+2024-11-20 00:12:30,518 [INFO] UtilMem:75 - End SaveConfig() Used Memory: 796566560 Bytes (1073741824)
+2024-11-20 00:12:30,928 [INFO] BlockDiagram:2759 - set Specific Code input for plugin: SPI
+2024-11-20 00:12:30,928 [INFO] BlockDiagram:2759 - set Specific Code input for plugin: NVIC
+2024-11-20 00:12:30,928 [INFO] BlockDiagram:2759 - set Specific Code input for plugin: USART
+2024-11-20 00:12:30,928 [INFO] BlockDiagram:2759 - set Specific Code input for plugin: TIM1_8F0
+2024-11-20 00:12:30,928 [INFO] BlockDiagram:2759 - set Specific Code input for plugin: SYS
+2024-11-20 00:12:30,928 [INFO] BlockDiagram:2759 - set Specific Code input for plugin: GPIO
+2024-11-20 00:12:30,929 [INFO] BlockDiagram:2759 - set Specific Code input for plugin: RCC
+2024-11-20 00:12:30,931 [INFO] CodeGenerator:807 - code generatio: config db path: C:/Users/ethan/.stm32cubemx/databases/DB.6.0.30/db/
+2024-11-20 00:12:31,201 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\MXTmpFiles\license.tmp_save
+2024-11-20 00:12:31,466 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\MXTmpFiles\license.tmp
+2024-11-20 00:12:31,616 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\gpio.c_save
+2024-11-20 00:12:31,777 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\gpio.c
+2024-11-20 00:12:31,801 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\gpio.h_save
+2024-11-20 00:12:31,882 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\gpio.h
+2024-11-20 00:12:32,208 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\spi.c_save
+2024-11-20 00:12:32,338 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\spi.c
+2024-11-20 00:12:32,361 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\spi.h_save
+2024-11-20 00:12:32,433 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\spi.h
+2024-11-20 00:12:32,447 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\tim.c_save
+2024-11-20 00:12:32,539 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\tim.c
+2024-11-20 00:12:32,545 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\tim.h_save
+2024-11-20 00:12:32,610 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\tim.h
+2024-11-20 00:12:32,621 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\usart.c_save
+2024-11-20 00:12:32,689 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\usart.c
+2024-11-20 00:12:32,693 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\usart.h_save
+2024-11-20 00:12:32,756 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\usart.h
+2024-11-20 00:12:32,778 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\stm32f0xx_it.c_save
+2024-11-20 00:12:32,876 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\stm32f0xx_it.c
+2024-11-20 00:12:32,893 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\stm32f0xx_it.h_save
+2024-11-20 00:12:32,960 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\stm32f0xx_it.h
+2024-11-20 00:12:32,983 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\stm32f0xx_hal_msp.c_save
+2024-11-20 00:12:33,064 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\stm32f0xx_hal_msp.c
+2024-11-20 00:12:33,073 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\MXTmpFiles\system.tmp_save
+2024-11-20 00:12:33,114 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\MXTmpFiles\system.tmp
+2024-11-20 00:12:33,135 [INFO] CodeEngine:311 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\stm32f0xx_hal_conf.h_save
+2024-11-20 00:12:33,201 [INFO] CodeEngine:335 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\stm32f0xx_hal_conf.h
+2024-11-20 00:12:33,265 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\main.h_save
+2024-11-20 00:12:33,337 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Inc\main.h
+2024-11-20 00:12:33,355 [INFO] CodeEngine:255 - oldGeneratedFile, C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\main.c_save
+2024-11-20 00:12:33,435 [INFO] CodeEngine:279 - Generated code: C:\Users\ethan\Documents\GitHub\embedded-bootcamp\nucleof072rb\Core\Src\main.c
+2024-11-20 00:12:33,706 [INFO] ProjectBuilder:3163 - Time for Copy HAL[1] : 126mS.
+2024-11-20 00:12:33,715 [INFO] ProjectBuilder:4736 - Project Generator version: 4.3.0-B58
+2024-11-20 00:12:33,787 [INFO] ConfigFileManager:1503 - The Die is : DIE448
+2024-11-20 00:12:33,801 [INFO] ApiDbMcu:508 - Load IP Config File for FATFS
+2024-11-20 00:12:33,812 [INFO] ApiDbMcu:508 - Load IP Config File for FREERTOS
+2024-11-20 00:12:33,826 [INFO] ApiDbMcu:508 - Load IP Config File for TOUCHSENSING
+2024-11-20 00:12:33,839 [INFO] ApiDbMcu:508 - Load IP Config File for USB_DEVICE
