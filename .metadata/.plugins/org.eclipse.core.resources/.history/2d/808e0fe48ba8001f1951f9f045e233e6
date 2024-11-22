@@ -96,10 +96,9 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-
   	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-  	__HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, __HAL_TIM_GET_AUTORELOAD(htim) * 0.05);
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	__HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, 3000);
 
   /* USER CODE END 2 */
 
@@ -108,7 +107,10 @@ int main(void)
 	while (1)
 	{
     /* USER CODE END WHILE */
+		get_potadc(&hspi1, recieve_res);
+		write_motor(&htim1, recieve_res);
 
+		HAL_Delay(10);
     /* USER CODE BEGIN 3 */
 	}
   /* USER CODE END 3 */
@@ -185,8 +187,8 @@ HAL_StatusTypeDef get_potadc(SPI_HandleTypeDef* hspi, uint16_t* adc_result) {
 void write_motor(TIM_HandlerTypeDef* htim, uint16_t* adc_result) {
 
 	// approximately 6000, which is 10% duty cycle
-
-	__HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, (__HAL_TIM_GET_AUTORELOAD(htim) * 0.05) * (1 + ((adc_result/1023.0))));
+	uint16_t counter_thres = 3000 + adc_result * 3;
+	__HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, counter_thres);
 
 }
 
