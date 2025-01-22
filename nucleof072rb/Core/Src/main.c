@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,7 +89,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,6 +101,35 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  uint8_t transmBuf = 0;
+	  uint8_t recvBuf = 0;
+	  uint16_t digitalVal = 0;
+
+	  // First byte
+	  transmBuf = 0x01;
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_Transmit(&hspi1, &transmBuf, 1, 100); // Send start bit
+
+	  // Second byte
+	  transmBuf = 0x80;
+	  HAL_SPI_TransmitReceive(&hspi1, &transmBuf, &recvBuf, 1, 100);
+	  recvBuf &= 0x03;
+	  digitalVal = recvBuf << 8;
+
+	  // Third byte
+	  HAL_SPI_Receive(&hspi1, &recvBuf, 1, 100);
+	  digitalVal |= recvBuf;
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // Change timer duty cycle
+	  uint16_t ccrVal = (digitalVal * 10 / 1024) + 10;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccrVal);
+
+	  HAL_Delay(10);
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +157,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +213,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
