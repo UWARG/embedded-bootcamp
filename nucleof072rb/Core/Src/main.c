@@ -94,6 +94,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3000);
 
   /* USER CODE END 2 */
 
@@ -102,33 +103,21 @@ int main(void)
   while (1)
   {
 
-	  uint8_t transmBuf = 0;
-	  uint8_t recvBuf = 0;
+	  uint8_t transmBuf[3] = {0x01, 0x80, 0x00};
+	  uint8_t recvBuf[3] = {0};
 	  uint16_t digitalVal = 0;
 
-	  // First byte
-	  transmBuf = 0x01;
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_Transmit(&hspi1, &transmBuf, 1, 100); // Send start bit
-
-	  // Second byte
-	  transmBuf = 0x80;
-	  HAL_SPI_TransmitReceive(&hspi1, &transmBuf, &recvBuf, 1, 100);
-	  recvBuf &= 0x03;
-	  digitalVal = recvBuf << 8;
-
-	  // Third byte
-	  HAL_SPI_Receive(&hspi1, &recvBuf, 1, 100);
-	  digitalVal |= recvBuf;
-
+	  HAL_SPI_TransmitReceive(&hspi1, &transmBuf, &recvBuf, 3, 100);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  // Change timer duty cycle
-	  uint16_t ccrVal = (digitalVal * 10 / 1024) + 10;
+	  recvBuf[1] &= 0x03;
+	  digitalVal = (recvBuf[1] << 8) | recvBuf[2];
+
+	  uint16_t ccrVal = (digitalVal * 3000 / 1023) + 3000;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccrVal);
 
 	  HAL_Delay(10);
-
 
     /* USER CODE END WHILE */
 
