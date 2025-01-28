@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,8 +89,16 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
 
+  uint8_t txData[3] = {0b00000001,0b10000000,0};
+  uint8_t rxData[3];
+
+  int COUNTER_PERIOD = htim1.Init.Period;
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +108,20 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1,&txData[0],&rxData[0],8,30);
+	  HAL_SPI_TransmitReceive(&hspi1,&txData[1],&rxData[1],8,30);
+	  HAL_SPI_TransmitReceive(&hspi1,&txData[2],&rxData[2],8,30);
+
+	  int reading = 0;
+	  reading += (rxData[1]&((uint8_t)0b00000011))<<8;
+	  reading += rxData[2];
+
+	  int pulse_width = reading/1023*COUNTER_PERIOD;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_width);
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
