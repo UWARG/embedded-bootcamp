@@ -108,7 +108,7 @@ int main(void)
 	  uint16_t digitalVal = 0;
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, &transmBuf, &recvBuf, 3, 100);
+	  HAL_SPI_TransmitReceive(&hspi1, transmBuf, recvBuf, 3, 100);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  recvBuf[1] &= 0x03;
