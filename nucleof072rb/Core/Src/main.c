@@ -46,7 +46,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+const uint16_t MAX_ADC_VAL = 1023;
+const uint16_t PWM_MIN_DUTY = 3000;
+const uint16_t PWM_SCALE = 3000;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -95,6 +97,8 @@ int main(void)
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3000);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
 
   /* USER CODE END 2 */
 
@@ -114,7 +118,7 @@ int main(void)
 	  recvBuf[1] &= 0x03;
 	  digitalVal = (recvBuf[1] << 8) | recvBuf[2];
 
-	  uint16_t ccrVal = (digitalVal * 3000 / 1023) + 3000;
+	  uint16_t ccrVal = (digitalVal * PWM_MIN_DUTY / MAX_ADC_VAL) + PWM_SCALE;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccrVal);
 
 	  HAL_Delay(10);
