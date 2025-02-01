@@ -47,8 +47,8 @@
 
 /* USER CODE BEGIN PV */
 const uint16_t MAX_ADC_VAL = 1023;
-const uint16_t PWM_MIN_DUTY = 3000;
-const uint16_t PWM_SCALE = 3000;
+const uint16_t PWM_MIN_DUTY = 3200;
+const uint16_t PWM_SCALE = 3200;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
