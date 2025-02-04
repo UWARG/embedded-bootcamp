@@ -47,7 +47,7 @@
 
 /* USER CODE BEGIN PV */
 	const uint16_t  MAX_ADC_VAL = 1023; // 10 bits
-	const uint16_t COUNTER_PERIOD = 60000;
+	const uint16_t COUNTER_PERIOD = 64000;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,11 +58,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-float PotDutyCycle(uint16_t adc_value){
+uint16_t PotDutyCycle(uint16_t adc_value){
 	float min_percent = 0.05;
 	float max_percent = 0.10;
 
-	return min_percent + (max_percent - min_percent) * ((float)adc_value / MAX_ADC_VAL);
+	return min_percent * COUNTER_PERIOD + (max_percent - min_percent) * adc_value * (COUNTER_PERIOD / MAX_ADC_VAL);
 }
 /* USER CODE END 0 */
 
@@ -106,14 +106,15 @@ int main(void)
    * 0b1000 --> 8 bit transmission that includes SGL, D2, D1, D0, and 4 don't care bits
    * 0 --> Empty bit doesn't matter
    */
-  uint8_t tx_buff[3] = {0b1, 0b100000000, 0b0};
+  uint8_t tx_buff[3] = {0x1, 0x100, 0x0};
   uint8_t rx_buff[3]; // don't have initial value as we are reading it
   uint16_t adc_value = 0; // 10 bit ADC value
 
   // Start the PWM timer
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
-
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COUNTER_PERIOD * 0.05);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,10 +131,12 @@ int main(void)
 	  // Transmit and receive the data
 	  HAL_SPI_TransmitReceive(&hspi1, tx_buff, rx_buff, 3, HAL_MAX_DELAY);
 
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
 	  // Turn the pot value into a ADC value
 	  uint16_t pot_value = ((rx_buff[1] & 0b11) << 8) | rx_buff[2];
 
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PotDutyCycle(pot_value) * COUNTER_PERIOD);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PotDutyCycle(pot_value));
 	  // Required to prevent ADC from overflowing
 	  HAL_Delay(10);
   }
