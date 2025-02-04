@@ -93,6 +93,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, COUNTER_PERIOD*5/100);
 
   uint8_t txData[3] = {0x01,0x80,0};
   uint8_t rxData[3];
