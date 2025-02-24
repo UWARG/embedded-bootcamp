@@ -14,8 +14,18 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN PV */
+
+// Define constants to replace magic numbers
+#define ADC_MAX_VALUE 1023         // Maximum ADC value (10-bit ADC)
+#define PWM_PERIOD 19999           // Timer period value
+#define DUTY_CYCLE_MIN 5           // Minimum duty cycle percentage
+#define DUTY_CYCLE_MAX 10          // Maximum duty cycle percentage
+#define CHIP_SELECT_PIN GPIO_PIN_8  // Chip Select Pin
+#define CHIP_SELECT_PORT GPIOB      // Chip Select Port
+
 uint16_t adc_value = 0;  // Stores ADC reading
 uint16_t pwm_value = 0;  // Stores PWM output
+
 /* USER CODE END PV */
 
 void SystemClock_Config(void);
@@ -36,6 +46,17 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
 
+  /* USER CODE BEGIN INIT */
+
+  // Set Chip Select High initially
+  HAL_GPIO_WritePin(CHIP_SELECT_PORT, CHIP_SELECT_PIN, GPIO_PIN_SET);
+
+  // Set Initial PWM Value (Start at the minimum duty cycle)
+  pwm_value = (DUTY_CYCLE_MIN * PWM_PERIOD) / 100;
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+
+  /* USER CODE END INIT */
+
   /* Start PWM */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
@@ -45,19 +66,22 @@ int main(void)
     uint8_t spi_rx[3] = {0};
 
     // Set Chip Select LOW (Start SPI)
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(CHIP_SELECT_PORT, CHIP_SELECT_PIN, GPIO_PIN_RESET);
 
     // SPI Transfer
     HAL_SPI_TransmitReceive(&hspi1, spi_tx, spi_rx, 3, HAL_MAX_DELAY);
 
     // Set Chip Select HIGH (End SPI)
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(CHIP_SELECT_PORT, CHIP_SELECT_PIN, GPIO_PIN_SET);
 
     // Convert received ADC data (10-bit value)
     adc_value = ((spi_rx[1] & 0x03) << 8) | spi_rx[2];
 
-    // Convert ADC value to PWM (5-10% duty cycle)
-    pwm_value = ((adc_value * 5) / 1023) + 5;
+    // Convert ADC value to PWM (5-10% duty cycle) using defined constants
+    pwm_value = ((adc_value * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN)) / ADC_MAX_VALUE) + DUTY_CYCLE_MIN;
+
+    // Scale PWM duty cycle to match timer period
+    pwm_value = (pwm_value * PWM_PERIOD) / 100;
 
     // Set PWM Duty Cycle
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
