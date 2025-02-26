@@ -17,7 +17,7 @@
 
 // Define constants to replace magic numbers
 #define ADC_MAX_VALUE 1023         // Maximum ADC value (10-bit ADC)
-#define PWM_PERIOD 19999           // Timer period value
+#define PWM_PERIOD 63999           // Timer period value
 #define DUTY_CYCLE_MIN 5           // Minimum duty cycle percentage
 #define DUTY_CYCLE_MAX 10          // Maximum duty cycle percentage
 #define CHIP_SELECT_PIN GPIO_PIN_8  // Chip Select Pin
@@ -78,10 +78,7 @@ int main(void)
     adc_value = ((spi_rx[1] & 0x03) << 8) | spi_rx[2];
 
     // Convert ADC value to PWM (5-10% duty cycle) using defined constants
-    pwm_value = ((adc_value * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN)) / ADC_MAX_VALUE) + DUTY_CYCLE_MIN;
-
-    // Scale PWM duty cycle to match timer period
-    pwm_value = (pwm_value * PWM_PERIOD) / 100;
+    pwm_value = (adc_value * (DUTY_CYCLE_MAX - DUTY_CYCLE_MIN) * PWM_PERIOD) / (ADC_MAX_VALUE * 100) + (DUTY_CYCLE_MIN * PWM_PERIOD) / 100;
 
     // Set PWM Duty Cycle
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
