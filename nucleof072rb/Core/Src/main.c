@@ -104,6 +104,7 @@ int main(void)
 	spiTxData[0] = MCP3004_START_BIT;
 	spiTxData[1] = MCP3004_CHANNEL;
 	spiTxData[2] = MCP3004_lastByte;
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
 
   /* USER CODE END 2 */
@@ -126,7 +127,6 @@ int main(void)
       adcValue = ((spiRxData[1] & 0x03) << 8) | spiRxData[2];
 
       counts = map(adcValue, 0, tenBit, counterPeriod*dutyMin, counterPeriod*dutyMax);
-      HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
       __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
 
 
@@ -146,7 +146,7 @@ int map(int value, int scale1min, int scale1max, int scale2min, int scale2max)
 	int range2 = scale2max - scale1min;
 
 	//percent away from scale1 min value
-	int percent = (value - scale1min)/range1;
+	float percent = (value - scale1min)/range1;
 
 	// Perform the mapping
 	return scale2min + percent * range2;
