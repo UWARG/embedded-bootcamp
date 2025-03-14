@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,11 +46,16 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+	char uart_buf[50];
+	int uart_buf_len;
+	char spi_buf[20];
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+uint16_t readADC(int8_t channel);
+void setPWM(uint16_t adc_value);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -87,7 +94,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  uint32_t initial_duty_cycle = (5 * (TIM1->ARR + 1)) / 100;
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, initial_duty_cycle);
 
   /* USER CODE END 2 */
 
@@ -95,9 +108,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  uint16_t adc_value = readADC(0);
+	  	  setPWM(adc_value);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  	HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -143,6 +160,37 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//This function sends an SPI request to the ADC chip, reads the ADC value converts it and returns the value
+uint16_t readADC(int8_t channel){
+	uint8_t spi_tx[3];
+	    uint8_t spi_rx[3] = {0};
+
+	    if (channel > 7) return 0;
+
+	    // Construct the command byte
+	    spi_tx[0] = 0x01;
+	    spi_tx[1] = (0x08 | channel) << 4;
+	    spi_tx[2] = 0x00;
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
+
+	    HAL_SPI_TransmitReceive(&hspi1, spi_tx, spi_rx, 3, HAL_MAX_DELAY);
+
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+
+	    uint16_t result = ((spi_rx[1] & 0x03) << 8) | spi_rx[2];
+
+	    return result;
+
+}
+
+//Generates PWM with duty cycle based on ADC reading
+void setPWM(uint16_t adc_value){
+
+	int max_val = 1023;
+
+	 uint32_t duty_cycle = (adc_value * (TIM1->ARR + 1)) / max_val;
+	    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
+}
 
 /* USER CODE END 4 */
 
