@@ -189,7 +189,7 @@ void setPWM(uint16_t adc_value){
 	int max_val = 1023;
 	uint32_t counter_period = __HAL_TIM_GET_AUTORELOAD(&htim1);
 
-	uint32_t duty_cycle = counter_period * 0.05 + (counter_period * 0.05)*(adc_value / max_val);
+	uint32_t duty_cycle = counter_period * 0.05 + (counter_period * 0.05)* ((float)adc_value / (float)max_val);
 	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
 }
 
