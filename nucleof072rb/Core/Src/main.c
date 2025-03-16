@@ -110,7 +110,7 @@ int main(void)
   {
 
 	  uint16_t adc_value = readADC(0);
-	  	  setPWM(adc_value);
+	  setPWM(adc_value);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -187,9 +187,10 @@ uint16_t readADC(int8_t channel){
 void setPWM(uint16_t adc_value){
 
 	int max_val = 1023;
+	uint32_t counter_period = __HAL_TIM_GET_AUTORELOAD(&htim1);
 
-	 uint32_t duty_cycle = (adc_value * (TIM1->ARR + 1)) / max_val;
-	    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
+	uint32_t duty_cycle = counter_period * 0.05 + (counter_period * 0.05)*(adc_value / max_val);
+	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
 }
 
 /* USER CODE END 4 */
