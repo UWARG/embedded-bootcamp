@@ -118,7 +118,7 @@ int main(void)
 	  adc_value = ((spi_rx[1] & 00000011) << 8) | spi_rx[2]; // 10-bit value
 
 	  // Map ADC value to pulsE
-	  uint32_t pulse = 1000 + ((adc_value * 1000) / 1023);
+	  uint32_t pulse = 3200 + ((adc_value * 3200) / 1023);
 
 	  // Update Compare Registry (Pulse Width)
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
