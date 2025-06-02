@@ -1,4 +1,6 @@
 /* USER CODE BEGIN Header */
+// WARG EFS BOOTCAMP
+// Coded by Shamanthi Rajagopal
 /**
   ******************************************************************************
   * @file           : main.c
@@ -19,6 +21,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -64,12 +68,15 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
+	//Initialize needed variables
+	int adc_result = 0;
+	int scaled_pwm = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
-
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
@@ -87,15 +94,51 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
+
+  //Start Timer for PWM
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
+
+	  /*Control CS Pin*/
+
+	  //Pull CS pin low
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  //SPI Transfer & Receive
+	  uint8_t transfer_buffer[3];
+	  uint8_t receive_buffer[3];
+
+	  //Set based on channel 0
+	  transfer_buffer[0] = 0x01;
+	  transfer_buffer[1] = 0x80;
+	  transfer_buffer[2] = 0x00;
+
+	  HAL_SPI_TransmitReceive(&hspi1, transfer_buffer, receive_buffer, 3, 100);
+
+	  //Bit masking and shifting to get correct 10 bits
+	  adc_result = ((( receive_buffer[1] & 0x03 ) << 8) | receive_buffer[2]);
+
+	  scaled_pwm = ((adc_result - 0)*( 2000 - 1000 )) / ( 1023 - 0 ) + 1000;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, scaled_pwm);
+
+	  //Pull CS pin high
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+
+	  //Extract 10 bit
+
+	  HAL_Delay(10); // Avoid weird issues when running infinite loop
 
     /* USER CODE BEGIN 3 */
   }
@@ -122,6 +165,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -177,5 +221,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
