@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,6 +46,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t txData[3];
+uint8_t rxData[3];
+uint16_t adcValue;
+uint16_t pwmDuty;
+#define MCP3008_CS_GPIO_Port GPIOA
+#define MCP3008_CS_Pin GPIO_PIN_4
 
 /* USER CODE END PV */
 
@@ -87,14 +95,27 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(MCP3008_CS_GPIO_Port, MCP3008_CS_Pin, GPIO_PIN_RESET);
+	    txData[0] = 0x01;
+	    txData[1] = 0x80;
+	    txData[2] = 0x00;
+	    HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+	    HAL_GPIO_WritePin(MCP3008_CS_GPIO_Port, MCP3008_CS_Pin, GPIO_PIN_SET);
+	    adcValue = ((rxData[1] & 0x03) << 8) | rxData[2];
+	    pwmDuty = 2400 + ((uint32_t)adcValue * 2400) / 1023;
+	    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmDuty);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
