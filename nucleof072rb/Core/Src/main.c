@@ -50,8 +50,8 @@ uint8_t txData[3];
 uint8_t rxData[3];
 uint16_t adcValue;
 uint16_t pwmDuty;
-#define MCP3008_CS_GPIO_Port GPIOA
-#define MCP3008_CS_Pin GPIO_PIN_4
+#define MCP3008_CS_GPIO_Port GPIOB
+#define MCP3008_CS_Pin GPIO_PIN_8
 
 /* USER CODE END PV */
 
@@ -99,6 +99,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(MCP3008_CS_GPIO_Port, MCP3008_CS_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,7 +113,7 @@ int main(void)
 	    HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
 	    HAL_GPIO_WritePin(MCP3008_CS_GPIO_Port, MCP3008_CS_Pin, GPIO_PIN_SET);
 	    adcValue = ((rxData[1] & 0x03) << 8) | rxData[2];
-	    pwmDuty = 2400 + ((uint32_t)adcValue * 2400) / 1023;
+	    pwmDuty = 3200 + ((uint32_t)adcValue * 3200) / 1023;
 	    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmDuty);
 
 	  HAL_Delay(10);
