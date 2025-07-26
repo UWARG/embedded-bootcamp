@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,7 +89,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  uint8_t transmit[3] = {0x1, 0x80, 0};
+  uint8_t receive[3] = {0, 0, 0};
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
@@ -95,6 +105,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_TogglePin (GPIOB, GPIO_PIN_8);
+
+	  HAL_SPI_TransmitReceive(&hspi1, transmit, receive, 3, 100);
+
+	  HAL_GPIO_TogglePin (GPIOB, GPIO_PIN_8);
+
+
+	  uint16_t dtyC = ((((receive[1] & 0x03) << 8) + (receive[2])) * 3200 / 1023) + 3200;
+
+	  _HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, dtyC);
+
+
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
