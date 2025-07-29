@@ -54,7 +54,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-uint32_t Convert_ADC_to_PWM(uint32_t adc_data, uint16_t counter_period, int ADC_MAX_VALUE);
+uint32_t Convert_ADC_to_PWM(uint32_t adc_data, uint16_t counter_period);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -70,7 +70,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	const int ADC_MAX_VALUE = 1023;
 	uint8_t txData[3] = {0x01, 0x80, 0x00};
 	uint8_t rxData[3];
 	uint32_t adc_data = 0;
@@ -112,7 +111,7 @@ int main(void)
 	  HAL_GPIO_WritePin (CS_PORT, CS_PIN, GPIO_PIN_SET);
 	  adc_data = (( rxData[1] & 0x03 ) << 8) | rxData[2];
 	  counter_period = __HAL_TIM_GET_AUTORELOAD(&htim1);
-	  pwm_value =  Convert_ADC_to_PWM(adc_data, counter_period, ADC_MAX_VALUE);
+	  pwm_value =  (adc_data * 3200) / 1023 + 3200;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
     /* USER CODE END WHILE */
 
@@ -164,12 +163,8 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint32_t Convert_ADC_to_PWM(uint32_t adc_data, uint16_t counter_period, int ADC_MAX_VALUE){
-	uint16_t min_pulse = counter_period * 5 / 100;
-	uint32_t max_pulse = counter_period * 10 / 100;
-
-	uint32_t pwm_value = (((uint32_t)adc_data * (max_pulse - min_pulse)) / 1023) + min_pulse;
-	return (adc_data * min_pulse) / ADC_MAX_VALUE + min_pulse;
+uint32_t Convert_ADC_to_PWM(uint32_t adc_data, uint16_t counter_period){
+	uint16_t
 }
 /* USER CODE END 4 */
 
