@@ -23,6 +23,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -31,11 +32,14 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+uint16_t Read_ADC_Value(void);
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_CS_GPIO_Port GPIOB
+#define ADC_CS_Pin GPIO_PIN_8
+#define ADC_MAX_VALUE 1023
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,7 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint16_t adc_value = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -92,7 +96,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,6 +106,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+  adc_value = Read_ADC_Value();
+
+  uint32_t pwm_min = __HAL_TIM_GET_AUTORELOAD(&htim1) * 0.05;
+  uint32_t pwm_max = __HAL_TIM_GET_AUTORELOAD(&htim1) * 0.1;
+  uint32_t pwm_value = pwm_min + ((pwm_max - pwm_min) * adc_value) / ADC_MAX_VALUE;
+
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+
+
 	HAL_Delay(10);
   }
   /* USER CODE END 3 */
@@ -148,7 +161,18 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t Read_ADC_Value(void) 
+  {
+	uint8_t txData[3] = {0x01, 0x80, 0x00};
+	uint8_t rxData[3];
 
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
+    HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+    
+    uint16_t value = ((rxData[1] & 0x03) << 8) | rxData[2];
+    return value;
+  }
 /* USER CODE END 4 */
 
 /**
