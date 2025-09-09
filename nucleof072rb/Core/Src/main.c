@@ -21,10 +21,11 @@
 #include "main.h"
 #include "usart.h"
 #include "gpio.h"
-
+#include "spi.h"
+#include "tim.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,7 +88,40 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+   // SPI timeout
+   const uint32_t SPI_TIMEOUT_MS = HAL_MAX_DELAY;
+
+   // ADC properties
+   const uint16_t ADC_MAX_VALUE = 1023; /* 10 bit ADC */
+
+   /* Timer / PWM values :
+      PSC = 16 , divisor = 17
+      ARR  = 56470 , ARR+1 = 56471 ticks per PWM period (50 Hz)
+
+Timer tick frequency = 48 MHz / 17 ≈ 2,823,529.4Hz
+Ticks per 1 ms = tick frequency * 0.001 ≈ 2823.5
+Ticks per 2 ms ≈ 5647.
+       CCR_MIN/CCR_MAX values pulses */
+   const uint16_t CCR_MIN = 2824;   // 1.000 ms
+   const uint16_t CCR_MAX = 5647;   //2.000 ms
+   const uint16_t CCR_INIT = 4236;  // center
+
+   // SPI transaction
+   uint8_t tx[3] = {0x01, 0x80, 0x00};// bits carries configuration, miso
+   uint8_t rx[3] = {0x00, 0x00, 0x00}; //receiving data
+
+   // CS is high before starting
+   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+   // Start PWM on TIM1 channel 1
+   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+   // Set value so servo is at neutral     am I supposed to do this
+   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, CCR_INIT);
 
   /* USER CODE END 2 */
 
@@ -96,6 +130,40 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	    // Begin SPI pull CS low
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //RESET = logic 0
+	    // Full-duplex transfer
+	    if (HAL_SPI_TransmitReceive(&hspi1, tx, rx, sizeof(tx), SPI_TIMEOUT_MS) != HAL_OK)
+	    {
+	      // error: raise CS skip this cycle
+	      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	      HAL_Delay(10);
+	      continue;
+	    }
+
+	    // End SPI transaction: set CS high
+	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	    /* Extract 10-bit ADC result (combine two partial bytes into one 10-bit number)
+	    CAST rx[1] and rx[2] TO 16bit, keep only the lowest 2 bits in rx[1], bit shift by 8 to correct position
+	    use or to combine rx[1] and rx[2] to get full 10 bit value
+	    use & to mask useless value
+	    0x03 = 0000 0011, 0xFF = 11111111 */
+	    const uint16_t adc_raw = (uint16_t)((((uint16_t)rx[1] & 0x03) << 8) | ((uint16_t)rx[2] & 0xFF));
+
+	    //sorry
+
+	    /* stretching 0–1023 ADC range to 1–2 ms PWM range for servo
+	     * Map ADC (0-1023) to CCR range
+	       CCR = CCR_MIN + (adc_raw * (CCR_MAX - CCR_MIN)) / ADC_MAX_VALUE */
+	    const uint32_t range = (uint32_t)(CCR_MAX - CCR_MIN);
+	    const uint32_t ccr_value = (uint32_t)CCR_MIN + ((uint32_t)adc_raw * range) / (uint32_t)ADC_MAX_VALUE;
+
+	    // Update PWM
+	    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint32_t)ccr_value);
+
+	    // Wait 10 ms
+	    HAL_Delay(10);
 
     /* USER CODE BEGIN 3 */
   }
