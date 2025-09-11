@@ -72,7 +72,7 @@ uint16_t read_adc(uint8_t ch, GPIO_TypeDef * CS_Port, uint16_t CS_Pin){
 
 	// transmit 3 bytes
 	tx[0] = 0x01; // start bit, 0b00000001
-	tx[1] = (uint8_t) (0x80 | (ch << 4)); // SINGLE_NDIFF, D2, D1, D0, then 0b0000
+	tx[1] = (uint8_t) (0x80 | (ch << 4));    // SINGLE_NDIFF, D2, D1, D0, then 0b0000
 	tx[2] = 0x00;	// 0b00000000
 
 
@@ -86,7 +86,7 @@ uint16_t read_adc(uint8_t ch, GPIO_TypeDef * CS_Port, uint16_t CS_Pin){
     //    rx[0] 		rx[1]             rx[2]
     // [0b???? ????] [0b ?????0 b9 b8] [b7 ... b0]
 
-    return (( rx[1] & 0x03 ) << 8) | rx[2]; 	// 0 to 1023
+    return ( ( (rx[1] & 0x03) << 8) | rx[2] ); 	// 0 to 1023
 
 }
 
@@ -126,14 +126,36 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+
+  // start PWM on timer 1 channel 1
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 150);    // by default start at 1.5ms pulse, 7.5% duty cycle
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // get the 10 bit value from the adc/pot
+	  uint16_t raw_val = read_adc(0, SPI1_CS_GPIO_Port, SPI1_CS_Pin);
 
+	  // calculate the new pulse value using the pot value
+	  float pot_voltage = (raw_val)* (3.3 / 1023);    // convert from bits to volts
+	  float pulse_val = 1 + (pot_voltage/3.3);    // convert from volts to a pulse value between 1 ms and 2 ms
+	  uint16_t new_ccr = pulse_val * 100;
+
+	  // clamp the pulse value (minimum 5% and maximum 10% duty cycle)
+	  if (new_ccr < 100) new_ccr = 100;
+	  else if (new_ccr > 200) new_ccr = 200;
+
+	  // update the pulse value
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, new_ccr);
+
+	  // delay so the adc is not overloaded
 	  HAL_Delay(10);
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
