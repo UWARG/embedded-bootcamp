@@ -57,8 +57,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t *pTxData[3] = {1, 0, 0};
-uint8_t *pRxData;
+uint8_t pTxData[3] = {1, 0, 0};
+uint8_t pRxData[3];
 /* USER CODE END 0 */
 
 /**
@@ -92,7 +92,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start (&htim1,  TIM_CHANNEL_1); // enables pwm
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,11 +103,12 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  //if?
+	  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_8,  GPIO_PIN_RESET);
 	  HAL_StatusTypeDef HAL_SPI_TransmitReceive (hspi1, pTxData, pRxData, 3, HAL_MAX_DELAY); // 10 bits from ADC gets stored in pRxData[2] and pRxData[3]
-	  uint8_t waveAmt = ((*pRxData) * 3200 / 1023) + 3200; //  need the value of pRxData
-	  HAL_TIM_PWM_Start (*htim,  TIM_CHANNEL_1); // enables pwm
-	  __HAL_TIM_SET_COMPARE (*htim, TIM_CHANNEL_1,  waveAmt); //__HAL_TIM_SET_COMPARE ( __HANDLE__, TIM_CHANNEL_1,  __COMPARE__); writes waveAmt to pin connected to motor
-
+	  HAL_GPIO_WritePin (GPIOB, GPIO_PIN_8,  GPIO_PIN_SET);
+	  uint16_t value = (pRxData[2] & 0x03) + pRxData[3];
+	  uint16_t waveAmt = (value * 3200 / 1023) + 3200; //  need the value of pRxData
+	  __HAL_TIM_SET_COMPARE (&htim1, TIM_CHANNEL_1,  waveAmt); //__HAL_TIM_SET_COMPARE ( __HANDLE__, TIM_CHANNEL_1,  __COMPARE__); writes waveAmt to pin connected to motor
 	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
