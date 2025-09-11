@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -55,7 +57,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t *pTxData[3] = {1, 0, 0};
+uint8_t *pRxData;
 /* USER CODE END 0 */
 
 /**
@@ -65,7 +68,6 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,6 +89,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -98,6 +102,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  //if?
+	  HAL_StatusTypeDef HAL_SPI_TransmitReceive (hspi1, pTxData, pRxData, 3, HAL_MAX_DELAY); // 10 bits from ADC gets stored in pRxData[2] and pRxData[3]
+	  uint8_t waveAmt = ((*pRxData) * 3200 / 1023) + 3200; //  need the value of pRxData
+	  HAL_TIM_PWM_Start (*htim,  TIM_CHANNEL_1); // enables pwm
+	  __HAL_TIM_SET_COMPARE (*htim, TIM_CHANNEL_1,  waveAmt); //__HAL_TIM_SET_COMPARE ( __HANDLE__, TIM_CHANNEL_1,  __COMPARE__); writes waveAmt to pin connected to motor
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
