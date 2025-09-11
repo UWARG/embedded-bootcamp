@@ -26,6 +26,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "string.h"
+#include <stdio.h>
+
 
 /* USER CODE END Includes */
 
@@ -57,6 +60,35 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+
+uint16_t read_adc(uint8_t ch, GPIO_TypeDef * CS_Port, uint16_t CS_Pin){
+
+	// 4 channels on MCP32004, we know we are using ch0, but do this anyways
+	// we know this is 10 bit
+	ch &= 0x03;
+	uint8_t tx[3];
+	uint8_t rx[3];
+
+	// transmit 3 bytes
+	tx[0] = 0x01; // start bit, 0b00000001
+	tx[1] = (uint8_t) (0x80 | (ch << 4)); // SINGLE_NDIFF, D2, D1, D0, then 0b0000
+	tx[2] = 0x00;	// 0b00000000
+
+
+
+	HAL_GPIO_WritePin(CS_Port, CS_Pin, GPIO_PIN_RESET);
+    HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(CS_Port, CS_Pin, GPIO_PIN_SET);
+    if (st != HAL_OK) return 0xFFFF;
+
+    // will receive the following bytes:
+    //    rx[0] 		rx[1]             rx[2]
+    // [0b???? ????] [0b ?????0 b9 b8] [b7 ... b0]
+
+    return (( rx[1] & 0x03 ) << 8) | rx[2]; 	// 0 to 1023
+
+}
 
 /* USER CODE END 0 */
 
@@ -100,6 +132,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
