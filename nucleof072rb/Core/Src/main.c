@@ -19,8 +19,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdio.h>
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -34,6 +38,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_CS_PORT GPIOB
+#define ADC_CS_PIN  GPIO_PIN_8
+
+// PWM Configuration (based on your TIM1 settings)
+#define PWM_PERIOD 60000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,7 +59,9 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t readADC(uint8_t channel);
+void setPWM(uint16_t value);
+uint16_t mapToDutyRange(uint16_t adc_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -64,6 +75,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,17 +99,30 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
+  setPWM(4500);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint16_t adc_value;
+  uint16_t pwm_pulse;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	adc_value = readADC(0);
+
+	pwm_pulse = mapToDutyRange(adc_value);
+
+	setPWM(pwm_pulse);
+
+	HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +147,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -143,7 +169,34 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t readADC(uint8_t channel)
+{
+    uint8_t tx_data[3] = {0};
+    uint8_t rx_data[3] = {0};
+    uint16_t result;
 
+    tx_data[0] = 0x01;
+    tx_data[1] = 0x80 | (channel << 4);
+    tx_data[2] = 0x00;
+
+    HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_RESET);
+
+    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_SET);
+
+    result = ((rx_data[1] & 0x03) << 8) | rx_data[2];
+
+    return result;
+}
+void setPWM(uint16_t pulse)
+{
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
+}
+uint16_t mapToDutyRange(uint16_t adc_value)
+{
+    return 3000 + (adc_value * 3000) / 1023;
+}
 /* USER CODE END 4 */
 
 /**
@@ -160,8 +213,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +229,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
