@@ -183,7 +183,7 @@ uint16_t readADC(uint8_t channel)
 
     HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_RESET);
 
-    spi-status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, SPI_DATA_SIZE, HAL_MAX_DELAY);
+    spi_status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, SPI_DATA_SIZE, HAL_MAX_DELAY);
     if (spi_status == HAL_OK)
         {
     		HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_SET);
