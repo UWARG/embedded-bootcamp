@@ -43,6 +43,11 @@
 
 // PWM Configuration (based on your TIM1 settings)
 #define PWM_PERIOD 60000
+#define DUTY_MIN 3000
+#define DUTY_MAX 6000
+#define DUTY_CENTER 4500
+#define ADC_MAX_VALUE 1023
+#define SPI_DATA_SIZE 3
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,7 +58,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t tx_data[3] = {0};
+uint8_t rx_data[3] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,8 +109,6 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
-  setPWM(4500);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -120,7 +124,7 @@ int main(void)
 
 	pwm_pulse = mapToDutyRange(adc_value);
 
-	setPWM(pwm_pulse);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_pulse);
 
 	HAL_Delay(10);
   }
@@ -171,31 +175,31 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 uint16_t readADC(uint8_t channel)
 {
-    uint8_t tx_data[3] = {0};
-    uint8_t rx_data[3] = {0};
-    uint16_t result;
 
+	HAL_StatusTypeDef spi_status;
     tx_data[0] = 0x01;
     tx_data[1] = 0x80 | (channel << 4);
     tx_data[2] = 0x00;
 
     HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_RESET);
 
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY);
+    spi-status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, SPI_DATA_SIZE, HAL_MAX_DELAY);
+    if (spi_status == HAL_OK)
+        {
+    		HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_SET);
+            return ((rx_data[1] & 0x03) << 8) | rx_data[2];
+        }
+        else //error handling
+        {
+        	HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_SET);
+            return 0;
+        }
 
-    HAL_GPIO_WritePin(ADC_CS_PORT, ADC_CS_PIN, GPIO_PIN_SET);
-
-    result = ((rx_data[1] & 0x03) << 8) | rx_data[2];
-
-    return result;
 }
-void setPWM(uint16_t pulse)
-{
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
-}
+
 uint16_t mapToDutyRange(uint16_t adc_value)
 {
-    return 3000 + (adc_value * 3000) / 1023;
+    return DUTY_MIN + (adc_value * (DUTY_MAX - DUTY_MIN)) / ADC_MAX_VALUE;
 }
 /* USER CODE END 4 */
 
