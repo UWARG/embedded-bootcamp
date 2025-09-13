@@ -65,12 +65,12 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 
-uint16_t read_adc(uint8_t ch, GPIO_TypeDef * CS_Port, uint16_t CS_Pin, uint8_t * rx_data, uint8_t * tx_data){
+uint16_t read_adc(GPIO_TypeDef * CS_Port, uint16_t CS_Pin, uint8_t * rx_data, uint8_t * tx_data){
 
 
 
 	HAL_GPIO_WritePin(CS_Port, CS_Pin, GPIO_PIN_RESET);
-    HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, ADC_FRAME_NUM_BYTES, HAL_MAX_DELAY);
+    HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, ADC_FRAME_NUM_BYTES, 100);
     if (st != HAL_OK) return 0xFFFF;
     HAL_GPIO_WritePin(CS_Port, CS_Pin, GPIO_PIN_SET);
 
@@ -122,7 +122,7 @@ int main(void)
   // declare and setup rx and tx data
   uint16_t new_ccr = 100;
   uint16_t raw_val = 0;
-  uint8_t channel = ADC_CHANNEL &= 0x03;
+  uint8_t channel = ADC_CHANNEL & 0x03;
   uint8_t tx[3];
   uint8_t rx[3];
 
@@ -142,8 +142,8 @@ int main(void)
 	  // get the 10 bit value from the adc/pot
 	  raw_val = read_adc(SPI1_CS_GPIO_Port, SPI1_CS_Pin, rx, tx);
 
-	  // raw val between 0 and 1023, so new_ccr will always be between 100 and 200, giving us the desired 1ms to 2 ms on time
-	  new_ccr =  100 * (1 +  (raw_val/1023) );	// convert potentiometer reading to pulse value
+	  // raw val between 0 and 1023, so new_ccr will always be between 3000 and 6000, giving us the desired 1ms to 2 ms on time
+	  new_ccr = (uint16_t) ( 3000.0f * (1.0f +  (((float)raw_val)/1023.0f) ));	// convert potentiometer reading to pulse value
 
 	  // update the pulse value
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, new_ccr);
