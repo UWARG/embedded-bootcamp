@@ -31,10 +31,10 @@
 #define PWM_MAX_MS 2.0f
 #define PWM_FREQ_HZ 50.0f
 
-#define TIM_TIMER_CLOCK_HZ 3200000UL
+#define TIM_TIMER_CLOCK_HZ 3200000UL // 48Mhz/14+1 prescaler
 #define TIM_PERIOD_COUNTS 65535U
-#define PWM_MIN_COUNTS ((uint32_t)(PWM_MIN_MS * 1000.0f))
-#define PWM_MAX_COUNTS ((uint32_t)(PWM_MAX_MS * 1000.0f))
+#define PWM_MIN_COUNTS ((uint32_t)(PWM_MIN_MS * 1000.0f * (TIM_TIMER_CLOCK_HZ / 1000000UL)))
+#define PWM_MAX_COUNTS ((uint32_t)(PWM_MAX_MS * 1000.0f * (TIM_TIMER_CLOCK_HZ / 1000000UL)))
 
 /* USER CODE END Includes */
 
