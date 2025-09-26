@@ -19,17 +19,29 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#define MCP3008_MAX 1023U
+#define PWM_MIN_MS 1.0f
+#define PWM_MAX_MS 2.0f
+#define PWM_FREQ_HZ 50.0f
+
+#define TIM_TIMER_CLOCK_HZ 3200000UL
+#define TIM_PERIOD_COUNTS 65535U
+#define PWM_MIN_COUNTS ((uint32_t)(PWM_MIN_MS * 1000.0f))
+#define PWM_MAX_COUNTS ((uint32_t)(PWM_MAX_MS * 1000.0f))
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+uint16_t MCP3008_ReadChannel(uint8_t channel);
+uint32_t ADC_to_PWMcounts(uint16_t adc_value);
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -87,7 +99,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -96,7 +112,12 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	    uint16_t adc = MCP3008_ReadChannel(0);
 
+	    uint32_t pwm_counts = ADC_to_PWMcounts(adc);
+
+	    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_counts);
+	    HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -143,6 +164,45 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+uint16_t MCP3008_ReadChannel(uint8_t channel)
+{
+	 if (channel > 7) return 0;
+
+	    uint8_t tx[3];
+	    uint8_t rx[3];
+	    tx[0] = 0x01;
+	    tx[1] = (uint8_t)((0x08 | (channel & 0x07)) << 4);
+	    tx[2] = 0x00;
+
+	    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
+
+	    if (HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 10) != HAL_OK) {
+	        HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+	        return 0;
+	    }
+
+	    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+
+	    uint16_t value = ( (uint16_t)(rx[1] & 0x03) << 8 ) | (uint16_t)rx[2];
+	    return value;
+
+}
+
+
+uint32_t ADC_to_PWMcounts(uint16_t adc_value)
+{
+    if (adc_value > MCP3008_MAX) adc_value = MCP3008_MAX;
+
+    float ratio = (float)adc_value / (float)MCP3008_MAX;
+    uint32_t counts = PWM_MIN_COUNTS + (uint32_t)(ratio * (float)(PWM_MAX_COUNTS - PWM_MIN_COUNTS) + 0.5f);
+    return counts;
+}
+
+
+
+
+
 
 /* USER CODE END 4 */
 
