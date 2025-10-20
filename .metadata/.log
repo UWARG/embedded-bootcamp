@@ -1,0 +1,116 @@
+!SESSION 2025-10-18 12:20:57.828 -----------------------------------------------
+eclipse.buildId=Version 1.19.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_CA
+Framework arguments:  -keyring /Users/jeremyniu/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/jeremyniu/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-10-18 12:21:21.620
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-10-18 12:21:21.622
+!MESSAGE Log4j2 initialized with config file /Users/jeremyniu/embedded-bootcamp/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-10-18 12:21:26.026
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-10-18 12:22:39.429
+!MESSAGE Indexed 'nucleof072rb' (25 sources, 104 headers) in 8.2 sec: 8,111 declarations; 36,358 references; 2 unresolved inclusions; 33 syntax errors; 188 unresolved names (0.42%)
+!SESSION 2025-10-18 13:50:27.880 -----------------------------------------------
+eclipse.buildId=Version 1.19.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_CA
+Framework arguments:  -keyring /Users/jeremyniu/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/jeremyniu/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-10-18 13:50:42.150
+!MESSAGE Log4j2 initialized with config file /Users/jeremyniu/embedded-bootcamp/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-10-18 13:50:52.708
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.equinox.p2.operations 4 10053 2025-10-20 10:40:55.344
+!MESSAGE Operation details
+!SUBENTRY 1 org.eclipse.equinox.p2.director 4 10053 2025-10-20 10:40:55.345
+!MESSAGE Cannot complete the install because one or more required items could not be found.
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.345
+!MESSAGE Software being installed: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.345
+!MESSAGE Missing requirement: Git integration for Eclipse - Core 7.4.0.202509020913-r (org.eclipse.egit.core 7.4.0.202509020913-r) requires 'osgi.bundle; org.eclipse.core.runtime [3.33.100,4.0.0)' but it could not be found
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.345
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.345
+!MESSAGE From: Git integration for Eclipse 7.4.0.202509020913-r (org.eclipse.egit.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.345
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.core [7.4.0.202509020913-r,7.4.0.202509020913-r]
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.345
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.345
+!MESSAGE From: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.345
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.feature.group [7.4.0,7.5.0), filter=(!(org.eclipse.equinox.p2.exclude.import=true))
+
+!ENTRY org.eclipse.equinox.p2.operations 4 10053 2025-10-20 10:40:55.367
+!MESSAGE Operation details
+!SUBENTRY 1 org.eclipse.equinox.p2.director 4 10053 2025-10-20 10:40:55.369
+!MESSAGE Cannot complete the install because one or more required items could not be found.
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.370
+!MESSAGE Software being installed: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.371
+!MESSAGE Missing requirement: Git integration for Eclipse - Core 7.4.0.202509020913-r (org.eclipse.egit.core 7.4.0.202509020913-r) requires 'osgi.bundle; org.eclipse.core.runtime [3.33.100,4.0.0)' but it could not be found
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.371
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.371
+!MESSAGE From: Git integration for Eclipse 7.4.0.202509020913-r (org.eclipse.egit.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.371
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.core [7.4.0.202509020913-r,7.4.0.202509020913-r]
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.371
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.371
+!MESSAGE From: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.371
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.feature.group [7.4.0,7.5.0), filter=(!(org.eclipse.equinox.p2.exclude.import=true))
+
+!ENTRY org.eclipse.equinox.p2.operations 4 10053 2025-10-20 10:40:55.401
+!MESSAGE Operation details
+!SUBENTRY 1 org.eclipse.equinox.p2.director 4 10053 2025-10-20 10:40:55.402
+!MESSAGE Cannot complete the install because one or more required items could not be found.
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.402
+!MESSAGE Software being installed: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.403
+!MESSAGE Missing requirement: Git integration for Eclipse - Core 7.4.0.202509020913-r (org.eclipse.egit.core 7.4.0.202509020913-r) requires 'osgi.bundle; org.eclipse.core.runtime [3.33.100,4.0.0)' but it could not be found
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.403
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.403
+!MESSAGE From: Git integration for Eclipse 7.4.0.202509020913-r (org.eclipse.egit.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.403
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.core [7.4.0.202509020913-r,7.4.0.202509020913-r]
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.403
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.403
+!MESSAGE From: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.404
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.feature.group [7.4.0,7.5.0), filter=(!(org.eclipse.equinox.p2.exclude.import=true))
+
+!ENTRY org.eclipse.equinox.p2.operations 4 10053 2025-10-20 10:40:55.404
+!MESSAGE Operation details
+!SUBENTRY 1 org.eclipse.equinox.p2.director 4 10053 2025-10-20 10:40:55.405
+!MESSAGE Cannot complete the install because one or more required items could not be found.
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.405
+!MESSAGE Software being installed: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.405
+!MESSAGE Missing requirement: Git integration for Eclipse - Core 7.4.0.202509020913-r (org.eclipse.egit.core 7.4.0.202509020913-r) requires 'osgi.bundle; org.eclipse.core.runtime [3.33.100,4.0.0)' but it could not be found
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.405
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.405
+!MESSAGE From: Git integration for Eclipse 7.4.0.202509020913-r (org.eclipse.egit.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.405
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.core [7.4.0.202509020913-r,7.4.0.202509020913-r]
+!SUBENTRY 2 org.eclipse.equinox.p2.director 4 1 2025-10-20 10:40:55.405
+!MESSAGE Cannot satisfy dependency:
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.405
+!MESSAGE From: Git integration for Eclipse - Source Code 7.4.0.202509020913-r (org.eclipse.egit.source.feature.group 7.4.0.202509020913-r)
+!SUBENTRY 3 org.eclipse.equinox.p2.director 4 0 2025-10-20 10:40:55.405
+!MESSAGE To: org.eclipse.equinox.p2.iu; org.eclipse.egit.feature.group [7.4.0,7.5.0), filter=(!(org.eclipse.equinox.p2.exclude.import=true))
