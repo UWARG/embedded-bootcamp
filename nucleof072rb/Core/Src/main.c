@@ -61,7 +61,7 @@ void SystemClock_Config(void);
 uint16_t Read_ADC_Channel1(void){
 	//this is because 0x90 = 0b10010000
 	//where 1 = sgl/diff, 0 = d2, 0 = d1, 1 = d0
-	uint8_t txData[3] = {0x01, 0x90, 0x00};//send
+	uint8_t txData[3] = {0x01, 0xD0, 0x00};//send
 	uint8_t rxData[3] = {0};//receive
 	//pull Chip Select to low, as the slave receives (master sends out) data on low edge
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
@@ -72,6 +72,12 @@ uint16_t Read_ADC_Channel1(void){
 	//reconstruct the output into a 10 bit value of type uint16_t
 	uint16_t adcOut = ((rxData[1] & 0x03) << 8) | rxData[2];
 	return adcOut;
+}
+//use this function to get the pwm read
+uint32_t Convert_to_PWM(uint16_t adcin){
+	//we begin with minimum 1ms, all the way up to 2ms by maxing out adcin as 1023.
+	//notice the formula base value + (adcread * delta)/10-bit-max
+	return 3000 + (uint32_t)adcin * (6000 - 3000) / 1023;
 }
 /* USER CODE END 0 */
 
@@ -116,7 +122,12 @@ int main(void)
   while (1)
   {
 	  uint16_t adcReturn = Read_ADC_Channel1();
+	  uint32_t pwmReturn = Convert_to_PWM(adcReturn);
+	  //compare the HIGH time
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmReturn);
+
 	  printf("ADC value through CH1: %u\r\n", adcReturn);
+	  printf("PWM value output: %lu\r\n", pwmReturn);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
