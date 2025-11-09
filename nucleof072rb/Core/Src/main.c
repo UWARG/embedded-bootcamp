@@ -23,7 +23,6 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -126,8 +125,8 @@ int main(void)
 	  //compare the HIGH time
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmReturn);
 
-	  printf("ADC value through CH1: %u\r\n", adcReturn);
-	  printf("PWM value output: %lu\r\n", pwmReturn);
+	  //printf("ADC value through CH1: %u\r\n", adcReturn);
+	  //printf("PWM value output: %lu\r\n", pwmReturn);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
