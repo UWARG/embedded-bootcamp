@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,6 +36,21 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define MCP3004_CS_PORT         GPIOB
+#define MCP3004_CS_PIN          GPIO_PIN_8
+#define MCP3004_TRANSFER_BYTES  3U
+
+// SPI command bits for MCP3004 channel 1
+#define MCP3004_START_BIT       0x01
+#define MCP3004_SINGLE_ENDED    0x80  // 1000 0000: start bit + single-ended mode
+#define MCP3004_CHANNEL_1       0x10  // 0100 0000: channel 1 (D2=0, D1=0, D0=1)
+//together, Sgl/diff and ch1 makes 0x90!
+
+// For ADC-to-PWM conversion
+#define ADC_MAX_VALUE        1023U       // 10-bit ADC maximum
+#define PWM_MIN_COUNTS       3000U       // corresponds to 1ms pulse width
+#define PWM_MAX_COUNTS       6000U       // corresponds to 2ms pulse width
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,26 +72,44 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+//set the txData and rxData for our SPI's MOSI and MISO pins
+//this is because 0x90 = 0b10010000
+//where 1 = sgl/diff, 0 = d2, 0 = d1, 1 = d0
+uint8_t txData[MCP3004_TRANSFER_BYTES] = {
+		MCP3004_START_BIT,
+		MCP3004_SINGLE_ENDED|MCP3004_CHANNEL_1,
+		0x00
+};//send
+
+uint8_t rxData[MCP3004_TRANSFER_BYTES] = {0};//receive
+//This denotes how many bytes are sent out and how many are received
+uint16_t transmit_receive_bytes = 3;
+
 uint16_t Read_ADC_Channel1(void){
-	//this is because 0x90 = 0b10010000
-	//where 1 = sgl/diff, 0 = d2, 0 = d1, 1 = d0
-	uint8_t txData[3] = {0x01, 0xD0, 0x00};//send
-	uint8_t rxData[3] = {0};//receive
+	//spiStatus will be checked every time
+	HAL_StatusTypeDef spiStatus;
+
 	//pull Chip Select to low, as the slave receives (master sends out) data on low edge
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	//now we use spi1 to transmit/receive data by HAL_SPI_TransmitReceive()
-	HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+	//set spiStatus to the return value
+	spiStatus = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, transmit_receive_bytes, HAL_MAX_DELAY);
 	//pull Chip Select back to high, as it is supposed to idle in high
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	if(spiStatus != HAL_OK){
+		printf("Error: %d\n", spiStatus);
+	}
+
 	//reconstruct the output into a 10 bit value of type uint16_t
-	uint16_t adcOut = ((rxData[1] & 0x03) << 8) | rxData[2];
-	return adcOut;
+	return ((rxData[1] & 0x03) << 8) | rxData[2];
 }
 //use this function to get the pwm read
 uint32_t Convert_to_PWM(uint16_t adcin){
 	//we begin with minimum 1ms, all the way up to 2ms by maxing out adcin as 1023.
 	//notice the formula base value + (adcread * delta)/10-bit-max
-	return 3000 + (uint32_t)adcin * (6000 - 3000) / 1023;
+	return PWM_MIN_COUNTS + (uint32_t)adcin * (PWM_MAX_COUNTS - PWM_MIN_COUNTS) / ADC_MAX_VALUE;
 }
 /* USER CODE END 0 */
 
@@ -113,7 +146,9 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  //this is because we are using timer 1
+  //begin the timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
