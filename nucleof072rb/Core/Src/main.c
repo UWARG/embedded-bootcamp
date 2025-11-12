@@ -43,7 +43,7 @@
 // SPI command bits for MCP3004 channel 1
 #define MCP3004_START_BIT       0x01
 #define MCP3004_SINGLE_ENDED    0x80  // 1000 0000: start bit + single-ended mode
-#define MCP3004_CHANNEL_1       0x10  // 0100 0000: channel 1 (D2=0, D1=0, D0=1)
+#define MCP3004_CHANNEL       0x00  // 0000 0000: channel 0 (D2=0, D1=0, D0=0)
 //together, Sgl/diff and ch1 makes 0x90!
 
 // For ADC-to-PWM conversion
@@ -78,8 +78,8 @@ void SystemClock_Config(void);
 //where 1 = sgl/diff, 0 = d2, 0 = d1, 1 = d0
 uint8_t txData[MCP3004_TRANSFER_BYTES] = {
 		MCP3004_START_BIT,
-		MCP3004_SINGLE_ENDED|MCP3004_CHANNEL_1,
-		0x00
+		MCP3004_SINGLE_ENDED,
+		MCP3004_CHANNEL
 };//send
 
 uint8_t rxData[MCP3004_TRANSFER_BYTES] = {0};//receive
@@ -91,12 +91,12 @@ uint16_t Read_ADC_Channel1(void){
 	HAL_StatusTypeDef spiStatus;
 
 	//pull Chip Select to low, as the slave receives (master sends out) data on low edge
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(MCP3004_CS_PORT, MCP3004_CS_PIN, GPIO_PIN_RESET);
 	//now we use spi1 to transmit/receive data by HAL_SPI_TransmitReceive()
 	//set spiStatus to the return value
 	spiStatus = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, transmit_receive_bytes, HAL_MAX_DELAY);
 	//pull Chip Select back to high, as it is supposed to idle in high
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(MCP3004_CS_PORT, MCP3004_CS_PIN, GPIO_PIN_SET);
 
 	if(spiStatus != HAL_OK){
 		printf("Error: %d\n", spiStatus);
