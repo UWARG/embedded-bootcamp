@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_MIN 0
+#define ADC_MAX 1023 //from documentation
+#define PWM_MIN 1000  // 1ms in microseconds
+#define PWM_MAX 2000  // 2ms in microseconds
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,6 +61,10 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int readADC();
+float getPulseWidth(uint16_t adc_value);
+float getTimerCounts(float pulse_width);
+void updateTimer(float timer_counts);
 
 /* USER CODE END 0 */
 
@@ -87,14 +97,21 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  int adc_value = readADC();
+	  float pulse_width = getPulseWidth(adc_value);
+	  float timer_counts = getTimerCounts(pulse_width);
+	  updateTimer(timer_counts);
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -143,6 +160,51 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+int readADC() {
+	uint8_t command_byte = 0b11000;
+	uint8_t tx[2] = {command_byte, 0x00};
+	uint8_t rx[2] = {0, 0};
+	uint16_t adc_value = 0;
+	/* pull cs low */
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	/* sends back null bit, 10 useful in LSB, 10 useful in MSB */
+	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, HAL_MAX_DELAY);
+	/* pull cs high*/
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	/* clean up and combine rx1 and rx2 */
+	rx[1] = rx[1] >> 5;
+	adc_value = ((uint16_t)(rx[0] & 0x7F)) << 3;
+	adc_value = adc_value | rx[1];
+	/* int should be 32 bits so returning a uint16_t should be fine */
+	return adc_value;
+}
+
+float getPulseWidth(uint16_t adc_value) {
+	/* linear mapping */
+	float pulse_width = 1.0 + ((float)adc_value / 1023.0) * 1.0;
+	return pulse_width;
+}
+
+float getTimerCounts(float pulse_width) {
+	/* clock period is 20,000 so that 1 timer count = 1 microsecond */
+	float timer_counts = pulse_width * 1000;
+	return timer_counts;
+
+}
+
+void updateTimer(float timer_counts) {
+	/* bounds checking */
+	const float max_counts = 2000.0;
+	const float min_counts = 0.0;
+	if (timer_counts > max_counts) {
+		timer_counts = max_counts;
+	}
+	if (timer_counts < min_counts){
+		timer_counts = min_counts;
+	}
+	/* set high untill timer_counts reached, then low */
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint32_t)timer_counts);
+}
 
 /* USER CODE END 4 */
 
