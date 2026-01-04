@@ -161,20 +161,21 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 int readADC() {
-	uint8_t command_byte = 0b11000;
-	uint8_t tx[2] = {command_byte, 0x00};
-	uint8_t rx[2] = {0, 0};
+	uint8_t start_byte = 0b00000001;
+	uint8_t command_byte = 0b10000000;
+	uint8_t tx[3] = {start_byte, command_byte, 0x00};
+	uint8_t rx[3] = {0, 0, 0};
 	uint16_t adc_value = 0;
 	/* pull cs low */
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	/* sends back null bit, 10 useful in LSB, 10 useful in MSB */
-	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, HAL_MAX_DELAY);
-	/* pull cs high*/
+	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+	/* pull cs high */
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	/* clean up and combine rx1 and rx2 */
+	/* clean up and combine rx[1] and rx[2] */
 	rx[1] = rx[1] >> 5;
-	adc_value = ((uint16_t)(rx[0] & 0x7F)) << 3;
-	adc_value = adc_value | rx[1];
+	adc_value = ((uint16_t)(rx[1] & 0b00000011)) << 8;
+	adc_value = adc_value | rx[2];
 	/* int should be 32 bits so returning a uint16_t should be fine */
 	return adc_value;
 }
@@ -186,10 +187,10 @@ float getPulseWidth(uint16_t adc_value) {
 }
 
 float getTimerCounts(float pulse_width) {
-	/* clock period is 20,000 so that 1 timer count = 1 microsecond */
-	float timer_counts = pulse_width * 1000;
+	/* prescalar is 15 and counter period is 65000 */
+	uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim1);
+	float timer_counts = pulse_width * period * 0.05;
 	return timer_counts;
-
 }
 
 void updateTimer(float timer_counts) {
