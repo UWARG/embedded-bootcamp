@@ -1,24 +1,26 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -50,7 +52,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t readADC(int);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -59,9 +61,9 @@ void SystemClock_Config(void);
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -87,7 +89,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init(); // Initializing SPI
+  MX_TIM1_Init(); // Initializing the timer
   /* USER CODE BEGIN 2 */
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // Bring the CS line high to reset
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);           // Starting the timer
 
   /* USER CODE END 2 */
 
@@ -95,6 +102,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    uint16_t adc_val = readADC(0); // Read ADC value on channel 0
+
+    // adc_val can range from 0 to 1023
+    // CRR min can be anywhere from 3200 to 6400 (based on timer prescaler and period)
+    uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim1);
+
+    uint32_t ccr_min = period * 5 / 100;  // 5%
+    uint32_t ccr_max = period * 10 / 100; // 10%
+
+    uint32_t ccr = ccr_min + ((uint32_t)adc_val * (ccr_max - ccr_min)) / 1023;
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr); // Set the timer values
+
+    HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -102,10 +123,10 @@ int main(void)
   /* USER CODE END 3 */
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+/**s
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -113,8 +134,8 @@ void SystemClock_Config(void)
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48;
   RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
@@ -123,9 +144,8 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI48;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -144,12 +164,41 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+uint16_t readADC(int channel)
+{
+  uint8_t transmission_data_buffer[3]; // MOSI (Din from ADC)
+  uint8_t reception_data_buffer[3];    // MISO (Dout from ADC)
+
+  // Reading on channel 0, single ended
+  transmission_data_buffer[0] = 0x1;                   // Start bit arrives on clock 8
+  transmission_data_buffer[1] = (0x08 | channel) << 4; // SGL + Channel identification. Used with 0 in this bootcamp.
+  transmission_data_buffer[2] = 0x00;                  // Just clocks for reading
+
+  // Bring the CS line to the ADC low (turn it on)
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  // Get the data
+  HAL_StatusTypeDef result = HAL_SPI_TransmitReceive(&hspi1, transmission_data_buffer, reception_data_buffer, 3, HAL_MAX_DELAY);
+
+  // Bring the CS line to the ADC high (turn it off)
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  if (result != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  // Get the data returned by the ADC
+  uint16_t adc_data = ((reception_data_buffer[1] & 0x03) << 8) | reception_data_buffer[2];
+  return adc_data;
+}
+
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -161,14 +210,14 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
