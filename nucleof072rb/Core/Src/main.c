@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -29,6 +31,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+uint16_t ADC_ReadChannel0(void);
 
 /* USER CODE END PTD */
 
@@ -87,7 +90,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
 
   /* USER CODE END 2 */
 
@@ -96,8 +105,15 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
+	  uint16_t adc_val = ADC_ReadChannel0();
+
+	      uint16_t scaled = (adc_val * 1000) / 1023;
+	      uint16_t compare_val = 1000 + scaled;
+
+	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+
+	      HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -143,6 +159,34 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t ADC_ReadChannel0(void)
+{
+    uint8_t tx[3];
+    uint8_t rx[3];
+
+    tx[0] = 0x01;       // Start bit
+    tx[1] = 0x80;       // 1 0 0 0 0 0 0 0 -> single-ended, channel 0
+    tx[2] = 0x00;       // don’t care, just clocks
+
+    // Pull CS low to start
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
+
+    // Full-duplex transmit & receive 3 bytes
+    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+
+    // Pull CS high to end
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+
+    // Now extract 10-bit value from rx[1] and rx[2]
+    // rx[1]: xxxx xBBB
+    // rx[2]: BBBB BBBB
+    // We want: (rx[1] & 0x03) as top 2 bits, rx[2] as low 8 bits
+
+    uint16_t value = ((rx[1] & 0x03) << 8) | rx[2];
+
+    return value;   // range: 0–1023
+}
+
 
 /* USER CODE END 4 */
 
