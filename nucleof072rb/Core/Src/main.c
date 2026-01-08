@@ -38,6 +38,8 @@
 /* USER CODE BEGIN PD */
 #define SPI_CHIP_SELECT_PORT GPIOB
 #define SPI_CHIP_SELECT_PIN GPIO_PIN_8
+#define SPI_DATA_BYTES_TRANSFER_SIZE 3
+#define SPI_TIMEOUT_TIME_MS 100
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -116,7 +118,7 @@ int main(void)
   {
 
 	  HAL_GPIO_WritePin(SPI_CHIP_SELECT_PORT, SPI_CHIP_SELECT_PIN, GPIO_PIN_RESET);
-	  HAL_StatusTypeDef current_status = HAL_SPI_TransmitReceive(&hspi1, t_buf, r_buf, 3, 100);
+	  HAL_StatusTypeDef current_status = HAL_SPI_TransmitReceive(&hspi1, t_buf, r_buf, SPI_DATA_BYTES_TRANSFER_SIZE, SPI_TIMEOUT_TIME_MS);
 	  HAL_GPIO_WritePin(SPI_CHIP_SELECT_PORT, SPI_CHIP_SELECT_PIN, GPIO_PIN_SET);
 	  if (current_status != HAL_OK) {
 		  printf("SPI Transmit Receive Error\r\n");
