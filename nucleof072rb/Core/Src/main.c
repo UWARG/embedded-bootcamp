@@ -36,6 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define SPI_CHIP_SELECT_PORT GPIOB
+#define SPI_CHIP_SELECT_PIN GPIO_PIN_8
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -94,8 +96,16 @@ int main(void)
   /* USER CODE BEGIN 2 */
   uint8_t t_buf[3];
   uint8_t r_buf[3];
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SPI_CHIP_SELECT_PORT, SPI_CHIP_SELECT_PIN, GPIO_PIN_SET);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  const uint8_t t_buf_byte_1 = 0x01; // all 0 except for the last bit, which is the start bit: 1
+  const uint8_t t_buf_byte_2 = 0x80; //	first bit is single/differential mode: single mode (1), second bit is D2, which is a don't care for MCP 3004, third and fourth bits are D1 and D0, which is ADC channel 0 (00), other four bits are don't cares
+  const uint8_t t_buf_byte_3 = 0x00; // all don't cares
+
+  t_buf[0] = t_buf_byte_1;
+  t_buf[1] = t_buf_byte_2;
+  t_buf[2] = t_buf_byte_3;
 
 
   /* USER CODE END 2 */
@@ -104,16 +114,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  t_buf[0] = 0x01;
-	  t_buf[1] = 0x80;
-	  t_buf[2] = 0x00;
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, t_buf, r_buf, 3, 100);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  uint32_t adc_value = ((r_buf[1] & 0x03) << 8) | r_buf[2];
-	  uint16_t pwm_count = (uint16_t)((adc_value * 1000) / 1023 + 1000);
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_count);
+	  HAL_GPIO_WritePin(SPI_CHIP_SELECT_PORT, SPI_CHIP_SELECT_PIN, GPIO_PIN_RESET);
+	  HAL_StatusTypeDef current_status = HAL_SPI_TransmitReceive(&hspi1, t_buf, r_buf, 3, 100);
+	  HAL_GPIO_WritePin(SPI_CHIP_SELECT_PORT, SPI_CHIP_SELECT_PIN, GPIO_PIN_SET);
+	  if (current_status != HAL_OK) {
+		  printf("SPI Transmit Receive Error\r\n");
+	  } else {
+		  uint32_t adc_value = ((r_buf[1] & 0x03) << 8) | r_buf[2]; // disregard the first byte take the last two bits from the second byte as the two MSBs, and the third byte as the 8 LSBs
+		  uint16_t pwm_count = (uint16_t)((adc_value * 1000) / 1023 + 1000);
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_count);
+
+	  }
+
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
