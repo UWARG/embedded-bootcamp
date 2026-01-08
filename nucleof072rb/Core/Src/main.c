@@ -105,15 +105,13 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
 	  uint16_t adc_val = ADC_ReadChannel0();
-
-	      uint16_t scaled = (adc_val * 1000) / 1023;
-	      uint16_t compare_val = 1000 + scaled;
-
-	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
-
-	      HAL_Delay(10);
+	  uint16_t scaled      = (adc_val * 3200) / 1023;
+	  uint16_t compare_val = 3200 + scaled;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -184,7 +182,7 @@ uint16_t ADC_ReadChannel0(void)
 
     uint16_t value = ((rx[1] & 0x03) << 8) | rx[2];
 
-    return value;   // range: 0–1023
+    return value;   // range: 0�?1023
 }
 
 
