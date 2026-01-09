@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_GPIO_PORT GPIOB
+#define ADC_GPIO_PIN GPIO_PIN_8
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,7 +54,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t readADC(uint8_t input_channel);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -74,30 +78,54 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  uint16_t adc_reading = 0;
+  uint16_t duty_counts = 0;
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  // Procedure from docs page 475
+  // Low-Level Initialization
+  HAL_TIM_PWM_MspInit(&htim1);
+  HAL_SPI_MspInit(&hspi1);
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  /* USER CODE BEGIN 2 */
+  MX_SPI1_Init();
 
+  // Handles high-level initialization by calling HAL_TIM_PWM_Init
+  // as well as config channel
+  MX_TIM1_Init();
+  /* USER CODE BEGIN 2 */
+  // Set the CS line to high so we de-select and don't accidently communicate to it
+  HAL_GPIO_WritePin(ADC_GPIO_PORT, ADC_GPIO_PIN, GPIO_PIN_SET);
+
+  // Start the PWM timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	// read ADC channel 1
+	adc_reading = readADC(0x01);
+
+	// 3200 - 6400 counts for a 5-10% duty cycle with 64000 counts period
+	// The following converts a reading from range 0-1023 to range 3200-6400
+	duty_counts = (adc_reading / 1023) * 3200 + 3200;
+
+	// Load value into compare to set duty cycle
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_counts);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -143,6 +171,45 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+/**
+ * @brief Function to read the ADC
+ * @param inputChannelConfig input channel, only 3 bits are used
+ * @note ADC is used in differential mode
+ * @retval uint16_t representing the ADC reading
+ */
+uint16_t readADC(uint8_t input_channel) {
+	// Initialize variables
+	uint8_t transmit_bytes[3]= {0};
+	uint8_t recieve_bytes[3] = {0};
+
+	// Set transmit bytes
+	// Start bit at the end of first byte
+	transmit_bytes[0] = 0x01;
+
+	// Input channel config, first bit is 0 for differential
+	transmit_bytes[1] = (0x00 | (input_channel << 4));
+
+	// Don't cares
+	transmit_bytes[2] = 0x00;
+
+	// Communicate through SPI
+	// Put CS to low to select ADC
+	HAL_GPIO_WritePin(ADC_GPIO_PORT, ADC_GPIO_PIN, GPIO_PIN_RESET);
+
+	// Note: this is a blocking function!
+	if(HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)&transmit_bytes, (uint8_t *)&recieve_bytes, 3, 100) != HAL_OK) {
+		Error_Handler();
+	}
+
+	// Put CS to high to de-select ADC
+	HAL_GPIO_WritePin(ADC_GPIO_PORT, ADC_GPIO_PIN, GPIO_PIN_SET);
+
+	// Format received bytes
+	// Append last two bytes and then mask out the last 10
+	uint16_t data = 0b1111111111 & ((recieve_bytes[2] << 8) | recieve_bytes[3]);
+
+	return data;
+}
 
 /* USER CODE END 4 */
 
