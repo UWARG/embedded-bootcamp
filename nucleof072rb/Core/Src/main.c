@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define ADC_MAX_VALUE 1023
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,8 +53,13 @@
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
+
 void SystemClock_Config(void);
+
 /* USER CODE BEGIN PFP */
+
+uint16_t ADC_Read(void);
+void Set_PWM_From_ADC(uint16_t adc_val);
 
 /* USER CODE END PFP */
 
@@ -71,23 +81,33 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+
   HAL_Init();
+
 
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
+
   SystemClock_Config();
+
 
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
+
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,9 +115,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	uint16_t adc_val;
+
+	adc_val = ADC_Read();
+	Set_PWM_From_ADC(adc_val);
+
+	HAL_Delay(10);
+
   }
   /* USER CODE END 3 */
 }
@@ -118,12 +149,15 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48;
   RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
+
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI48;
@@ -143,7 +177,42 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t ADC_Read(void)
+{
+    uint8_t tx[2];
+    uint8_t rx[2];
+    uint16_t adc_value;
 
+    tx[0] = 0x01;
+    tx[1] = 0x80;
+
+    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+
+    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+
+    adc_value = ((rx[0] & 0x03) << 8) | rx[1];
+
+    return adc_value;
+}
+
+
+
+void Set_PWM_From_ADC(uint16_t adc_val)
+{
+    uint32_t pwm_min;
+    uint32_t pwm_max;
+    uint32_t compare_val;
+
+    pwm_min = (htim1.Init.Period * 5) / 100;
+    pwm_max = (htim1.Init.Period * 10) / 100;
+
+    compare_val = pwm_min +
+        ((adc_val * (pwm_max - pwm_min)) / ADC_MAX_VALUE);
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+}
 /* USER CODE END 4 */
 
 /**
