@@ -179,20 +179,17 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 uint16_t ADC_Read(void)
 {
-    uint8_t tx[2];
-    uint8_t rx[2];
+    uint8_t tx[3] = {0x01, 0x80, 0x00};
+    uint8_t rx[3] = {0};
     uint16_t adc_value;
-
-    tx[0] = 0x01;
-    tx[1] = 0x80;
 
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
-    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, HAL_MAX_DELAY);
+    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
 
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 
-    adc_value = ((rx[0] & 0x03) << 8) | rx[1];
+    adc_value = ((rx[1] & 0x03) << 8) | rx[2];
 
     return adc_value;
 }
