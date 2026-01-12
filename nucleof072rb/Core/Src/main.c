@@ -174,7 +174,7 @@ void SystemClock_Config(void)
 /**
  * @brief Function to read the ADC
  * @param inputChannelConfig input channel, only 3 bits are used
- * @note ADC is used in differential mode
+ * @note ADC is used in single-ended mode
  * @retval uint16_t representing the ADC reading
  */
 uint16_t readADC(uint8_t input_channel) {
@@ -186,8 +186,8 @@ uint16_t readADC(uint8_t input_channel) {
 	// Start bit at the end of first byte
 	transmit_bytes[0] = 0x01;
 
-	// Input channel config, first bit is 0 for differential
-	transmit_bytes[1] = (0x00 | (input_channel << 4));
+	// Input channel config, first bit is 1 for single-ended
+	transmit_bytes[1] = (0b10000000 | (input_channel << 4));
 
 	// Don't cares
 	transmit_bytes[2] = 0x00;
