@@ -113,11 +113,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1) {
   // Set to low to enable ADC
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
   // Send dummy and receive
   spiStatus = HAL_SPI_TransmitReceive(&hspi1, txBuf, rxBuf, ADC_MSG_LEN, SPI_TIMEOUT);
   // Set back to high to disable ADC
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   // Check is SPI was successful
   if (spiStatus == HAL_OK) {
 
