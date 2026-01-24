@@ -100,7 +100,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,7 +111,7 @@ int main(void)
 	  initComms();
 
 	  //Initialize buffers
-	  uint8_t rx_buf = 0x0; tx_buf = 0x1;
+	  uint8_t rx_buf = 0x0, tx_buf = 0x1;
 
 	  //Transmit start bit
 	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
@@ -125,10 +125,10 @@ int main(void)
 	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
 	  ADC_data += rx_buf;
 
-	  //Count must be in the range 3277 - 6553. Therefore 0 - 2^10 must be mapped to this range
+	  //Count must be in the range 3277 - 6553. Therefore 0 - (2^10 - 1) must be mapped to this range
 
 	  //Slope is therefore approximately 3.20
-	  uint16_t PWM_count = 3.20 * ADC_data + 3277;
+	  uint16_t PWM_count = (320 * ADC_data)/100 + 3277;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_count);
 
