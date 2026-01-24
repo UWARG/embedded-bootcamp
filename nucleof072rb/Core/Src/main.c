@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,13 +46,20 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+GPIO_PinState n_CS = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void initComms(){
+	n_CS = HAL_GPIO_ReadPin(GPIOB, 8);
 
+	if (!n_CS){
+		HAL_GPIO_WritePin(GPIOB, 8, GPIO_PIN_SET);
+	}
+	HAL_GPIO_WritePin(GPIOB, 8, GPIO_PIN_RESET);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -64,6 +73,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,6 +97,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +107,32 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //Start communication
+	  initComms();
+
+	  //Initialize buffers
+	  uint8_t rx_buf = 0x0; tx_buf = 0x1;
+
+	  //Transmit start bit
+	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
+
+	  //Transmit config
+	  tx_buf = 0x80;
+	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
+
+	  //Clean ADC data
+	  uint16_t ADC_data = (rx_buf << 8) & 0x07FF;
+	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
+	  ADC_data += rx_buf;
+
+	  //Count must be in the range 3277 - 6553. Therefore 0 - 2^10 must be mapped to this range
+
+	  //Slope is therefore approximately 3.20
+	  uint16_t PWM_count = 3.20 * ADC_data + 3277;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_count);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -122,6 +160,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -160,8 +199,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +215,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
