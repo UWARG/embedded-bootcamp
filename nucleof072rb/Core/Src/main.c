@@ -118,7 +118,7 @@ int main(void)
 	  };
 
 	  //Transmit start bit
-	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 3, 100);
+	  HAL_SPI_TransmitReceive (&hspi1, tx_buf, rx_buf, 3, 100);
 
 	  //Clean ADC data
 	  uint16_t ADC_data = (rx_buf[1] << 8) & 0x07FF;
