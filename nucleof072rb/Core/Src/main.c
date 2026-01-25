@@ -111,25 +111,22 @@ int main(void)
 	  initComms();
 
 	  //Initialize buffers
-	  uint8_t rx_buf = 0x0, tx_buf = 0x1;
+	  uint8_t rx_buf [3]= {0x0};
+	  uint8_t tx_buf[3] = {0x1, //Transmit start bit
+			  0x8, //Transmit config
+			  0x0 //Don't Care
+	  };
 
 	  //Transmit start bit
-	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
-
-	  //Transmit config
-	  tx_buf = 0x80;
-	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
+	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 3, 100);
 
 	  //Clean ADC data
-	  uint16_t ADC_data = (rx_buf << 8) & 0x07FF;
-	  HAL_SPI_TransmitReceive (&hspi1, &tx_buf, &rx_buf, 1, 100);
-	  ADC_data += rx_buf;
+	  uint16_t ADC_data = (rx_buf[1] << 8) & 0x07FF;
+	  ADC_data += rx_buf[2];
 
 	  //Count must be in the range 3277 - 6553. Therefore 0 - (2^10 - 1) must be mapped to this range
-
 	  //Slope is therefore approximately 3.20
 	  uint16_t PWM_count = (320 * ADC_data)/100 + 3277;
-
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_count);
 
 	  HAL_Delay(10);
