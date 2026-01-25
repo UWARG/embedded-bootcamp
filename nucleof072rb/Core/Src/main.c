@@ -120,13 +120,18 @@ int main(void)
 	  //Transmit start bit
 	  HAL_SPI_TransmitReceive (&hspi1, tx_buf, rx_buf, 3, 100);
 
+	  //Set n_CS high
+	  HAL_GPIO_WritePin(GPIOB, 8, GPIO_PIN_SET);
+
 	  //Clean ADC data
 	  uint16_t ADC_data = (rx_buf[1] << 8) & 0x07FF;
 	  ADC_data += rx_buf[2];
 
-	  //Count must be in the range 3277 - 6553. Therefore 0 - (2^10 - 1) must be mapped to this range
-	  //Slope is therefore approximately 3.20
-	  uint16_t PWM_count = (320 * ADC_data)/100 + 3277;
+
+
+	  //Count must be in the range 3200 - 6400. Therefore 0 - (2^10 - 1) must be mapped to this range
+	  //Slope is therefore approximately 3.13
+	  uint16_t PWM_count = 3.13 * ADC_data + 3200;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_count);
 
 	  HAL_Delay(10);
