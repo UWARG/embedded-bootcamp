@@ -46,7 +46,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+// Defining Identifiers
+uint8_t txBuffer[3];
+uint8_t rxBuffer[3];
+uint16_t adcValue;
+uint16_t pwmValue;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,14 +97,50 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Start Timer
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  // ADC IC Setup
+  // We are using ADC0 in Single Mode
+  txBuffer[0] = 0x01;						// Start Bit -> Leading Zeroes with 1
+  txBuffer[1] = 0b10000000;					// SIG/DIF Bit -> is 1, D2 -> Dont care (Zero), D1 -> Zero, D0 -> Zero, Trailing Zeroes
+  txBuffer[2] = 0; 							// All Don't Cares
+
+  // Set CS Pin to HIGH (need to toggle it to Low to Start ADC process in loop)
+  HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	  // Drive CS Pin to LOW to start ADC
+	  HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
 
+	  // Transmit and Receive via SPI
+	  HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, 1000);
+
+	  // Get ADC Chip ready for next Read
+	  HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
+
+	  // Decipher ADC value from SPI
+	  // adcValue is the last 2 bits of rxBuffer[2] concatenated with rxBuffer[3]
+	  adcValue = rxBuffer[2] & 0b11;							// Get the last two digits
+	  adcValue = ((uint16_t)adcValue << 8) | rxBuffer[3];		// Mathematically concatenate the two
+
+	  // Convert ADC Value to PWM Signal
+	  // This PWM signal needs to range from 10% or 2ms of on time TO max 100% of on time
+	  // First Converting this to a percentage
+	  pwmValue = (adcValue / 1024) * 100;
+	  if (pwmValue < 10){
+		  pwmValue = 10;
+	  }
+	  // Then Converting to scale to a 16bit number (thats how big Pulse/CCR is)
+	  pwmValue = (pwmValue/100) * 65536;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmValue);
+    /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
