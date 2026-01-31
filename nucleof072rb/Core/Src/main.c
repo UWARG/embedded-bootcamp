@@ -51,6 +51,8 @@ uint8_t txBuffer[3];
 uint8_t rxBuffer[3];
 uint16_t adcValue;
 uint16_t pwmValue;
+uint16_t dutyValue;
+uint16_t arr;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -131,16 +133,18 @@ int main(void)
 	  adcValue = ((uint16_t)adcValue << 8) | rxBuffer[3];		// Mathematically concatenate the two
 
 	  // Convert ADC Value to PWM Signal
-	  // This PWM signal needs to range from 10% or 2ms of on time TO max 100% of on time
-	  // First Converting this to a percentage
-	  pwmValue = (adcValue / 1024) * 100;
-	  if (pwmValue < 10){
-		  pwmValue = 10;
-	  }
-	  // Then Converting to scale to a 16bit number (thats how big Pulse/CCR is)
-	  pwmValue = (pwmValue/100) * 65536;
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmValue);
+	  // Get Timer Period
+	  arr = __HAL_TIM_GET_AUTORELOAD(&htim1);
+
+	  //Duty cycle must be 5%–10%
+	  //Map adcValue [0–1023] → duty [5%–10%]
+
+	  dutyValue = (arr * (5 + ((adcValue * 5) / 1023))) / 100;
+
+	  // Set new Duty
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, dutyValue);
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
