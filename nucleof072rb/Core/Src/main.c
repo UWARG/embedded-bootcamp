@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -38,23 +40,62 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define ADC_CS_GPIO_Port	GPIOB
+#define ADC_CS_Pin 		 	GPIO_PIN_8
+#define Counter_Period  	30000U
+#define ADC_Max_Read     	1023U //maximum reading from 10bit ADC is 1023
+#define MOTOR_Channel  		TIM_CHANNEL_1
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern SPI_HandleTypeDef hspi1;
+extern TIM_HandleTypeDef htim1;
+uint8_t channel = 0x00; //The potential meter is connected to CH0 of ADC
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t MCP3008_Read(uint8_t channel);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint16_t MCP3008_Read(uint8_t channel){
+	if (channel > 7)return 0;
+	uint8_t tx[3];
+	uint8_t rx[3];
+	//MCU sends 3 bytes to ADC
+	tx[1] = 0x01;
+	tx[2] = 0x80 | (channel << 4); //0x80:Mode:Single
+	tx[3] = 0x00;
+
+	//bring cs low to start transmission
+	HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
+	//starts transmission
+	HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 1); //defined 1 microsecond for timeout
+	//bring cs high to end
+	HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+	//type HAL_StatusTypeDef reports whether the hal function calls is succeed.
+	if(st!= HAL_OK)return 0;
+	//the useful rx is the last byte and the last 2 bit of second byte
+	uint16_t value = (uint32_t)(((rx[1] & 0x03) <<8) | rx[2]);
+	return value;
+}
+
+//converts adc value to number of on counts.
+uint32_t ADC_To_Counts(uint16_t ADC_Read){
+	uint32_t Counts = ADC_Read/ADC_Max_Read * Counter_Period;
+	return Counts;
+}
+
+
+
+
+
 
 /* USER CODE END 0 */
 
@@ -64,6 +105,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,7 +129,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+
 
   /* USER CODE END 2 */
 
@@ -95,9 +141,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  uint32_t adc_value = MCP3008_Read(channel);
+	  uint32_t counts = ADC_To_Counts(adc_value);
+	  //Set compare register with CCR which has been calculated in ADC_To_Counts
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counts);
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +175,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -160,8 +214,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +230,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
