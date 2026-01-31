@@ -50,7 +50,6 @@
 uint8_t txBuffer[3];
 uint8_t rxBuffer[3];
 uint16_t adcValue;
-uint16_t pwmValue;
 uint16_t dutyValue;
 uint16_t arr;
 /* USER CODE END PV */
@@ -138,6 +137,7 @@ int main(void)
 
 	  //Duty cycle must be 5%–10%
 	  //Map adcValue [0–1023] → duty [5%–10%]
+	  //dutyValue = 5% of Current Speed + (adcValue / 1023) * 5/100
 
 	  dutyValue = (arr * (5 + ((adcValue * 5) / 1023))) / 100;
 
