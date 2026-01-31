@@ -48,8 +48,8 @@
 
 /* USER CODE BEGIN PV */
 static const uint16_t ADC_MAX = 1023;   // 2^10 - 1
-static const uint16_t PWM_MIN = 1000;   // 20000 * 5%
-static const uint16_t PWM_MAX = 2000;   // 20000 * 10%  
+static const uint16_t PWM_MIN = 3200;   // 64000 * 5%
+static const uint16_t PWM_MAX = 6400;   // 64000 * 10%
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
