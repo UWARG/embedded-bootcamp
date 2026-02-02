@@ -45,16 +45,16 @@
 #define Counter_Period  	30000U
 #define ADC_Max_Read     	1023U //maximum reading from 10bit ADC is 1023
 #define MOTOR_Channel  		TIM_CHANNEL_1
-#define ADC_Channel 		0x00//The potential meter is connected to CH0 of ADC
+#define channel  			0x00//The potential meter is connected to CH0 of ADC
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-uint8_t channel = 0x00;
+
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi1;
 extern TIM_HandleTypeDef htim1;
 
-uint8_t tx[3] = {0x01, 0x80 | (ADC_Channel << 4), 0x00}; //MCU sends 3 bytes to ADC
+uint8_t tx[3] = {0x01, 0x80 | (channel << 4), 0x00}; //MCU sends 3 bytes to ADC
 uint8_t rx[3] = {};
 
 

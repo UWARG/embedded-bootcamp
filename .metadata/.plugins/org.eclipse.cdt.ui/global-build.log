@@ -109,3 +109,163 @@ Finished building: default.size.stdout
  
 Finished building: nucleof072rb.list
  
+15:16:14 **** Incremental Build of configuration Debug for project nucleof072rb ****
+make -j20 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F072xB -c -I../Core/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c:59:1: warning: data definition has no type or storage class
+   59 | tx[1] = 0x01;
+      | ^~
+../Core/Src/main.c:59:1: warning: type defaults to 'int' in declaration of 'tx' [-Wimplicit-int]
+../Core/Src/main.c:59:1: error: conflicting types for 'tx'; have 'int[1]'
+../Core/Src/main.c:56:9: note: previous declaration of 'tx' with type 'uint8_t[3]' {aka 'unsigned char[3]'}
+   56 | uint8_t tx[3];
+      |         ^~
+../Core/Src/main.c:59:9: error: invalid initializer
+   59 | tx[1] = 0x01;
+      |         ^~~~
+../Core/Src/main.c:60:1: warning: data definition has no type or storage class
+   60 | tx[2] = 0x80 | (channel << 4); //0x80:Mode:Single
+      | ^~
+../Core/Src/main.c:60:1: warning: type defaults to 'int' in declaration of 'tx' [-Wimplicit-int]
+../Core/Src/main.c:60:1: error: conflicting types for 'tx'; have 'int[2]'
+../Core/Src/main.c:56:9: note: previous declaration of 'tx' with type 'uint8_t[3]' {aka 'unsigned char[3]'}
+   56 | uint8_t tx[3];
+      |         ^~
+../Core/Src/main.c:60:9: error: invalid initializer
+   60 | tx[2] = 0x80 | (channel << 4); //0x80:Mode:Single
+      |         ^~~~
+../Core/Src/main.c:61:1: warning: data definition has no type or storage class
+   61 | tx[3] = 0x00;
+      | ^~
+../Core/Src/main.c:61:1: warning: type defaults to 'int' in declaration of 'tx' [-Wimplicit-int]
+../Core/Src/main.c:61:1: error: conflicting types for 'tx'; have 'int[3]'
+../Core/Src/main.c:56:9: note: previous declaration of 'tx' with type 'uint8_t[3]' {aka 'unsigned char[3]'}
+   56 | uint8_t tx[3];
+      |         ^~
+../Core/Src/main.c:61:9: error: invalid initializer
+   61 | tx[3] = 0x00;
+      |         ^~~~
+../Core/Src/main.c: In function 'MCP3008_Read':
+../Core/Src/main.c:79:64: warning: passing argument 2 of 'HAL_SPI_TransmitReceive' from incompatible pointer type [-Wincompatible-pointer-types]
+   79 |         HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 1); //defined 1 microsecond for timeout
+      |                                                                ^~
+      |                                                                |
+      |                                                                int *
+In file included from ../Core/Inc/stm32f0xx_hal_conf.h:277,
+                 from ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:29,
+                 from ../Core/Inc/main.h:31,
+                 from ../Core/Src/main.c:21:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h:794:77: note: expected 'uint8_t *' {aka 'unsigned char *'} but argument is of type 'int *'
+  794 | HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size,
+      |                                                                    ~~~~~~~~~^~~~~~~
+../Core/Src/main.c: In function 'ADC_To_On_Counts':
+../Core/Src/main.c:95:43: error: 'Min_On_Counts' undeclared (first use in this function); did you mean 'Min_On_Count'?
+   95 |         uint32_t Counts = (Max_On_Count - Min_On_Counts) * ADC_Read/ADC_Max_Read + Min_On_Count;
+      |                                           ^~~~~~~~~~~~~
+      |                                           Min_On_Count
+../Core/Src/main.c:95:43: note: each undeclared identifier is reported only once for each function it appears in
+make: *** [Core/Src/subdir.mk:46: Core/Src/main.o] Error 1
+"make -j20 all" terminated with exit code 2. Build might be incomplete.
+15:18:18 **** Incremental Build of configuration Debug for project nucleof072rb ****
+make -j20 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F072xB -c -I../Core/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c:59:1: warning: data definition has no type or storage class
+   59 | tx[1] = 0x01;
+      | ^~
+../Core/Src/main.c:59:1: warning: type defaults to 'int' in declaration of 'tx' [-Wimplicit-int]
+../Core/Src/main.c:59:1: error: conflicting types for 'tx'; have 'int[1]'
+../Core/Src/main.c:56:9: note: previous declaration of 'tx' with type 'uint8_t[3]' {aka 'unsigned char[3]'}
+   56 | uint8_t tx[3];
+      |         ^~
+../Core/Src/main.c:59:9: error: invalid initializer
+   59 | tx[1] = 0x01;
+      |         ^~~~
+../Core/Src/main.c:60:1: warning: data definition has no type or storage class
+   60 | tx[2] = 0x80 | (channel << 4); //0x80:Mode:Single
+      | ^~
+../Core/Src/main.c:60:1: warning: type defaults to 'int' in declaration of 'tx' [-Wimplicit-int]
+../Core/Src/main.c:60:1: error: conflicting types for 'tx'; have 'int[2]'
+../Core/Src/main.c:56:9: note: previous declaration of 'tx' with type 'uint8_t[3]' {aka 'unsigned char[3]'}
+   56 | uint8_t tx[3];
+      |         ^~
+../Core/Src/main.c:60:9: error: invalid initializer
+   60 | tx[2] = 0x80 | (channel << 4); //0x80:Mode:Single
+      |         ^~~~
+../Core/Src/main.c:61:1: warning: data definition has no type or storage class
+   61 | tx[3] = 0x00;
+      | ^~
+../Core/Src/main.c:61:1: warning: type defaults to 'int' in declaration of 'tx' [-Wimplicit-int]
+../Core/Src/main.c:61:1: error: conflicting types for 'tx'; have 'int[3]'
+../Core/Src/main.c:56:9: note: previous declaration of 'tx' with type 'uint8_t[3]' {aka 'unsigned char[3]'}
+   56 | uint8_t tx[3];
+      |         ^~
+../Core/Src/main.c:61:9: error: invalid initializer
+   61 | tx[3] = 0x00;
+      |         ^~~~
+../Core/Src/main.c: In function 'MCP3008_Read':
+../Core/Src/main.c:79:64: warning: passing argument 2 of 'HAL_SPI_TransmitReceive' from incompatible pointer type [-Wincompatible-pointer-types]
+   79 |         HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 1); //defined 1 microsecond for timeout
+      |                                                                ^~
+      |                                                                |
+      |                                                                int *
+In file included from ../Core/Inc/stm32f0xx_hal_conf.h:277,
+                 from ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:29,
+                 from ../Core/Inc/main.h:31,
+                 from ../Core/Src/main.c:21:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h:794:77: note: expected 'uint8_t *' {aka 'unsigned char *'} but argument is of type 'int *'
+  794 | HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size,
+      |                                                                    ~~~~~~~~~^~~~~~~
+make: *** [Core/Src/subdir.mk:46: Core/Src/main.o] Error 1
+"make -j20 all" terminated with exit code 2. Build might be incomplete.
+15:25:26 **** Incremental Build of configuration Debug for project nucleof072rb ****
+make -j20 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F072xB -c -I../Core/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c:56:1: warning: data definition has no type or storage class
+   56 | tx[3] = {0x01, 0x80 | (channel << 4), 0x00}; //MCU sends 3 bytes to ADC
+      | ^~
+../Core/Src/main.c:56:1: warning: type defaults to 'int' in declaration of 'tx' [-Wimplicit-int]
+../Core/Src/main.c:56:16: error: initializer element is not constant
+   56 | tx[3] = {0x01, 0x80 | (channel << 4), 0x00}; //MCU sends 3 bytes to ADC
+      |                ^~~~
+../Core/Src/main.c:56:16: note: (near initialization for 'tx[1]')
+../Core/Src/main.c:57:1: warning: data definition has no type or storage class
+   57 | rx[3] = {};
+      | ^~
+../Core/Src/main.c:57:1: warning: type defaults to 'int' in declaration of 'rx' [-Wimplicit-int]
+../Core/Src/main.c: In function 'MCP3008_Read':
+../Core/Src/main.c:77:64: warning: passing argument 2 of 'HAL_SPI_TransmitReceive' from incompatible pointer type [-Wincompatible-pointer-types]
+   77 |         HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 1); //defined 1 microsecond for timeout
+      |                                                                ^~
+      |                                                                |
+      |                                                                int *
+In file included from ../Core/Inc/stm32f0xx_hal_conf.h:277,
+                 from ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:29,
+                 from ../Core/Inc/main.h:31,
+                 from ../Core/Src/main.c:21:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h:794:77: note: expected 'uint8_t *' {aka 'unsigned char *'} but argument is of type 'int *'
+  794 | HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size,
+      |                                                                    ~~~~~~~~~^~~~~~~
+../Core/Src/main.c:77:68: warning: passing argument 3 of 'HAL_SPI_TransmitReceive' from incompatible pointer type [-Wincompatible-pointer-types]
+   77 |         HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 1); //defined 1 microsecond for timeout
+      |                                                                    ^~
+      |                                                                    |
+      |                                                                    int *
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h:794:95: note: expected 'uint8_t *' {aka 'unsigned char *'} but argument is of type 'int *'
+  794 | HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size,
+      |                                                                                      ~~~~~~~~~^~~~~~~
+make: *** [Core/Src/subdir.mk:46: Core/Src/main.o] Error 1
+"make -j20 all" terminated with exit code 2. Build might be incomplete.
+15:31:06 **** Incremental Build of configuration Debug for project nucleof072rb ****
+make -j20 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F072xB -c -I../Core/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "nucleof072rb.elf" @"objects.list"   -mcpu=cortex-m0 -T"E:\Code\embedded-bootcamp\nucleof072rb\STM32F072RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="nucleof072rb.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: nucleof072rb.elf
+ 
+arm-none-eabi-size  nucleof072rb.elf 
+arm-none-eabi-objdump -h -S nucleof072rb.elf  > "nucleof072rb.list"
+   text	   data	    bss	    dec	    hex	filename
+  14656	     16	   1888	  16560	   40b0	nucleof072rb.elf
+Finished building: default.size.stdout
+ 
+Finished building: nucleof072rb.list
+ 
