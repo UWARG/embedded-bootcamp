@@ -54,7 +54,7 @@ uint8_t channel = 0x00;
 extern SPI_HandleTypeDef hspi1;
 extern TIM_HandleTypeDef htim1;
 
-uint8_t tx[3] = {0x01, 0x80 | (ADC_Channel << 4), 0x00}; //MCU sends 3 bytes to ADC
+uint8_t tx[3] = {0x01, 1U << 7 | (ADC_Channel << 4), 0x00}; //MCU sends 3 bytes to ADC
 uint8_t rx[3] = {};
 
 
@@ -88,8 +88,9 @@ uint16_t MCP3008_Read(uint8_t channel){
 //converts adc value to number of on counts.
 //the motor can only operate in 1ms - 2ms on time.
 uint32_t ADC_To_On_Counts(uint16_t ADC_Read){
-	uint32_t Max_On_Count = 2 * 30000/20; //used 30000 as ARR
-	uint32_t Min_On_Count = 1 * 30000/20;
+	const uint32_t ARR = 30000;
+	uint32_t Max_On_Count = ARR/10; //to satisfy the duty-cycle of 2ms maximum.
+	uint32_t Min_On_Count = ARR/20;
 	//map reading to the allowed on-counts range.
 	uint32_t Counts = (Max_On_Count - Min_On_Count) * ADC_Read/ADC_Max_Read + Min_On_Count;
 	return Counts;
