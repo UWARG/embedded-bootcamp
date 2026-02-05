@@ -57,7 +57,17 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint16_t ReadADC(void)
+ {
+	  uint8_t txData[3] = {0x01, 0x80, 0x00};
+	  uint8_t rxData[3];
 
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+     return ((rxData[1] & 0x03) << 8) | rxData[2];
+ }
 /* USER CODE END 0 */
 
 /**
@@ -93,23 +103,7 @@ int main(void)
   MX_SPI2_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
-
-  HAL_Init();
-
-  uint16_t ReadADC(void)
-  {
-	  uint8_t txData[3] = {0x01, 0x80, 0x00};
-	  uint8_t rxData[3];
-
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-
-      return ((rxData[1] & 0x03) << 8) | rxData[2];
-  }
-
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
