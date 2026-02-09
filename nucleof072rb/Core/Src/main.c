@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,7 +46,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t p_rx_data[3] = {};
+uint8_t p_tx_data[3] = {};
+uint16_t adc_data = 0;
+uint32_t pulse_val = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,7 +92,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 
@@ -96,7 +105,20 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	  p_tx_data[0] = 0x01;
+	  p_tx_data[1] = 0x80;
+	  p_tx_data[2] = 0;
+	  HAL_SPI_TransmitReceive(&hspi1, p_tx_data, p_rx_data, 3, 100);
+	  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+	  adc_data = ((p_rx_data[2] & 0b11) << 8 | p_rx_data[3]);
 
+	  //map adc value to 3000-6000 counts
+	  pulse_val = adc_data * 3000 / 1023 + 3000;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_val);
+
+
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
