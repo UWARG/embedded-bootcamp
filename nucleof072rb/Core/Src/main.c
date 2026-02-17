@@ -19,12 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,12 +46,20 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+#define ADC_CS_GPIO_Port GPIOB
+#define ADC_CS_Pin      GPIO_PIN_8
 
+#define SERVO_MIN_PULSE  1000u   // 1.0ms
+#define SERVO_MAX_PULSE  2000u   // 2.0ms
+uint8_t tx[3] = {0};
+uint8_t rx[3] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+static uint16_t_ MCP3004_ReadCH(uint8_t channel);
+static uint16_t_ MapAdcToPulse(uint16_t adc);
 
 /* USER CODE END PFP */
 
@@ -64,8 +74,10 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
 
+  /* USER CODE BEGIN 1 */
+	uint16_t_ adc = 0;
+	uint16_t_ compare_value = SERVO_MIN_PULSE;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -86,18 +98,28 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
+  MX_USART2_Init();
+  MX_TIM1_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  adc = MCP3004_ReadCH(0);                 // CH0 single-ended
+	  compare_value = MapAdcToPulse(adc);      // 1000~2000
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_value);
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +144,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -143,6 +166,31 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+static uint16_t MCP3004_ReadCH(uint8_t channel)
+{
+    channel &= 0x03;
+
+    tx[0] = 0x01;                               // Start bit
+    tx[1] = (uint8_t)(0x80u | (channel << 4));  // SGL=1 + channel
+    tx[2] = 0x00;
+
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
+    (void)HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+
+    return (uint16_t)(((rx[1] & 0x03u) << 8) | rx[2]);
+}
+
+static uint16_t MapAdcToPulse(uint16_t adc)
+{
+    uint32_t pulse = SERVO_MIN_PULSE
+                   + ((uint32_t)adc * (SERVO_MAX_PULSE - SERVO_MIN_PULSE)) / 1023u;
+
+    if (pulse < SERVO_MIN_PULSE) pulse = SERVO_MIN_PULSE;
+    if (pulse > SERVO_MAX_PULSE) pulse = SERVO_MAX_PULSE;
+
+    return (uint16_t)pulse;
+}
 
 /* USER CODE END 4 */
 
@@ -177,5 +225,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
