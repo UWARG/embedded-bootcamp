@@ -170,8 +170,8 @@ static uint16_t MCP3004_ReadCH(uint8_t channel)
 {
     channel &= 0x03;
 
-    tx[0] = 0x01;                               // Start bit
-    tx[1] = (uint8_t)(0x80u | (channel << 4));  // SGL=1 + channel
+    tx[0] = 0x01;
+    tx[1] = (uint8_t)(0x80u | (channel << 4));
     tx[2] = 0x00;
 
     HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
@@ -183,11 +183,16 @@ static uint16_t MCP3004_ReadCH(uint8_t channel)
 
 static uint16_t MapAdcToPulse(uint16_t adc)
 {
-    uint32_t pulse = SERVO_MIN_PULSE
-                   + ((uint32_t)adc * (SERVO_MAX_PULSE - SERVO_MIN_PULSE)) / 1023u;
+    uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim1);
 
-    if (pulse < SERVO_MIN_PULSE) pulse = SERVO_MIN_PULSE;
-    if (pulse > SERVO_MAX_PULSE) pulse = SERVO_MAX_PULSE;
+    uint32_t min_pulse = (arr + 1u) / 20u;
+    uint32_t max_pulse = (arr + 1u) / 10u;
+
+    uint32_t pulse = min_pulse
+                   + ((uint32_t)adc * (max_pulse - min_pulse)) / 1023u;
+
+    if (pulse < min_pulse) pulse = min_pulse;
+    if (pulse > max_pulse) pulse = max_pulse;
 
     return (uint16_t)pulse;
 }
