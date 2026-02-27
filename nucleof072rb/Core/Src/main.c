@@ -58,8 +58,8 @@ uint8_t rx[3] = {0};
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-static uint16_t_ MCP3004_ReadCH(uint8_t channel);
-static uint16_t_ MapAdcToPulse(uint16_t adc);
+static uint16_t MCP3004_ReadCH(uint8_t channel);
+static uint16_t MapAdcToPulse(uint16_t adc);
 
 /* USER CODE END PFP */
 
@@ -76,8 +76,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	uint16_t_ adc = 0;
-	uint16_t_ compare_value = SERVO_MIN_PULSE;
+	uint16_t adc = 0;
+	uint16_t compare_value = SERVO_MIN_PULSE;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
