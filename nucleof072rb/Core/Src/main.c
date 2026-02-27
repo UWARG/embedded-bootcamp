@@ -49,8 +49,8 @@
 #define ADC_CS_GPIO_Port GPIOB
 #define ADC_CS_Pin      GPIO_PIN_8
 
-#define SERVO_MIN_PULSE  1000u   // 1.0ms
-#define SERVO_MAX_PULSE  2000u   // 2.0ms
+#define SERVO_MIN_PULSE  3200u   // 1.0ms
+#define SERVO_MAX_PULSE  6400u   // 2.0ms
 uint8_t tx[3] = {0};
 uint8_t rx[3] = {0};
 /* USER CODE END PV */
