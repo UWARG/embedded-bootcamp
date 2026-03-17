@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,13 +46,18 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t output_word[] = {1, 1 << 7, 0};
+uint8_t receive_word[3];
+uint16_t adc_value;
+const float ADC_RESOLUTION = 1023.0; 	// 10-bit resolution
+const int PWM_ARR = 64000; 				// PWM Auto-Reload Register Value
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t get_adc();
+void output_pwm(uint16_t adc_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -87,17 +94,24 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  adc_value = get_adc();
+	  output_pwm(adc_value);
+	  HAL_Delay(50);
   }
   /* USER CODE END 3 */
 }
@@ -143,7 +157,16 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t get_adc() {
+	HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1, output_word, receive_word, 3, 100);
+	HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
+	return ((receive_word[1] & 3) << 8) | receive_word[2];
+}
 
+void output_pwm(uint16_t adc_value) {
+	htim1.Instance->CCR1 = (int)(((5.0 + (5.0 / ADC_RESOLUTION)*adc_value)/100)*PWM_ARR);
+}
 /* USER CODE END 4 */
 
 /**
