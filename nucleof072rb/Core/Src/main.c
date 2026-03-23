@@ -65,7 +65,9 @@ void SystemClock_Config(void);
 #define MAX_ADC   1023
 #define MIN_PWM   3200
 #define MAX_PWM   6400
+#define TIMEOUT_MS  100
 
+uint16_t pwm_range = MAX_PWM - MIN_PWM;
 /* USER CODE END PD */
 
 
@@ -78,12 +80,10 @@ uint16_t convert_adc_to_pwm(uint16_t adc_value)
     if (adc_value > MAX_ADC)
         adc_value = MAX_ADC;
 
-    uint16_t pwm_range = MAX_PWM - MIN_PWM;
-
     // Multiply before divide to avoid truncating to 0
     uint16_t ccr_value =
         MIN_PWM +
-        (adc_value * pwm_range) / MAX_ADC;
+        (uint16_t)((adc_value * pwm_range) / (float)MAX_ADC);
 
     return ccr_value;
 }
@@ -129,15 +129,18 @@ int main(void)
   {
       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-      HAL_SPI_TransmitReceive(
+      HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(
           &hspi1,
           tx_buffer,
           rx_buffer,
-          3,
-          HAL_MAX_DELAY
+          sizeof(tx_buffer),
+          TIMEOUT_MS
       );
 
       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+      if (status != HAL_OK)
+          continue;
 
 
       // Extract ADC value (0–1023)
