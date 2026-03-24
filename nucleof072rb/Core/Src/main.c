@@ -49,58 +49,113 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
 
-/* USER CODE END PFP */
+// ADC
+#define ADC_START_BIT   0x01
+#define ADC_SIGNAL_BIT     0x01
+#define ADC_DIFF_BIT    0x00
+
+#define ADC_CH0   0b000
+#define ADC_CH1   0b001
+#define ADC_CH2   0b010
+#define ADC_CH3   0b011
+
+#define MAX_ADC   1023
+#define MIN_PWM   3200
+#define MAX_PWM   6400
+#define TIMEOUT_MS  100
+
+uint16_t pwm_range = MAX_PWM - MIN_PWM;
+/* USER CODE END PD */
+
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+// Converts raw ADC value (0–1023) into PWM CCR value (3200–6400)
+uint16_t convert_adc_to_pwm(uint16_t adc_value)
+{
+    if (adc_value > MAX_ADC)
+        adc_value = MAX_ADC;
+
+    // Multiply before divide to avoid truncating to 0
+    uint16_t ccr_value =
+        MIN_PWM +
+        (uint16_t)((adc_value * pwm_range) / (float)MAX_ADC);
+
+    return ccr_value;
+}
+
+// Extract 10 bit ADC result from MCP3004 SPI response
+uint16_t extract_adc_result(uint8_t *rx_buffer)
+{
+    uint16_t upper_bits = (uint16_t)(rx_buffer[1] & 0x03) << 8;
+    uint16_t lower_bits = rx_buffer[2];
+
+    return (upper_bits | lower_bits);
+}
+
 /* USER CODE END 0 */
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
+
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
+
   /* USER CODE BEGIN 2 */
+
+  // Start PWM once (we will only update duty cycle)
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  uint8_t tx_buffer[3] = {0};
+  uint8_t rx_buffer[3] = {0};
+
+  // Build MCP3004 command (single ended, channel 0)
+  tx_buffer[0] = ADC_START_BIT;
+  tx_buffer[1] = (ADC_SIGNAL_BIT << 7) | (ADC_CH0 << 4);
+  tx_buffer[2] = 0x00;
 
   /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-    /* USER CODE BEGIN 3 */
+      HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(
+          &hspi1,
+          tx_buffer,
+          rx_buffer,
+          sizeof(tx_buffer),
+          TIMEOUT_MS
+      );
+
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+      if (status != HAL_OK)
+          continue;
+
+
+      // Extract ADC value (0–1023)
+      uint16_t adc_value = extract_adc_result(rx_buffer);
+
+      // Convert ADC value into PWM CCR
+      uint16_t pwm_ccr = convert_adc_to_pwm(adc_value);
+
+      // Update PWM duty cycle
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_ccr);
+
+      HAL_Delay(10);
   }
-  /* USER CODE END 3 */
 }
+
 
 /**
   * @brief System Clock Configuration
