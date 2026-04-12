@@ -97,23 +97,23 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  pwmCounts = 100 + ((adcValue * 100) / 1023);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmCounts);
+  txData[0] = 0x01;
+  txData[1] = 0x80;
+  txData[2] = 0x00;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  txData[0] = 0x01;
-	  txData[1] = 0x80;
-	  txData[2] = 0x00;
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, 100);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  adcValue = ((rxData[1] & 0x03) << 8) | rxData[2];
+	  pwmCounts = 1000 + ((adcValue * 1000) / 1023);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmCounts);
 
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
