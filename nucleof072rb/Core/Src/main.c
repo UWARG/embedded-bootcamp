@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,13 +46,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t readADC(int channel);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -87,17 +88,30 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	  uint16_t adc_val = readADC(0);
 
-    /* USER CODE BEGIN 3 */
+	  uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim1);
+
+	  uint32_t ccr_min = period * 5 / 100;
+	  uint32_t ccr_max = period * 10 / 100;
+
+	  uint32_t ccr = ccr_min + ((uint32_t)adc_val * (ccr_max - ccr_min)) / 1023;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr);
+
+	  HAL_Delay(10);
+    /* USER CODE END WHILE */
   }
   /* USER CODE END 3 */
 }
@@ -143,7 +157,29 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t readADC(int channel)
+{
+    uint8_t transmission_data_buffer[3];
+    uint8_t reception_data_buffer[3];
 
+    transmission_data_buffer[0] = 0x1;
+    transmission_data_buffer[1] = (0x08 | channel) << 4;
+    transmission_data_buffer[2] = 0x00;
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+    HAL_StatusTypeDef result = HAL_SPI_TransmitReceive(&hspi1, transmission_data_buffer, reception_data_buffer, 3, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+    if (result != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    uint16_t adc_data = ((reception_data_buffer[1] & 0x03) << 8) | reception_data_buffer[2];
+    return adc_data;
+}
 /* USER CODE END 4 */
 
 /**
