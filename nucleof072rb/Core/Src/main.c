@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,7 +46,14 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+#define ADC_MAX_VALUE   1023    // 10-bit ADC
+#define PWM_MIN_PULSE   1000    // 1 ms on-time = 5% duty cycle
+#define PWM_MAX_PULSE   2000    // 2 ms on-time = 10% duty cycle
+#define PWM_RANGE       (PWM_MAX_PULSE - PWM_MIN_PULSE)  // 1000
 
+// Buffers for full-duplex SPI transfer with MCP3008
+uint8_t spi_tx_buffer[3];
+uint8_t spi_rx_buffer[3];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,8 +96,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +109,32 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  // prepare TX buffer to request ADC channel read
+	  // 0x01: 0000 0001, 0x80: CH0 single ended
+	  spi_tx_buffer[0] = 0x01;
+	  spi_tx_buffer[1] = 0x80;
+	  spi_tx_buffer[2] = 0x00;
+
+	  // activate the ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // send 3 bytes, receive 3 bytes
+	  HAL_SPI_TransmitReceive(&hspi1, spi_tx_buffer, spi_rx_buffer, 3, HAL_MAX_DELAY);
+
+	  // PB8 high
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // reconstruct the 10-bit ADC value from received bytes
+	  uint16_t adc_value = ((spi_rx_buffer[1] & 0x03) << 8) | spi_rx_buffer[2];
+
+	  // adc-value to pulse
+	  uint16_t pulse = PWM_MIN_PULSE + ((uint32_t)adc_value * PWM_RANGE) / ADC_MAX_VALUE;
+
+	  // update the PWM compare register to change duty cycle
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
+
+	  // delay to avoid overloading the ADC
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
