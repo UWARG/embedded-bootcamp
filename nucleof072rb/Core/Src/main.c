@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -45,6 +47,12 @@
 
 /* USER CODE BEGIN PV */
 
+extern SPI_HandleTypeDef hspi1;
+
+// ADC Configuration
+const uint8_t start_byte = 0b00000001;
+const uint8_t configure_byte = 0b10000000;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,7 +72,14 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
+
+	// ADC Input Buffer
+	uint8_t adc_buf[2];
+	// ADC Final Output Result
+	uint16_t adc_result;
+	uint16_t adc_max = 0x3ff;
 
   /* USER CODE END 1 */
 
@@ -87,7 +102,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // CS pin should default high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  // Set up timer
+  // Set up SPI communication
+
 
   /* USER CODE END 2 */
 
@@ -96,6 +119,28 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+	  // Set CS output
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  // Output start bit
+	  HAL_SPI_Transmit(&hspi1, (uint8_t *) start_byte, 1, 100);
+	  // Output diff and channel and receive first two bits
+	  HAL_SPI_TransmitReceive(&hspi, (uint8_t *) configure_byte, &adc_buf[0], 1, 100);
+	  adc_buf[0] &= 0b00000011;
+	  // Receive last 8 bits
+	  HAL_SPI_Receive(&hspi1, &adc_buf[1], 1, 100);
+	  // Reset CS output
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // Calculate PWM strength
+	  adc_result = ((uint16_t) adc_buf[0] << 8) + rx_buf[1];
+
+	  // Set PWM strength
+	  // Clean output
+	  adc_buf[0] = 0;
+	  adc_buf[1] = 0;
+
+	  HAL_Delay(10);
 
     /* USER CODE BEGIN 3 */
   }
@@ -122,6 +167,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -160,8 +206,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +222,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
