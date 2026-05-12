@@ -48,10 +48,19 @@
 /* USER CODE BEGIN PV */
 
 extern SPI_HandleTypeDef hspi1;
+extern TIM_HandleTypeDef htim1;
 
 // ADC Configuration
-const uint8_t start_byte = 0b00000001;
-const uint8_t configure_byte = 0b10000000;
+const uint8_t start_byte = 0x1;
+const uint8_t configure_byte = 0x80;
+const uint16_t adc_max = 0x3ff;
+
+// PWM Variables
+// ARR -> 60000
+// PWM -> 5-10%
+// CCR => 3000-6000
+const uint32_t ccr_min = 3000;
+const uint32_t ccr_range = 3000;
 
 /* USER CODE END PV */
 
@@ -79,7 +88,9 @@ int main(void)
 	uint8_t adc_buf[2];
 	// ADC Final Output Result
 	uint16_t adc_result;
-	uint16_t adc_max = 0x3ff;
+
+	// PWM CCR Value
+	uint32_t ccr;
 
   /* USER CODE END 1 */
 
@@ -109,41 +120,42 @@ int main(void)
   // CS pin should default high
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   // Set up timer
-  // Set up SPI communication
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-    /* USER CODE END WHILE */
+      {
+        /* USER CODE END WHILE */
 
-	  // Set CS output
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  // Output start bit
-	  HAL_SPI_Transmit(&hspi1, (uint8_t *) start_byte, 1, 100);
-	  // Output diff and channel and receive first two bits
-	  HAL_SPI_TransmitReceive(&hspi, (uint8_t *) configure_byte, &adc_buf[0], 1, 100);
-	  adc_buf[0] &= 0b00000011;
-	  // Receive last 8 bits
-	  HAL_SPI_Receive(&hspi1, &adc_buf[1], 1, 100);
-	  // Reset CS output
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    	  // Set CS output
+    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    	  // Output start bit
+    	  HAL_SPI_Transmit(&hspi1, (uint8_t *) &start_byte, 1, 100);
+    	  // Output diff and channel and receive first two bits
+    	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *) &configure_byte, &adc_buf[0], 1, 100);
+    	  adc_buf[0] &= 0b00000011;
+    	  // Receive last 8 bits
+    	  HAL_SPI_Receive(&hspi1, &adc_buf[1], 1, 100);
+    	  // Reset CS output
+    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	  // Calculate PWM strength
-	  adc_result = ((uint16_t) adc_buf[0] << 8) + rx_buf[1];
+    	  // Calculate PWM strength
+    	  adc_result = ((uint16_t) adc_buf[0] << 8) + adc_buf[1];
+    	  // Set PWM strength
+    	  ccr = (uint32_t)(((double)adc_result / adc_max) * ccr_range) + ccr_min;
+    	  TIM1->CCR1 = ccr;
 
-	  // Set PWM strength
-	  // Clean output
-	  adc_buf[0] = 0;
-	  adc_buf[1] = 0;
+    	  // Clean output
+    	  adc_buf[0] = 0;
+    	  adc_buf[1] = 0;
 
-	  HAL_Delay(10);
+    	  HAL_Delay(10);
 
-    /* USER CODE BEGIN 3 */
-  }
+        /* USER CODE BEGIN 3 */
+      }
   /* USER CODE END 3 */
 }
 
