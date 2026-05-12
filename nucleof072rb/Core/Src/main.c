@@ -127,35 +127,35 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-      {
-        /* USER CODE END WHILE */
+  {
+    /* USER CODE END WHILE */
 
-    	  // Set CS output
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-    	  // Output start bit
-    	  HAL_SPI_Transmit(&hspi1, (uint8_t *) &start_byte, 1, 100);
-    	  // Output diff and channel and receive first two bits
-    	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t *) &configure_byte, &adc_buf[0], 1, 100);
-    	  adc_buf[0] &= 0b00000011;
-    	  // Receive last 8 bits
-    	  HAL_SPI_Receive(&hspi1, &adc_buf[1], 1, 100);
-    	  // Reset CS output
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    // Set CS output
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    // Output start bit
+    HAL_SPI_Transmit(&hspi1, (uint8_t *) &start_byte, 1, 100);
+    // Output diff and channel and receive first two bits
+    HAL_SPI_TransmitReceive(&hspi1, (uint8_t *) &configure_byte, &adc_buf[0], 1, 100);
+    adc_buf[0] &= 0b00000011;
+    // Receive last 8 bits
+    HAL_SPI_Receive(&hspi1, &adc_buf[1], 1, 100);
+    // Reset CS output
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-    	  // Calculate PWM strength
-    	  adc_result = ((uint16_t) adc_buf[0] << 8) + adc_buf[1];
-    	  // Set PWM strength
-    	  ccr = (uint32_t)(((double)adc_result / adc_max) * ccr_range) + ccr_min;
-    	  TIM1->CCR1 = ccr;
+    // Calculate PWM strength
+    adc_result = ((uint16_t) adc_buf[0] << 8) + adc_buf[1];
+    // Set PWM strength
+    ccr = (uint32_t)(((double)adc_result / adc_max) * ccr_range) + ccr_min;
+    TIM1->CCR1 = ccr;
 
-    	  // Clean output
-    	  adc_buf[0] = 0;
-    	  adc_buf[1] = 0;
+    // Clean output
+    adc_buf[0] = 0;
+    adc_buf[1] = 0;
 
-    	  HAL_Delay(10);
+    HAL_Delay(10);
 
-        /* USER CODE BEGIN 3 */
-      }
+    /* USER CODE BEGIN 3 */
+  }
   /* USER CODE END 3 */
 }
 
