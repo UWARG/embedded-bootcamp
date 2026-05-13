@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -55,7 +57,24 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint16_t readADC(void)
+{
+  uint8_t txData[2] = {0x00, 0x00};
+  uint8_t rxData[2] = {0x00, 0x00};
 
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 2, HAL_MAX_DELAY);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  uint16_t adcValue = ((rxData[0] << 8) | rxData[1]) & 0x03FF;
+
+  return adcValue;
+}
+
+uint16_t adcToPwm(uint16_t adcValue)
+{
+  return 1000 + ((adcValue * 1000) / 1023);
+}
 /* USER CODE END 0 */
 
 /**
@@ -87,8 +106,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,10 +120,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
-}
+    uint16_t adcValue = readADC();
+    uint16_t pwmValue = adcToPwm(adcValue);
 
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmValue);
+
+    HAL_Delay(10);
+    /* USER CODE END 3 */
+  }
+}
 /**
   * @brief System Clock Configuration
   * @retval None
