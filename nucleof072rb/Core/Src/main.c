@@ -46,6 +46,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+//00000001  00000001  00000000
+uint8_t spi_tx_data[3] = {0x01, 0x80, 0x00};
+uint8_t spi_rx_data[3] = {};
+uint16_t adcValue;
+uint16_t ccr;
 
 /* USER CODE END PV */
 
@@ -92,6 +97,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -100,6 +106,44 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  SPI_CS_Select();
+	  HAL_SPI_TransmitReceive(&hspi1, spi_tx_data, spi_rx_data, 3, 100);
+	  SPI_CS_Deselect();
+
+
+	  adcValue = ((spi_rx_data[1] & 0x03) << 8) | spi_rx_data[2];
+	     //when doing operation it should change to int
+	  	 //and 00000011 will get the last two bit. then move those two bit to upper
+	  	 //bit. then or rx[2] will fit rx[2] to lower 8 bit
+
+
+	  //pwm 50hz P = 1/50 = 0.2s = 20 ms
+	  //20x5% = 1 ms  20x10% = 2 ms
+
+	  //timer is 48m/(47+1) = 1m hz, 1000tick is 1 ms,
+	  //arr is 1999. P = 1/1m x (1999 + 1) = 0.002s = 20 ms, so rcr is 0
+
+	  //ccr will base on adc value， from 1ms to 2ms
+	  //10 bit adc value 0-1023
+
+	  //ccr = 1000 + adc/1023 * 1000
+	  //when adc = 0 ccr is 1000tick(1 ms), when = 1023 ccr is 2000tick(2 ms)
+
+
+	  //or
+
+	  //crr = duty *(arr+1)
+	  //duty is 0.05-0.1
+	  //duty = 0.05 + adc/1023 *0.05
+
+	  ccr = 1000 + (adcValue*1000)/1023;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr);
+
+
+
+	  HAL_Delay(20);
+
 
     /* USER CODE BEGIN 3 */
   }
@@ -147,6 +191,13 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void SPI_CS_Select(void) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // low
+}
+
+void SPI_CS_Deselect(void) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);   // high
+}
 
 /* USER CODE END 4 */
 
