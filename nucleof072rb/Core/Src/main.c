@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -64,6 +66,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,8 +90,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // Runs once to turn on the PMW
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +103,34 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  // Sends 3 bytes to ADC asking for channel 0 reading, receive 3 bytes back into result
+	  //mb, I totally got the hex wrong (first time using it), might be wrong here as well, but from the doc
+	  // The first byte sends 00000001 which should be 0x01 in hex, the second represents single ended measurement of the voltage
+	  // for the ADC, a 10000000 represents that. The third byte is as is.
+	  uint8_t data[3] = {0x01, 0x80, 0x00};
+	  uint8_t result[3] = {0x00, 0x00, 0x00};
+
+	  // Pulls the CS pin LOW to tell ADC we are about to talk to it
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // Sends data to ADC and receive result at the same time using the HAL_SPI_TransmitRecieve function
+	  HAL_SPI_TransmitReceive(&hspi1, data, result, 3, 100);
+
+	  // Pulls CS pin HIGH to tell ADC we are done talking
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // Extracts the 10 bit ADC value from the result array (bitwise operators used here)
+	  uint16_t adcValue = ((result[1] & 0x03) << 8) | result[2];
+
+	  // Converts ADC value (0-1023) to timer counts for PWM (3200-6400 counts = 1ms-2ms)
+	  // New config = 64,000 period and 14 prescaler (significantly better resolution)
+	  uint16_t pwmValue = 3200 + (adcValue * 3200 / 1023);
+
+	  // Sets the PWM output to the calculated value
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmValue);
+
+	  // Wait 10ms so we dont overwhelm the ADC with requests
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +155,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -160,8 +194,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +210,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
