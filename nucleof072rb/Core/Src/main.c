@@ -49,8 +49,13 @@
 //00000001  00000001  00000000
 uint8_t spi_tx_data[3] = {0x01, 0x80, 0x00};
 uint8_t spi_rx_data[3] = {};
-uint16_t adcValue;
-uint16_t ccr;
+
+uint16_t arr = 0;
+
+uint16_t adcValue = 0;
+uint16_t ccr= 0;
+uint16_t offset= 0;
+uint16_t range= 0;
 
 /* USER CODE END PV */
 
@@ -72,6 +77,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
 
   /* USER CODE END 1 */
 
@@ -98,6 +104,8 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  //arr ((TIMER_CLOCK / PWM_f) - 1)
+  arr = htim1.Init.Period + 1;
 
   /* USER CODE END 2 */
 
@@ -136,7 +144,13 @@ int main(void)
 	  //duty is 0.05-0.1
 	  //duty = 0.05 + adc/1023 *0.05
 
-	  ccr = 1000 + (adcValue*1000)/1023;
+	  //# of tick when it is 5% duty
+	  offset = (5 * arr) / 100 ;
+
+	  //difference of 5% and 10%. unit tick
+	  range = ((10 * arr) / 100) - offset;
+
+	  ccr = offset + (adcValue*range)/1023;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr);
 
