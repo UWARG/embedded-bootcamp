@@ -107,6 +107,12 @@ int main(void)
   //arr ((TIMER_CLOCK / PWM_f) - 1)
   arr = htim1.Init.Period + 1;
 
+  //# of tick when it is 5% duty
+  offset = (5 * arr) / 100 ;
+
+  //difference of 5% and 10%. unit tick
+  range = ((10 * arr) / 100) - offset;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -144,16 +150,9 @@ int main(void)
 	  //duty is 0.05-0.1
 	  //duty = 0.05 + adc/1023 *0.05
 
-	  //# of tick when it is 5% duty
-	  offset = (5 * arr) / 100 ;
-
-	  //difference of 5% and 10%. unit tick
-	  range = ((10 * arr) / 100) - offset;
-
 	  ccr = offset + (adcValue*range)/1023;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr);
-
 
 
 	  HAL_Delay(20);
