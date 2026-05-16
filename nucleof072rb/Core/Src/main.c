@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,6 +46,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t txData[3]; // The command we send to the ADC
+uint8_t rxData[3]; // The answer we get back
+uint16_t adcResult; // The final 10-bit number (0-1023)
+
 
 /* USER CODE END PV */
 
@@ -87,14 +93,78 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  /*
+   * Make sure pin 8 is set to high so it is not being read at the start
+   */
+   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+  /*
+   * set rxData to be all zeros, clear it in case any junk remains
+   */
+  memset(rxData, 0, sizeof(rxData));
+  txData[0] = 0x01;
+  txData[1] = 0x80; // 0x80 targets Channel 0
+  txData[2] = 0x00;
 
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 HAL_Delay(10);
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); /* Turn pin low so MCU knows to read from ADC*/
+
+
+	 /*
+	  *
+	  * The MCU looks at txData and sends its data via PA7 to the ADC
+	  * This tells the ADC which channel to read (channel 0 since our Pot is connected to channel 0)
+	  *
+	  * Then at the same time, it recives the analog converted to digital value form teh ADC which is sent
+	  * to rxData. rxData now has the digital value of the pot. (a 10 bit number)
+	  */
+	 HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, 100);
+
+
+	 /*
+	  * Turn the pin on high now so it stops reading form the ADC
+	  */
+	 HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	 /*
+	  * Since we only need 10 digits we need to shift bits
+	  *
+			  * BYTE 0                  BYTE 1                  BYTE 2
+		MCU Pin PA7 (MOSI):  [ 0x01 ] -------------> [ 0x80 ] -------------> [ 0x00 ]  (MCU Talking)
+							   │                       │                       │
+							   ▼                       ▼                       ▼
+		MCU Pin PA6 (MISO):  [ 0x00 ] -------------> [ 0x00 + 2 bits ] ----> [ 8 bits ]  (ADC Replying)
+							   │                       │                       │
+							   ▼                       ▼                       ▼
+						   rxData[0]               rxData[1]               rxData[2]
+						 (Pure Garbage)         (Top 2 bits of data)    (Bottom 8 bits)
+
+	  */
+	 adcResult = ((rxData[1] & 0x03) << 8) | rxData[2];
+
+	 // Calculate motor pulse (1000 to 2023)
+	 uint32_t motorValue = 1000 + adcResult;
+
+	 /*
+	  * Update PA8 to adjust the motors PWM
+	  * This changes the servos CCR
+	  * It coutns on HIGH unitl the motor value and then for the rest of its 2000micros clock it is now on LOW
+	  *  --> this is now changing its duty cycle
+	  *
+	  *  Once it hits 2000 it resets and continues
+	  *
+	  *  htim1, timer 1 channel 1 is phsyically hardwared to only affect pin PA8
+	  */
+	 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, motorValue);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
