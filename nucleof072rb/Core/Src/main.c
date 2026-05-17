@@ -48,7 +48,7 @@
 /* USER CODE BEGIN PV */
 uint8_t txData[3]; // The command we send to the ADC
 uint8_t rxData[3]; // The answer we get back
-uint16_t adcResult; // The final 10-bit number (0-1023)
+uint32_t adcResult; // The final 10-bit number (0-1023) --> updated to be 32 bits so can perform motor calc.
 
 
 /* USER CODE END PV */
@@ -152,7 +152,13 @@ int main(void)
 	 adcResult = ((rxData[1] & 0x03) << 8) | rxData[2];
 
 	 // Calculate motor pulse (1000 to 2023)
-	 uint32_t motorValue = 1000 + adcResult;
+	 /*
+	  * add 1000, bc servo motor will ignore anything below a 1000mms pulse
+	  * we also use 32 unit even tho timer can only go to 2^16 to prevent any overflow in math
+	  *
+	  * need 2000 to be maxium value --> cannot have 2023
+	  */
+	 uint32_t motorValue = 1000 + ((adcResult*1000) / 1023);
 
 	 /*
 	  * Update PA8 to adjust the motors PWM
