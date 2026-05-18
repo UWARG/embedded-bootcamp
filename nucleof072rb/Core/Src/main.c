@@ -56,11 +56,11 @@ const uint8_t configure_byte = 0x80;
 const uint16_t adc_max = 0x3ff;
 
 // PWM Variables
-// ARR -> 60000
+// ARR -> 64000
 // PWM -> 5-10%
-// CCR => 3000-6000
-const uint32_t ccr_min = 3000;
-const uint32_t ccr_range = 3000;
+// CCR => 3200-6400
+const uint32_t ccr_min = 3200;
+const uint32_t ccr_range = 3200;
 
 /* USER CODE END PV */
 
