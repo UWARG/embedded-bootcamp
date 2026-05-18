@@ -31,7 +31,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+#define ADC_RESOLUTION_BITS 10U
+#define ADC_MAX_COUNT ((1U << ADC_RESOLUTION_BITS) - 1U)
 
+#define PWM_MIN_COUNT 3200U
+#define PWM_MAX_COUNT 6400U
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,8 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-const uint16_t PWM_MIN_US = 1000;
-const uint16_t PWM_MAX_US = 2000;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -122,13 +125,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	uint16_t adc_in = readADC(1);
 
-	uint16_t pwm_us = PWM_MIN_US + ((adc_in * (PWM_MAX_US - PWM_MIN_US)) / 1023);
-
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_us);
-
-	HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
