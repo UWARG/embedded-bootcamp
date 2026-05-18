@@ -36,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PWM_MIN 3200
+#define PWM_MAX 6400
+#define ADC_MAX 1023
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -52,6 +55,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+uint16_t readADC(void);
 
 /* USER CODE END PFP */
 
@@ -93,7 +97,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,6 +107,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  uint16_t adcValue = readADC();
+	  uint32_t pwmCounts = PWM_MIN + ((adcValue * (uint32_t)(PWM_MAX - PWM_MIN)) / ADC_MAX);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)pwmCounts);
+	  HAL_Delay(10);
+
   }
   /* USER CODE END 3 */
 }
@@ -149,6 +158,18 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+// function that reads a 10 bit value from the ADC over SPI
+// returns value between 0 and 1023
+uint16_t readADC(void)
+{
+    uint8_t txData[3] = {0x01, 0x80, 0x00};
+    uint8_t rxData[3] = {0x00, 0x00, 0x00};
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+    HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 3, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    uint16_t result = ((rxData[1] & 0x03) << 8) | rxData[2];
+    return result;
+}
 
 /* USER CODE END 4 */
 
