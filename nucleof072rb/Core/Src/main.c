@@ -101,7 +101,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -117,7 +117,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -125,7 +125,13 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  uint16_t adc_in = readADC(1);
 
+	  uint16_t pwm_count = PWM_MIN_COUNT + ((adc_in * (PWM_MAX_COUNT - PWM_MIN_COUNT)) / ADC_MAX_COUNT);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_count);
+
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
