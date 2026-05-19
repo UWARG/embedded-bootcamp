@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -29,7 +31,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+#define ADC_RESOLUTION_BITS 10U
+#define ADC_MAX_COUNT ((1U << ADC_RESOLUTION_BITS) - 1U)
 
+#define PWM_MIN_COUNT 3200U
+#define PWM_MAX_COUNT 6400U
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -55,6 +61,27 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint16_t readADC(uint8_t channel)
+{
+	uint8_t tx[3];
+	uint8_t rx[3];
+
+	channel &= 0x03;
+
+	tx[0] = 0x01; // Send start bit
+	tx[1] = (0x08 | channel) << 4; // Select single-ended mode and channel
+	tx[2] = 0x00;
+
+	HAL_GPIO_WritePin(SPI_Chip_Select_GPIO_Port, SPI_Chip_Select_Pin, GPIO_PIN_RESET);
+
+	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+
+	HAL_GPIO_WritePin(SPI_Chip_Select_GPIO_Port, SPI_Chip_Select_Pin, GPIO_PIN_SET);
+
+	uint16_t adc_in = ((rx[1] & 0x03) << 8) | rx[2];
+
+	return adc_in;
+}
 
 /* USER CODE END 0 */
 
@@ -87,8 +114,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -96,7 +125,13 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  uint16_t adc_in = readADC(1);
 
+	  uint16_t pwm_count = PWM_MIN_COUNT + ((adc_in * (PWM_MAX_COUNT - PWM_MIN_COUNT)) / ADC_MAX_COUNT);
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_count);
+
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

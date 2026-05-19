@@ -66,10 +66,20 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define SPI_ADC_Input_Pin GPIO_PIN_6
+#define SPI_ADC_Input_GPIO_Port GPIOA
+#define SPI_ADC_Output_Pin GPIO_PIN_7
+#define SPI_ADC_Output_GPIO_Port GPIOA
+#define PWM_Motor_Output_Pin GPIO_PIN_8
+#define PWM_Motor_Output_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
+#define SPI_Clk_Signal_Pin GPIO_PIN_3
+#define SPI_Clk_Signal_GPIO_Port GPIOB
+#define SPI_Chip_Select_Pin GPIO_PIN_8
+#define SPI_Chip_Select_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
