@@ -117,7 +117,7 @@ int main(void)
 	  // map ADC (0-1023) to servo pulse width (1ms-2ms)
 	  // CCR 500  = 1ms | Pulse = min speed/position
 	  // CCR 1000 = 2ms | Pulse = max speed/position
-	  uint32_t ccr = 500 + (adc_val * 500) / 1023;
+	  uint32_t ccr = 3000 + (adc_val * 3000) / 1023;
 
 	  // set PWM duty cycle
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr);
