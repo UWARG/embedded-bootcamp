@@ -38,8 +38,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define PWM_MIN 1000
-#define PWM_MAX 2000
+#define PWM_MIN 2000
+#define PWM_MAX 4000
 #define ADC_MAX 1023
 
 /* USER CODE END PD */
