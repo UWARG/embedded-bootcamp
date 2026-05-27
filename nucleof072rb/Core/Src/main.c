@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,8 +89,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +102,27 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  // read MCP3004 CH0 over SPI
+	  uint8_t txBuf[3] = {0x01, 0x80, 0x00};
+	  uint8_t rxBuf[3] = {0, 0, 0};
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // CS low - start transaction
+	  HAL_SPI_TransmitReceive(&hspi1, txBuf, rxBuf, 3, HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);   // CS high - end transaction
+
+	  // parse 10-bit ADC value from response
+	  uint16_t adc_val = ((rxBuf[1] & 0x03) << 8) | rxBuf[2];
+
+	  // map ADC (0-1023) to servo pulse width (1ms-2ms)
+	  // CCR 500  = 1ms | Pulse = min speed/position
+	  // CCR 1000 = 2ms | Pulse = max speed/position
+	  uint32_t ccr = 3200 + (adc_val * 3200) / 1023;
+
+	  // set PWM duty cycle
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr);
+
+	  HAL_Delay(10); // update at 100Hz
   }
   /* USER CODE END 3 */
 }
