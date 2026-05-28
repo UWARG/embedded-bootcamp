@@ -96,7 +96,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
- HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -104,15 +104,15 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-HAL_SPI_TransmitReceive(&hspi1, spi_tx_data, spi_rx_data, 3, HAL_MAX_DELAY);
-HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1, spi_tx_data, spi_rx_data, 3, HAL_MAX_DELAY);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-adc_value = ((spi_rx_data[1] & 0x03) << 8) | spi_rx_data[2];
-pwmvalue = 3200 + ((uint32_t)adc_value * (6400 - 3200)) / 1023;
-__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmvalue);
+	adc_value = ((spi_rx_data[1] & 0x03) << 8) | spi_rx_data[2];
+	pwmvalue = 3200 + ((uint32_t)adc_value * (6400 - 3200)) / 1023;
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmvalue);
 
-HAL_Delay(10);
+	HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
