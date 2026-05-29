@@ -97,6 +97,9 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  uint32_t period = htim1.Init.Period + 1;
+  uint32_t min_value = period/20;
+  uint32_t max_value = period/10;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -109,7 +112,7 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	adc_value = ((spi_rx_data[1] & 0x03) << 8) | spi_rx_data[2];
-	pwmvalue = 3200 + ((uint32_t)adc_value * (6400 - 3200)) / 1023;
+	pwmvalue = min_value + ((uint32_t)adc_value * (max_value - min_value)) / 1023;
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmvalue);
 
 	HAL_Delay(10);
