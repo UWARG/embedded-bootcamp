@@ -37,9 +37,16 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-	#define ON_TIME_MIN 3000
-	#define ON_TIME_MAX 6000
-	#define ADC_CHANNEL 0
+	#define ON_TIME_MIN       3000
+	#define ON_TIME_MAX       6000
+	#define ADC_CHANNEL       0
+	#define SPI_START_BYTE    0x01    // MCP3004 start bit
+	#define SPI_CONFIG_BYTE   0x80    // Single-ended mode, channel select
+	#define SPI_DUMMY_BYTE    0x00    // Dummy byte to clock out result
+	#define SPI_NUM_BYTES     3       // Total bytes in SPI transaction
+	#define ADC_MAX_VALUE     1023    // Maximum 10-bit ADC value
+
+
 
 /* USER CODE END PD */
 
@@ -99,7 +106,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
+  uint8_t tx_data[3] = {SPI_START_BYTE, (SPI_CONFIG_BYTE | (ADC_CHANNEL << 4)), SPI_DUMMY_BYTE};
+  uint8_t rx_data[3] = {0, 0, 0}; // buffer
 
   /* USER CODE END 2 */
 
@@ -109,9 +117,8 @@ int main(void)
   {
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //Set low
-	  uint8_t tx_data[3] = {0x01, (0x80 | (ADC_CHANNEL << 4)), 0x00};
-	  uint8_t rx_data[3] = {0, 0, 0}; // buffer
-	  HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY);
+
+	  HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, SPI_NUM_BYTES, HAL_MAX_DELAY);
 
 
 
@@ -119,7 +126,7 @@ int main(void)
 
 	  uint16_t adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2]; //parse 10-bit
 
-	  uint32_t pulse = ON_TIME_MIN + (adc_value * (ON_TIME_MAX - ON_TIME_MIN)) / 1023; //map to 50-100 counts = 1-2ms
+	  uint32_t pulse = ON_TIME_MIN + ((adc_value * (ON_TIME_MAX - ON_TIME_MIN)) / ADC_MAX_VALUE);
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse); //PWM signal sent
 
 
