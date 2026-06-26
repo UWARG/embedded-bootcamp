@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,7 +89,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -98,6 +103,24 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  // Step 1: Send SPI request to ADC
+	  uint8_t tx_data[3] = {0x01, 0x80, 0x00}; // start bit thing and single ended thingi
+	  uint8_t rx_data[3] = {0x00, 0x00, 0x00};
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // CS low (HA COMPUTER SCIENCE LOW)
+	  HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // CS high (HA COMPUTER SCIENCE HIGH.. GET IT? HIGH CS? no? alright)
+
+	  // Step 2: Extract 10 bit ADC value
+	  uint16_t adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2];
+
+	  // Step 3: Convert to PWM counts (100 to 200)
+	  uint16_t pwm_counts = 100 + (adc_value * 100 / 1023);
+
+	  // Step 4: Set PWM output
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_counts);
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
