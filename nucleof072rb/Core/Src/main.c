@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,23 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// Motor limits using prescaler 14 math
+#define ON_TIME_MIN                 3200  // 1ms pulse width
+#define ON_TIME_MAX                 6400  // 2ms pulse width
+
+#define ADC_MAX_VALUE               1023  // Max value a 10-bit ADC can output
+
+// SPI command bytes from datasheet channel 0 setup
+#define MCP3008_START_BIT           0x01
+#define MCP3008_CH0_SINGLE          0x80
+#define MCP3008_DUMMY_BYTE          0x00
+#define MCP3008_MSG_LENGTH          3
+
+// Constants to fix the split bytes from ADC
+#define MCP3008_HIGH_BYTE_MASK      0x03
+#define ADC_HIGH_BYTE_MULTIPLIER    256
+
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,7 +106,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+
+  //set up buffers
+  uint8_t tx_buf[MCP3008_MSG_LENGTH] = {MCP3008_START_BIT, MCP3008_CH0_SINGLE, MCP3008_DUMMY_BYTE};
+  uint8_t rx_buf[MCP3008_MSG_LENGTH] = {0};
 
   /* USER CODE END 2 */
 
@@ -95,10 +122,32 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  // Select ADC chip (set PB8 low)
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  //Send commands and read response over SPI
+	  HAL_SPI_TransmitReceive(&hspi1, tx_buf, rx_buf, MCP3008_MSG_LENGTH, HAL_MAX_DELAY);
+
+	  // Deselect ADC chip (set PB8 high)
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // Combine split bytes into one 10-bit integer
+	  uint16_t top_bits = rx_buf[1] & MCP3008_HIGH_BYTE_MASK;
+	  uint16_t adc_raw = (top_bits * ADC_HIGH_BYTE_MULTIPLIER) + rx_buf[2];
+
+	  //Map ADC range (0-1023) to PWM range (3200-6400)
+	  uint32_t pwm_value = ON_TIME_MIN + ((adc_raw * (ON_TIME_MAX - ON_TIME_MIN)) / ADC_MAX_VALUE);
+
+	  // Update timer compare register to move motor
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+
   /* USER CODE END 3 */
 }
 
