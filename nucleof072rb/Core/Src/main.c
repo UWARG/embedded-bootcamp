@@ -46,6 +46,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+const int ADC_MAX_VALUE = 1023;
 
 /* USER CODE END PV */
 
@@ -92,6 +93,11 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  // Set initial PWM duty cycle to 5%
+  const uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim1);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, arr * 5 / 100);
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -99,9 +105,30 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    uint8_t tx_data[3] = {0x00, 0x80, 0x00};
+    uint8_t rx_data[3] = {0x00, 0x00, 0x00};
+
+    // Pull Chip Select line to low
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+    // Send ADC command while receiving ADC response
+    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY);
+
+    // Release Chip Select line to high
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+    // Extract 10-bit ADC value
+    const uint16_t useful_bits = (rx_data[1] & 0x03U) << 8 | rx_data[2];
+
+    // Map ADC reading linearly to a PWM duty cycle from 5% to 10%
+    const uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim1);
+    uint16_t value = (uint16_t)(arr * (ADC_MAX_VALUE + useful_bits) / (20U * ADC_MAX_VALUE));
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, value);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
