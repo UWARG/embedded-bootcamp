@@ -105,7 +105,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    uint8_t tx_data[3] = {0x00, 0x80, 0x00};
+    uint8_t tx_data[3] = {0x01, 0x80, 0x00};
     uint8_t rx_data[3] = {0x00, 0x00, 0x00};
 
     // Pull Chip Select line to low
