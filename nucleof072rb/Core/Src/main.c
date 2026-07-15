@@ -93,6 +93,19 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // COPI
+  uint8_t txBuffer[3] = {1, 1 << 7, 0};
+  // CIPO
+  uint8_t rxBuffer[3] = {0};
+
+  // CS pin defaults high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_SPI_Transmit(&hspi1, &txBuffer[0], 1, 100);
+  HAL_SPI_TransmitReceive(&hspi1, &txBuffer[1], &rx[1], 1, 100);
+  HAL_SPI_TransmitReceive(&hspi1, &txBuffer[2], &rx[2], 1, 100);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
