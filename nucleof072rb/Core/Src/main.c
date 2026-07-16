@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,7 +46,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,7 +75,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  // Configure the transmitted buffer for single-ended input at CH0
+  uint8_t tx[] = {0x01, 0x80, 0x00};
+  uint8_t rx[3] = {0};
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,6 +90,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,6 +101,25 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // Set CS line to low to begin communication with the ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+
+	  // Set CS line back to high after finishing communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // We ignore rx[0], and combine the useful bits from rx[1] with rx[2] to get our adc value
+	  uint16_t adc_val = ((rx[1] & 0x03) << 8) | rx[2];
+
+	  // Since our max timer value is 64000 and we want a 5-10% duty cycle, we linearly map our ADC values to
+	  // 64000 * 0.05 = 3200 (min) and
+	  // 64000 * 0.1 = 6400 (max)
+	  uint32_t ticks = 3200 + (adc_val * (6400 - 3200)) / 1023;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ticks);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
