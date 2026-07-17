@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,18 +89,51 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // COPI
+  uint8_t txBuffer[3] = {1, 1 << 7, 0};
+  // CIPO
+  uint8_t rxBuffer[3] = {0};
+
+  const uint16_t MAX_10BIT_VAL = 0x3FF;
+  const uint16_t DUTY_CYCLE_MIN_PERC = 5;
+  const uint16_t DUTY_CYCLE_MAX_PERC = 10;
+
+  // CS pin defaults high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, txBuffer, rxBuffer, 3, 100);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-    /* USER CODE BEGIN 3 */
+	  // get 10 bits from rxBuffer
+	  uint32_t voltage_read = ((rxBuffer[1] & 0x3) << 8) | (rxBuffer[2]);
+	  // offset from min_perc of ARR as a count
+	  uint32_t steps_offset = (htim1.Init.Period
+			  * (DUTY_CYCLE_MAX_PERC - DUTY_CYCLE_MIN_PERC))
+			  * voltage_read
+			  / MAX_10BIT_VAL
+			  / 100;
+
+	  uint32_t counter_max = DUTY_CYCLE_MIN_PERC * htim1.Init.Period / 100
+			  + steps_offset;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, counter_max);
+
+
+	  HAL_Delay(10);
+    /* USER CODE END WHILE */
   }
+  /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
 }
 
