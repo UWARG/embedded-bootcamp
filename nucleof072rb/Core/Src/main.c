@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +47,21 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+//Motor limits using prescaler 14
+#define ADC_MAX_VALUE	1023 //max 10-bit ADC reading
+#define PWM_MIN_COUNTS	3200 //1ms on-time
+#define PWM_MAX_COUNTS	6400 //2ms on-time
+
+//SPI channel 0 setup
+#define ADC_START_BYTE	0x01 //ADC start bit
+#define ADC_CH0_SINGLE	0x80 //single-ended channel 0 command
+#define ADC_DUMMY_BYTE	0x00 //dummy byte to generate additional SPI clocks
+
+#define SPI_MSG_LENGTH	3 //3 transmitted and received bytes
+
+#define ADC_HIGH_BYTE_MASK	0x03 //take only the two upper ADC result bits
+
 
 /* USER CODE END PV */
 
@@ -87,7 +105,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  uint8_t spi_tx_buffer[SPI_MSG_LENGTH] = {ADC_START_BYTE, ADC_CH0_SINGLE, ADC_DUMMY_BYTE};
+  uint8_t spi_rx_buffer[SPI_MSG_LENGTH] = {0};
 
   /* USER CODE END 2 */
 
@@ -95,6 +120,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); //select ADC chip (set PB8 low)
+
+	  HAL_SPI_TransmitReceive(&hspi1, spi_tx_buffer, spi_rx_buffer, SPI_MSG_LENGTH, HAL_MAX_DELAY); //send and receive commands over SPI
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); //deselect ADC chip (set PB8 high)
+
+	  //reconstruct the 10-bit ADC from received bytes
+	  uint16_t adc_raw = ((spi_rx_buffer[1] & ADC_HIGH_BYTE_MASK) << 8) | spi_rx_buffer[2];
+
+	  //map ADC range (0 - 1023) to PWM range (3200 - 6400)
+	  uint32_t pwm_value = PWM_MIN_COUNTS + (((uint32_t)adc_raw * (PWM_MAX_COUNTS - PWM_MIN_COUNTS)) / ADC_MAX_VALUE);
+
+	  //update the PWM compare register to change duty cycle
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_value);
+
+	  //delay to avoid overloading ADC
+	  HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
