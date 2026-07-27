@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PWM_MIN 0.05
+#define PWM_MAX 0.10
+#define ADC_MAX_VAL 1023 // for a 10 bit ADC, 2^10 - 1 = 1023
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,7 +49,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,7 +78,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  // Configure the transmitted buffer for single-ended input at CH0
+  uint8_t tx[] = {0x01, 0x80, 0x00};
+  uint8_t rx[3] = {0};
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -87,14 +93,36 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // Set CS line to low to begin communication with the ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+
+	  // Set CS line back to high after finishing communication
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  // We ignore rx[0], and combine the useful bits from rx[1] with rx[2] to get our adc value
+	  uint16_t adc_val = ((rx[1] & 0x03) << 8) | rx[2];
+
+	  // Map the ADC values to the appropriate number of ticks for the timer for our desired duty cycle range
+	  uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim1);
+	  uint32_t min_ticks = arr * PWM_MIN;
+	  uint32_t max_ticks = arr * PWM_MAX;
+	  uint32_t ticks = min_ticks + (adc_val * (max_ticks - min_ticks)) / ADC_MAX_VAL;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ticks);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
