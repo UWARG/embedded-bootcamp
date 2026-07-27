@@ -36,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PWM_MIN 0.05
+#define PWM_MAX 0.10
+#define ADC_MAX_VAL 1023 // for a 10 bit ADC, 2^10 - 1 = 1023
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -92,9 +95,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,10 +114,11 @@ int main(void)
 	  // We ignore rx[0], and combine the useful bits from rx[1] with rx[2] to get our adc value
 	  uint16_t adc_val = ((rx[1] & 0x03) << 8) | rx[2];
 
-	  // Since our max timer value is 64000 and we want a 5-10% duty cycle, we linearly map our ADC values to
-	  // 64000 * 0.05 = 3200 (min) and
-	  // 64000 * 0.1 = 6400 (max)
-	  uint32_t ticks = 3200 + (adc_val * (6400 - 3200)) / 1023;
+	  // Map the ADC values to the appropriate number of ticks for the timer for our desired duty cycle range
+	  uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim1);
+	  uint32_t min_ticks = arr * PWM_MIN;
+	  uint32_t max_ticks = arr * PWM_MAX;
+	  uint32_t ticks = min_ticks + (adc_val * (max_ticks - min_ticks)) / ADC_MAX_VAL;
 
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ticks);
 
