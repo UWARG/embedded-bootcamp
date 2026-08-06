@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,17 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_CS_GPIO_PORT       GPIOB
+#define ADC_CS_PIN             GPIO_PIN_8
+
+#define ADC_CHANNEL            0U
+#define ADC_MAX_VALUE          1023U
+#define ADC_SPI_TIMEOUT_MS     100U
+
+#define PWM_MIN_PULSE_COUNTS   3000U
+#define PWM_MAX_PULSE_COUNTS   6000U
+
+#define MAIN_LOOP_DELAY_MS     10U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,7 +63,8 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+static uint16_t ReadAdcChannel(uint8_t channel);
+static uint32_t ConvertAdcToPwmPulse(uint16_t adc_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -87,8 +101,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(ADC_CS_GPIO_PORT, ADC_CS_PIN, GPIO_PIN_SET);
 
+    if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
+    {
+      Error_Handler();
+    }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +119,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  uint16_t adc_value = ReadAdcChannel(ADC_CHANNEL);
+	      uint32_t pwm_pulse = ConvertAdcToPwmPulse(adc_value);
+
+	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_pulse);
+
+	      HAL_Delay(MAIN_LOOP_DELAY_MS);
   }
   /* USER CODE END 3 */
 }
@@ -143,7 +170,40 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+static uint16_t ReadAdcChannel(uint8_t channel)
+{
+  uint8_t tx_data[3] = {0};
+  uint8_t rx_data[3] = {0};
 
+  channel &= 0x03U;
+
+  tx_data[0] = 0x01U;
+  tx_data[1] = (uint8_t)((0x08U | channel) << 4);
+  tx_data[2] = 0x00U;
+
+  HAL_GPIO_WritePin(ADC_CS_GPIO_PORT, ADC_CS_PIN, GPIO_PIN_RESET);
+
+  if (HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3U, ADC_SPI_TIMEOUT_MS) != HAL_OK)
+  {
+    HAL_GPIO_WritePin(ADC_CS_GPIO_PORT, ADC_CS_PIN, GPIO_PIN_SET);
+    Error_Handler();
+  }
+
+  HAL_GPIO_WritePin(ADC_CS_GPIO_PORT, ADC_CS_PIN, GPIO_PIN_SET);
+
+  return (uint16_t)((((uint16_t)rx_data[1]) & 0x03U) << 8) | rx_data[2];
+}
+
+static uint32_t ConvertAdcToPwmPulse(uint16_t adc_value)
+{
+  if (adc_value > ADC_MAX_VALUE)
+  {
+    adc_value = ADC_MAX_VALUE;
+  }
+
+  return PWM_MIN_PULSE_COUNTS +
+         (((uint32_t)adc_value * (PWM_MAX_PULSE_COUNTS - PWM_MIN_PULSE_COUNTS)) / ADC_MAX_VALUE);
+}
 /* USER CODE END 4 */
 
 /**
