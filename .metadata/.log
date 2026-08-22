@@ -1,0 +1,33 @@
+!SESSION 2026-06-29 14:40:50.585 -----------------------------------------------
+eclipse.buildId=Version 1.19.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_GB
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-06-29 14:41:14.600
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-06-29 14:41:14.601
+!MESSAGE Log4j2 initialized with config file /home/razam/shayan/Uni/design_team/air/embedded-bootcamp/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-06-29 14:41:17.098
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-06-29 14:42:19.328
+!MESSAGE Indexed 'nucleof072rb' (29 sources, 108 headers) in 4.18 sec: 9,261 declarations; 58,106 references; 2 unresolved inclusions; 33 syntax errors; 188 unresolved names (0.28%)
+!SESSION 2026-08-22 14:36:08.042 -----------------------------------------------
+eclipse.buildId=Version 1.19.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_GB
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-08-22 14:36:16.672
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-08-22 14:36:16.672
+!MESSAGE Log4j2 initialized with config file /home/razam/shayan/Uni/design_team/air/embedded-bootcamp/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-08-22 14:36:20.540
+!MESSAGE Started RMI Server, listening on port 41337
