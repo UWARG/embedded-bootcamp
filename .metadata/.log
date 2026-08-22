@@ -31,3 +31,18 @@ Command-line arguments:  -os linux -ws gtk -arch x86_64
 
 !ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-08-22 14:36:20.540
 !MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2026-08-22 14:41:51.873 -----------------------------------------------
+eclipse.buildId=Version 1.19.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_GB
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-08-22 14:41:57.819
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-08-22 14:41:57.819
+!MESSAGE Log4j2 initialized with config file /home/razam/shayan/Uni/design_team/air/embedded-bootcamp/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-08-22 14:42:01.793
+!MESSAGE Started RMI Server, listening on port 41337
