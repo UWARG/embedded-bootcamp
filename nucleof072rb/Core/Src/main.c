@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,7 +46,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t tx_data[3] = {0x01,0x80,0x00}; //start conversation, use single-ended mode, read channel 0
+uint8_t rx_data[3];
+uint16_t adc_value;
+uint32_t pwm_compare;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,8 +92,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,7 +106,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 100);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2]; //convert the 2 bytes into one 10 bits number
+
+	  pwm_compare = 1000 + ((uint32_t)adc_value * 1000) / 1023;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_compare);
+
+	  HAL_Delay(10);
   }
+
   /* USER CODE END 3 */
 }
 
