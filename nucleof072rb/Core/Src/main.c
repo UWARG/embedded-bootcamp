@@ -50,6 +50,9 @@ uint8_t tx_data[3] = {0x01,0x80,0x00}; //start conversation, use single-ended mo
 uint8_t rx_data[3];
 uint16_t adc_value;
 uint32_t pwm_compare;
+uint32_t period;
+uint32_t min_compare;
+uint32_t max_compare;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -95,6 +98,10 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  period = htim1.Init.Period + 1;
+  min_compare = period / 20;   // 5% duty cycle = 1 ms
+  max_compare = period / 10;   // 10% duty cycle = 2 ms
+
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
   /* USER CODE END 2 */
@@ -109,11 +116,12 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
 	  HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, 100);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 	  adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2]; //convert the 2 bytes into one 10 bits number
 
-	  pwm_compare = 1000 + ((uint32_t)adc_value * 1000) / 1023;
+	  pwm_compare = min_compare
+			  + ((uint32_t)adc_value * (max_compare - min_compare)) / 1023;
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_compare);
 
 	  HAL_Delay(10);
