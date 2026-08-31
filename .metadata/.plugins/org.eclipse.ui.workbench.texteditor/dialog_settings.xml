@@ -2,4 +2,7 @@
 <section name="Workbench">
 	<item key="hasShownOverlayPopupBefore" value="true"/>
 	<item key="replaceBarOpen" value="false"/>
+	<list key="searchhistory">
+		<item value="// Step 3: Convert to PWM counts (1000 to 2000)&#x0A;uint16_t pwm_counts = 1000 + (adc_value * 1000 / 1023);"/>
+	</list>
 </section>
