@@ -114,8 +114,8 @@ int main(void)
 	  // Step 2: Extract 10 bit ADC value
 	  uint16_t adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2];
 
-	  // Step 3: Convert to PWM counts (3200 to 6400)
-	  uint16_t pwm_counts = 3200 + (adc_value * 3200 / 1023);
+	  // Step 3: Convert to PWM counts (1000 to 2000)
+	  uint16_t pwm_counts = 1000 + (adc_value * 1000 / 1023);
 
 	  // Step 4: Set PWM output
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_counts);
