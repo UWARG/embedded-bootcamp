@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define ADC_MAX_VALUE 1023U
+#define PWM_MIN_COUNT 3200U
+#define PWM_COUNT_RANGE 3200U
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +51,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+uint8_t tx_data[3] = {0};
+uint8_t rx_data[3] = {0};
+
+uint16_t adc_value = 0;
+uint32_t pwm_compare = 0;
 
 /* USER CODE END PV */
 
@@ -64,6 +77,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,17 +101,68 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
+
+
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  HAL_GPIO_WritePin(
+      ADC_CS_GPIO_Port,
+      ADC_CS_Pin,
+      GPIO_PIN_SET
+  );
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+  while (1) {
+      /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+      /* USER CODE BEGIN 3 */
+
+      tx_data[0] = 0x01;
+      tx_data[1] = 0x80;
+      tx_data[2] = 0x00;
+
+      HAL_GPIO_WritePin(
+          ADC_CS_GPIO_Port,
+          ADC_CS_Pin,
+          GPIO_PIN_RESET
+      );
+
+      HAL_SPI_TransmitReceive(
+          &hspi1,
+          tx_data,
+          rx_data,
+          3,
+          HAL_MAX_DELAY
+      );
+
+      HAL_GPIO_WritePin(
+          ADC_CS_GPIO_Port,
+          ADC_CS_Pin,
+          GPIO_PIN_SET
+      );
+
+      // Extract B9-B8 and combine them with B7-B0.
+      adc_value = ((rx_data[1] & 0x03) << 8) | rx_data[2];
+
+      // Convert the ADC value to the servo PWM range.
+      pwm_compare =
+          PWM_MIN_COUNT
+          + ((uint32_t)adc_value * PWM_COUNT_RANGE) / ADC_MAX_VALUE;
+
+      __HAL_TIM_SET_COMPARE(
+          &htim1,
+          TIM_CHANNEL_1,
+          pwm_compare
+      );
+
+      HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +187,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -160,8 +226,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +242,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
