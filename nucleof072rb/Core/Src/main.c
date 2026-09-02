@@ -49,8 +49,8 @@
 uint8_t tx_data[3];   // 3 bytes to send and receive from the MCP3008
 uint8_t rx_data[3];
 
-uint16_t adc_value;
-uint32_t pwm_compare;
+uint16_t adc_value;    // final 10-bit value
+uint32_t pwm_compare;  //comparison value
 
 
 
@@ -101,6 +101,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,6 +111,23 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  tx_data[3] = 0x01;
+	  tx_data[1] = 0x80;
+	  tx_data[2] = 0x00;
+
+
+	  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 3, HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
+
+
+	  adc_value = ((rx_data[1] & 0x03) << 8 | rx_data[2]);   // take the b8 and b9 and shift it by 8 to the left then or with the b7 - b0
+	  pwm_compare = 3200 + ((uint32_t)adc_value * 3200)/1023;   //servo range comaprison
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_compare);
+
+	  HAL_Delay(10);
+
   }
   /* USER CODE END 3 */
 }
