@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -34,6 +36,17 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+
+#define NUM_SEGMENTS 3U
+#define TIMEOUT_MS 100U
+
+#define MIN_COUNT_RANGE 3200U
+#define MAX_COUNT_RANGE 6400U
+#define MAX_ADC_VALUE 1023U
+
+#define CHANNEL 0U
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,12 +57,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+
+uint16_t getADCReading(uint8_t channel);
+uint32_t getPWMWave(uint16_t adcReading);
+uint32_t clamp32(uint32_t value, uint32_t min, uint32_t max);
 
 /* USER CODE END PFP */
 
@@ -87,7 +103,20 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  //Set CS to high to begin
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  //htim1 is handle for the timer peripheral
+  //TIM_CHANNEL_1 is channel 1 for whatever timer it is -- not TIM1_CH1
+
+  //Start up the timer with PWM wave output, error guard
+  if(HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1 ) != HAL_OK){
+	Error_Handler();
+  }
 
   /* USER CODE END 2 */
 
@@ -95,9 +124,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //Get ADC reading
+	  uint16_t adcReading = getADCReading(CHANNEL);
+
+	  //Convert it to a PWM wave
+	  uint32_t pwmWave = getPWMWave(adcReading);
+
+	  //Set the duty cycle/ on-time of the PWM wave
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwmWave);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -144,6 +183,55 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+uint16_t getADCReading(uint8_t channel) {
+
+	//Init transmit and receive
+	uint8_t txSegments[3] = {0,0,0};
+	uint8_t rxSegments[3] = {0,0,0};
+
+	//Set transmit segments
+	//Just the start bit
+	txSegments[0] = 0x01U;
+	//Truncate channel to 2 bits, add a one for single ended input mode, zero for D2, and bitshift for the 4 blanks
+	txSegments[1] = (uint8_t) (((channel & 0x03U) | 0x08U) << 4);
+	//Nothing
+	txSegments[2] = 0U;
+
+	//Turn CS to low
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	//Run the comms, make sure it works, turn CS to high for next time
+	if(HAL_SPI_TransmitReceive(&hspi1, txSegments, rxSegments, NUM_SEGMENTS, TIMEOUT_MS) != HAL_OK) {
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+		Error_Handler();
+	}
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	//Truncate 2nd segment at 2 bits, bitshift it over, combine with 3rd segment, cast to uint16_t since 10 > 8
+	return (uint16_t) (((rxSegments[1] & 0x03U) << 8) | rxSegments[2]);
+}
+
+uint32_t getPWMWave(uint16_t adcReading) {
+
+	//Just in case, prevent issues
+	uint32_t pwmWave = clamp32((uint32_t)adcReading, 0, MAX_ADC_VALUE);
+
+	//Since min happens to be half it could just be min, but subtracting is more proper
+	pwmWave = MIN_COUNT_RANGE + (MAX_COUNT_RANGE - MIN_COUNT_RANGE) * pwmWave / MAX_ADC_VALUE;
+
+	return pwmWave;
+}
+
+uint32_t clamp32(uint32_t value, uint32_t min, uint32_t max) {
+	if(value > max) {
+		value = max;
+	}
+	if(value < min) {
+		value = min;
+	}
+	return value;
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -154,7 +242,12 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
+
+	//Stop the PWM wave just in case
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+
+	__disable_irq();
+
   while (1)
   {
   }
