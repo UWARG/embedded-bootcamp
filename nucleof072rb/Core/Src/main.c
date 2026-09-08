@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -56,6 +58,36 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/*
+ * Reads a 10-bit value from the MCP3004 ADC via SPI.
+ * Hardcoded to read Single-Ended Channel 0.
+ */
+uint16_t Read_ADC_Channel_0(void) {
+
+	uint8_t tx_buf[3];
+	uint8_t rx_buf[3];
+	uint16_t adc_value = 0;
+
+	// 1. Prepare transmission buffer for Channel 0
+	tx_buf[0] = 0x01;  // Start bit
+	tx_buf[1] = 0x80;  // 0x80 is 10000000 (Single-Ended, Channel 0)
+	tx_buf[2] = 0x00;  // Dummy byte
+
+	// 2. Pull Chip Select (PB8) LOW to select the ADC
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	// 3. Send and receive 3 bytes
+	HAL_SPI_TransmitReceive(&hspi1, tx_buf, rx_buf, 3, 100);
+
+	// 4. Pull Chip Select (PB8) HIGH to deselect the ADC
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	// 5. Reconstruct the 10-bit value
+	adc_value = ((rx_buf[1] & 0x03) << 8) | rx_buf[2];
+
+	return adc_value;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -64,6 +96,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -87,7 +120,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // 1. Start the Timer ONLY ONCE before the infinite loop!
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -95,9 +133,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	// 2. Get the ADC value (0 to 1023)
+	uint16_t pot_value = Read_ADC_Channel_0();
+	// 3. Convert ADC value to Timer Counts (3200 to 6400)
+	uint32_t timer_counts = 3200 + ((pot_value * 3200) / 1023);
+	// 4. Use the Macro to update the Compare Register
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, timer_counts);
+
+	HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -122,6 +169,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -160,8 +208,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -177,5 +224,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
