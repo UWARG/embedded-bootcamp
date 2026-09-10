@@ -124,6 +124,16 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Initialization: Put the ADC Chip Select pin in a known IDLE state (HIGH)
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  // Calculate the min count based on counter period
+  uint32_t timer_period = __HAL_TIM_GET_AUTORELOAD(&htim1);
+  uint32_t min_counts   = timer_period / 20; // 1ms (5% of 20ms) -> 3200
+
+  // Initialization: Put counter compare in a known state (e.g. 1ms / 3200 counts)
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, min_counts);
+
   // 1. Start the Timer ONLY ONCE before the infinite loop!
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
@@ -136,7 +146,7 @@ int main(void)
 	// 2. Get the ADC value (0 to 1023)
 	uint16_t pot_value = Read_ADC_Channel_0();
 	// 3. Convert ADC value to Timer Counts (3200 to 6400)
-	uint32_t timer_counts = 3200 + ((pot_value * 3200) / 1023);
+	uint32_t timer_counts = min_counts + ((pot_value * min_counts) / 1023);
 	// 4. Use the Macro to update the Compare Register
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, timer_counts);
 
