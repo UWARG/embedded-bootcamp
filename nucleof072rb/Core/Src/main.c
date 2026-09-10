@@ -83,7 +83,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  ///Drive Chip Select (CS) HIGH before enabling output mode to reduce chances of chip going out of sync
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -92,7 +93,8 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  // Start PWM output on Timer 1 Channel 1 for servo control (50 Hz signal)
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,6 +104,38 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  // 3-byte SPI request frame:
+	  // - Byte 0 (0x01): Start bit
+	  // - Byte 1 (0x80): Single-ended mode (Bit 7 = 1), Channel 0 select (Bits 6-4 = 000)
+	  // - Byte 2 (0x00): Dummy byte to supply clock cycles for receiving remaining data
+	  uint8_t tx_buf[3] = {0x01, 0x80, 0x00};
+	  uint8_t rx_buf[3] = {0x00, 0x00, 0x00};
+
+	  // Assert Chip Select (CS) LOW to begin SPI transaction with ADC
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+
+	  // Send command frame and read returned data simultaneously over full-duplex SPI
+	  HAL_SPI_TransmitReceive(&hspi1, tx_buf, rx_buf, 3, HAL_MAX_DELAY);
+
+	  // De-assert Chip Select (CS) HIGH to end SPI transaction
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+
+	  // Reconstruct 10-bit ADC reading from response:
+	  // - rx_buf[1] holds top 2 MSBs in bits [1:0] -> mask with 0x03 (0000 0011) and shift left by 8
+	  // - rx_buf[2] holds lower 8 LSBs -> bitwise OR to combine
+	  uint16_t adc_value = ((rx_buf[1] & 0x03) << 8) | rx_buf[2];
+
+	  // Linear interpolation: Map 10-bit ADC value (0-1023) to 50Hz PWM timer counts (3200-6400)
+	  // - Min duty cycle (1 ms pulse / 5%):  3200 counts
+	  // - Max duty cycle (2 ms pulse / 10%): 6400 counts
+	  uint32_t compare_val = 3200 + ((adc_value * 3200) / 1023);
+
+	  // Load calculated duty cycle count into Timer 1 Compare Register
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+
+	  // Delay to throttle loop execution and prevent oversampling the ADC
+	  HAL_Delay(10);
+
   }
   /* USER CODE END 3 */
 }
