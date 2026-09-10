@@ -36,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define SERVO_MIN_PULSE   3200UL
+#define SERVO_MAX_PULSE   6400UL
+#define SERVO_PULSE_RANGE (SERVO_MAX_PULSE - SERVO_MIN_PULSE)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -128,7 +131,7 @@ int main(void)
 	  // Linear interpolation: Map 10-bit ADC value (0-1023) to 50Hz PWM timer counts (3200-6400)
 	  // - Min duty cycle (1 ms pulse / 5%):  3200 counts
 	  // - Max duty cycle (2 ms pulse / 10%): 6400 counts
-	  uint32_t compare_val = 3200 + ((adc_value * 3200) / 1023);
+	  uint32_t compare_val = SERVO_MIN_PULSE + ((adc_value * SERVO_PULSE_RANGE) / 1023UL);
 
 	  // Load calculated duty cycle count into Timer 1 Compare Register
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
