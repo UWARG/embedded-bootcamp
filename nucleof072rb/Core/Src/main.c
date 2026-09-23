@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,13 +46,16 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t spi_tx[3];
+uint8_t spi_rx[3];
+uint16_t adc_value;
+uint32_t pwm_counts;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint16_t Read_ADC_Channel(uint8_t channel);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -87,17 +92,26 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // adjust channel to match your .ioc PWM config
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    adc_value = Read_ADC_Channel(0);
+
+    pwm_counts = 3200 + ((uint32_t)adc_value * (6400 - 3200)) / 1023;
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_counts);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -143,7 +157,26 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint16_t Read_ADC_Channel(uint8_t channel)
+{
+    // Byte 1: 5 leading zeros + start bit
+    spi_tx[0] = 0x01;
+    // Byte 2: SGL/DIFF=1 (single-ended), then D2 D1 D0 = channel bits
+    spi_tx[1] = (0x80 | (channel << 4));
+    // Byte 3: don't care, just clocks out the result
+    spi_tx[2] = 0x00;
 
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);   // CS low - begin communication
+
+    HAL_SPI_TransmitReceive(&hspi1, spi_tx, spi_rx, 3, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);     // CS high - end communication
+
+    // Null bit + 10 data bits: top 2 bits (B9,B8) in spi_rx[1], bottom 8 (B7..B0) in spi_rx[2]
+    uint16_t result = ((spi_rx[1] & 0x03) << 8) | spi_rx[2];
+
+    return result;
+}
 /* USER CODE END 4 */
 
 /**
