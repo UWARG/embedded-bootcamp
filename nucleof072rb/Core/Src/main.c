@@ -100,6 +100,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
 	  	uint8_t ADC_write[3] = {0x01, 0x64, 0x00};
 		uint8_t ADC_read[3];
@@ -109,7 +110,7 @@ int main(void)
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
 		uint16_t adc_value = ((ADC_read[1] & 0x03) << 8) | ADC_read[2];
-		uint32_t PWM = 3000 + ((uint32_t)adc_value * (3000)) / 1023	;
+		uint32_t PWM = 3200 + ((uint32_t)adc_value * (3200)) / 1023	;
 
 		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM);
 		HAL_Delay(10);
