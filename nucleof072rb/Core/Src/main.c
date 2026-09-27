@@ -93,12 +93,20 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
   uint8_t txdata[3] = {0b00000001, 0b10000000, 0b00000000};
   uint8_t rxdata[3] = {};
-  uint16_t adc_value = 0;
+  float adc_value = 0;
   uint16_t pwm_duty_cycle = 0;
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  int byte_size_adc = 3;
+  int max_ms_tx_rx = 100;
 
+  //for duty cycle of 1-2ms in 50hz frequency
+  float counter_period = 64000;
+  float five_percent_counter = 0.05*counter_period;
+
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -107,14 +115,16 @@ int main(void)
   {
 
 	HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_TransmitReceive(&hspi1, txdata, rxdata, 3, 100);
+	HAL_SPI_TransmitReceive(&hspi1, txdata, rxdata, byte_size_adc, max_ms_tx_rx);
 	HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
 
 	adc_value = ((rxdata[1] & 0x03) << 8) | rxdata[2];
 
-	pwm_duty_cycle = ((adc_value*1000)/1023) + 1000;
+	pwm_duty_cycle = (((adc_value*five_percent_counter)/1023.0) + five_percent_counter)+0.5;
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_duty_cycle);
+
+	HAL_Delay(10);
 
     /* USER CODE END WHILE */
 
