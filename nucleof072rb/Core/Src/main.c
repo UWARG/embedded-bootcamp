@@ -120,7 +120,7 @@ int main(void)
 
 	adc_value = ((rxdata[1] & 0x03) << 8) | rxdata[2];
 
-	pwm_duty_cycle = (((adc_value*five_percent_counter)/1023.0) + five_percent_counter)+0.5;
+	pwm_duty_cycle = (uint16_t) (((adc_value*five_percent_counter)/1023.0) + five_percent_counter);
 
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_duty_cycle);
 
