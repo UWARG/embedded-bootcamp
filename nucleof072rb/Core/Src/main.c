@@ -51,7 +51,6 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
 /* USER CODE BEGIN PFP */
 static uint16_t ADC_ReadChannel(uint8_t channel);
 /* USER CODE END PFP */
@@ -62,6 +61,8 @@ static uint16_t ADC_ReadChannel(uint8_t channel);
 /* USER CODE END 0 */
 
 /**
+  * @brief  The application entry point.
+  * @retval int
   */
 int main(void)
 {
@@ -71,12 +72,12 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the systick. */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN init */
+  /* USER CODE BEGIN Init */
 
-  /* USER CODE END init */
+  /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
@@ -89,13 +90,11 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
-
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
-
   /* USER CODE BEGIN WHILE */
   while (1)
   {
@@ -113,10 +112,9 @@ int main(void)
   /* USER CODE END 3 */
 }
 
-
 /**
   * @brief System Clock Configuration
-
+  * @retval None
   */
 void SystemClock_Config(void)
 {
@@ -173,6 +171,7 @@ static uint16_t ADC_ReadChannel(uint8_t channel)
 
 /**
   * @brief  This function is executed in case of error occurrence.
+  * @retval None
   */
 void Error_Handler(void)
 {
@@ -187,6 +186,11 @@ void Error_Handler(void)
 
 #ifdef  USE_FULL_ASSERT
 /**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
 {
