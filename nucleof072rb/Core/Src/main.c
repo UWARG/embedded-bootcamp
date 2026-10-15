@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -65,7 +67,15 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	const uint16_t MAX_READING =1023;//max ADC value
+	const uint16_t PWM_MIN = 3276;
+	uint16_t reading = 0;
+	uint16_t angle_pwm;//angle for servo motor
+	uint8_t transmit_buffer[3]={1,1,0};//the potentiometer is single mode (1)
+	uint8_t *p_tx_data = transmit_buffer;
+	uint8_t recieve_buffer[3];//data buffer to store recieved values
+	uint8_t *p_rx_data = recieve_buffer;
+	uint16_t mask_2bit = 0x03;//masking variable for first part of reading
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,14 +97,25 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8,GPIO_PIN_RESET);//set ADC pins to low
+	HAL_SPI_TransmitReceive(&hspi1,p_tx_data,p_rx_data,3, HAL_MAX_DELAY);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8,GPIO_PIN_SET);
+
+	reading=((p_rx_data[1] & mask_2bit)<<8)+p_rx_data[2];//gets rid of first 10 bits, shifts up 8 digits, adds second part of reading
+	angle_pwm = (reading*PWM_MIN/MAX_READING)+PWM_MIN;
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, angle_pwm);
+
+	HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
