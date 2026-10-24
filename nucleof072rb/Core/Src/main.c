@@ -94,7 +94,10 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3000U);
+  /* At 50 Hz, a 1 ms pulse is 1/20 of the PWM period. */
+  const uint32_t min_pulse_ticks =
+      (__HAL_TIM_GET_AUTORELOAD(&htim1) + 1U) / 20U;
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, min_pulse_ticks);
   if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
@@ -124,7 +127,8 @@ int main(void)
 
 
 	     uint32_t pwm_value =
-	         3000U + ((uint32_t)adc_raw * 3000U) / 1023U;
+	         min_pulse_ticks +
+	         ((uint32_t)adc_raw * min_pulse_ticks) / 1023U;
 
 	     __HAL_TIM_SET_COMPARE(
 	         &htim1, TIM_CHANNEL_1, pwm_value);
