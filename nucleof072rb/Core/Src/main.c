@@ -45,7 +45,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+  uint8_t adc_transmit_buffer[3] = {1, 0b10000000, 0};
+  uint8_t adc_receive_buffer[3];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,6 +92,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,13 +100,16 @@ int main(void)
   while (1)
   {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  uint8_t send[3] = {1, 0b10000000, 0};
-	  uint8_t receive[3];
-	  HAL_SPI_TransmitReceive(&hspi1, send, receive, 3, HAL_MAX_DELAY);
-	  uint16_t adc_value = (((receive[1]&(3))) << 8 ) + receive[2];
+	  HAL_SPI_TransmitReceive(&hspi1, adc_transmit_buffer, adc_receive_buffer, 3, HAL_MAX_DELAY);
+	  uint16_t adc_value = (((adc_receive_buffer[1]&(3))) << 8 ) | adc_receive_buffer[2];
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	  uint16_t compare = 1000 + (adc_value*1000)/1023;
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare);
+	  // servo range is from 1ms to 2ms --> with a prescale of (14+1) = 15
+	  // this results in a frequency of 48MHz / 15 = 3200000Hz
+	  // thus one count = 1/3200000 = 3.125x10^-7 s or 3.125x10^-4 ms
+	  // or 1 count = 0.3125μs --> 1ms = 1000μs / 0.3125μs per count = 3200 counts/ms
+	  // 1 ms = 3200 counts, 2 ms = 6400 counts --> map servo_pwm_counts between these two values
+	  uint16_t servo_pwm_counts = 3200 + (adc_value*3200)/1023;
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, servo_pwm_counts);
 	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
