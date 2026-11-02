@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,9 +89,21 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3200U);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  uint8_t tx[3] = {0x01, 0x80, 0x00};
+  uint8_t rx[3] = {0};
+
   /* USER CODE END 2 */
+
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -98,7 +112,29 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  HAL_StatusTypeDef status =
+	      HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 100);
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  if (status != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+	  uint16_t adc_value =
+	      ((uint16_t)(rx[1] & 0x03) << 8) | rx[2];
+	  uint32_t pwm_counts =
+	      3200U + ((uint32_t)adc_value * 3200U) / 1023U;
+
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_counts);
+
+
+	  HAL_Delay(10);
   }
+
   /* USER CODE END 3 */
 }
 
@@ -173,7 +209,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+//     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
