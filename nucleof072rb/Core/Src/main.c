@@ -47,7 +47,7 @@
 
 /* USER CODE BEGIN PV */
 #define ADC_MAX_VALUE 1023 // 10-bit
-#define PWM_PERIOD 20000
+#define PWM_PERIOD 64000
 #define CCR_MIN (PWM_PERIOD/20) // 5%
 #define CCR_MAX (PWM_PERIOD/10) // 10%
 #define CCR_RANGE (CCR_MAX-CCR_MIN)
