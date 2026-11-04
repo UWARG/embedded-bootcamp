@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -44,7 +46,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#define ADC_MAX_VALUE 1023 // 10-bit
+#define PWM_PERIOD 20000
+#define CCR_MIN (PWM_PERIOD/20) // 5%
+#define CCR_MAX (PWM_PERIOD/10) // 10%
+#define CCR_RANGE (CCR_MAX-CCR_MIN)
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,17 +93,28 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t tx[3] = { 0x01,0b10000000, 0 };
+  uint8_t rx[3] = {0};
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+	HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
+	HAL_Delay(10);
+	uint16_t value = rx[2] | ((rx[1] & 0b11) << 8);
+	uint16_t ccr = CCR_MIN + ( value * CCR_RANGE)/ADC_MAX_VALUE;
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr);
   }
   /* USER CODE END 3 */
 }
