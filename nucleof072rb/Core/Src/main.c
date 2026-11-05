@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,17 +89,52 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  uint8_t tx[3] = {0x01, 0x80, 0x00};
+  uint8_t rx[3] = {0};
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  // Select ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+	  // Exchange SPI data
+	  HAL_StatusTypeDef status =
+	      HAL_SPI_TransmitReceive(&hspi1, tx, rx, sizeof(tx), 100);
+
+	  // Deselect ADC
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	  if (status == HAL_OK)
+	  {
+	      // Reconstruct the 10 bit ADC value
+	      uint16_t adc_value = ((rx[1] & 0x03) << 8) | rx[2];
+
+	      // Convert ADC reading into timer counts
+	      uint16_t pwm_counts =
+	          1000 + ((uint32_t)adc_value * 1000) / 1023;
+
+	      // Update timer compare register
+	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_counts);
+	  }
+
+	  HAL_Delay(10);
+
+	  /* USER CODE END 3 */
+
   }
   /* USER CODE END 3 */
 }
