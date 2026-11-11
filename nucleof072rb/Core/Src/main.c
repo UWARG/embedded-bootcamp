@@ -125,7 +125,7 @@ int main(void)
 
 	      // Convert ADC reading into timer counts
 	      uint16_t pwm_counts =
-	          1000 + ((uint32_t)adc_value * 1000) / 1023;
+	          3200 + ((uint32_t)adc_value * 3200) / 1023;
 
 	      // Update timer compare register
 	      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pwm_counts);
@@ -133,12 +133,9 @@ int main(void)
 
 	  HAL_Delay(10);
 
-	  /* USER CODE END 3 */
-
-  }
   /* USER CODE END 3 */
+  }
 }
-
 /**
   * @brief System Clock Configuration
   * @retval None
