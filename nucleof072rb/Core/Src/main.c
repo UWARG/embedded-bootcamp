@@ -19,9 +19,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
-
+#include "tim.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -34,6 +35,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_MAX_VAL 1023
+#define CCR_MIN 3000
+#define CCR_MAX 6000
+#define BYTE_TRANSFER_SIZE 3
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +49,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t txData[BYTE_TRANSFER_SIZE] = {0x01, 0x80, 0x00};
+uint8_t rxData[BYTE_TRANSFER_SIZE] = {0};
+
 
 /* USER CODE END PV */
 
@@ -87,7 +95,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);		// generate PWM signal
 
   /* USER CODE END 2 */
 
@@ -95,6 +106,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, BYTE_TRANSFER_SIZE, HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  uint32_t adc_value = ((rxData[1] & 0x03) << 8) | rxData[2];
+	  uint32_t compareValue = CCR_MIN + ((adc_value * (CCR_MAX - CCR_MIN)) / ADC_MAX_VAL);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareValue);
+
+	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
