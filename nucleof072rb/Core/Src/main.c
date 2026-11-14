@@ -106,9 +106,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	uint8_t tx[3] = {0x01, 0x80 | (ADC_CHANNEL << 4), 0x00};
+	uint8_t rx[3] = {0};
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8,GPIO_PIN_RESET);
+	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 4800);
+	HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
