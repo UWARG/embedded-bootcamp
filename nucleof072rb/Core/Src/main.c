@@ -36,10 +36,16 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define PWM_MIN_COUNTS   3200U // 1 ms pulse (0.3125 us per tick)
-#define PWM_MAX_COUNTS   6400U // 2 ms pulse
-#define ADC_MAX          1023U // largest 10-bit value
-#define ADC_CHANNEL      0U    // pot wiper is on MCP3004 CH0
+#define PWM_MIN_COUNTS      3200U // 1 ms pulse (0.3125 us per tick)
+#define PWM_MAX_COUNTS      6400U // 2 ms pulse
+#define ADC_MAX             1023U // largest 10-bit value
+#define ADC_CHANNEL         0U    // pot wiper is on MCP3004 CH0
+
+#define ADC_START_BIT       0x01U // byte 1: start bit (MCP3004 datasheet fig 6-1)
+#define ADC_SINGLE_ENDED    0x80U // byte 2: bit 7: measure vs ground, not differential
+#define ADC_CHANNEL_SHIFT   4U    // byte 2: channel select starts at bit 4 (D2..D0)
+#define ADC_RESULT_MSB_MASK 0x03U // byte 2 of reply: only B9..B8 are valid
+#define ADC_FRAME_BYTES     3U    // one full conversion = 3 bytes over SPI
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -98,7 +104,10 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
+  {
+	  Error_Handler();
+  }
 
   /* USER CODE END 2 */
 
@@ -107,21 +116,26 @@ int main(void)
   while (1)
   {
 
-    /* USER CODE END WHILE */
+	  /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-	uint8_t tx[3] = {0x01, 0x80 | (ADC_CHANNEL << 4), 0x00};
-	uint8_t rx[3] = {0};
+	  /* USER CODE BEGIN 3 */
+	  uint8_t tx[ADC_FRAME_BYTES] = {ADC_START_BIT,
+			  ADC_SINGLE_ENDED | (ADC_CHANNEL << ADC_CHANNEL_SHIFT),
+			  0x00};  // filler byte that just clocks out the result
+	  uint8_t rx[ADC_FRAME_BYTES] = {0};
 
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8,GPIO_PIN_RESET);
-	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_RESET);
+	  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, tx, rx, ADC_FRAME_BYTES, 10);
+	  HAL_GPIO_WritePin(ADC_CS_GPIO_Port, ADC_CS_Pin, GPIO_PIN_SET);
 
-	uint16_t adc = ((rx[1] & 0x03) << 8) | rx[2];
-	uint32_t pulse = PWM_MIN_COUNTS + ((uint32_t)adc * (PWM_MAX_COUNTS - PWM_MIN_COUNTS)) / ADC_MAX;
+	  if (status == HAL_OK)
+	  {
+		  uint16_t adc = ((rx[1] & ADC_RESULT_MSB_MASK) << 8) | rx[2];
+		  uint32_t pulse = PWM_MIN_COUNTS + ((uint32_t)adc * (PWM_MAX_COUNTS - PWM_MIN_COUNTS)) / ADC_MAX;
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
+	  }
 
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
-	HAL_Delay(10);
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
