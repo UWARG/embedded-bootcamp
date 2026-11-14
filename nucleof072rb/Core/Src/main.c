@@ -117,7 +117,10 @@ int main(void)
 	HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, HAL_MAX_DELAY);
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
 
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 4800);
+	uint16_t adc = ((rx[1] & 0x03) << 8) | rx[2];
+	uint32_t pulse = PWM_MIN_COUNTS + ((uint32_t)adc * (PWM_MAX_COUNTS - PWM_MIN_COUNTS)) / ADC_MAX;
+
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
 	HAL_Delay(10);
   }
   /* USER CODE END 3 */
