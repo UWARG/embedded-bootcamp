@@ -36,6 +36,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PWM_MIN_COUNTS   3200U // 1 ms pulse (0.3125 us per tick)
+#define PWM_MAX_COUNTS   6400U // 2 ms pulse
+#define ADC_MAX          1023U // largest 10-bit value
+#define ADC_CHANNEL      0U    // pot wiper is on MCP3004 CH0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -93,6 +97,8 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
