@@ -20,9 +20,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "tim.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -35,10 +36,15 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ADC_MAX_VAL 1023
-#define CCR_MIN 3000
-#define CCR_MAX 6000
-#define BYTE_TRANSFER_SIZE 3
+#define ADC_MAX_VAL 1023U
+#define CCR_MIN 3000U
+#define CCR_MAX 6000U
+#define BYTE_TRANSFER_SIZE 3U
+#define SPI_TIMEOUT 100U	 // ms
+#define ADC_START 0x01U
+#define ADC_CH0 0x80U
+#define ADC_DUMMY_BYTE 0x00U
+#define ADC_VALUE_MASK 0x03U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,8 +55,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t txData[BYTE_TRANSFER_SIZE] = {0x01, 0x80, 0x00};
-uint8_t rxData[BYTE_TRANSFER_SIZE] = {0};
+static uint8_t txData[BYTE_TRANSFER_SIZE] = {ADC_START, ADC_CH0, ADC_DUMMY_BYTE};
+static uint8_t rxData[BYTE_TRANSFER_SIZE] = {0};
 
 
 /* USER CODE END PV */
@@ -106,17 +112,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-	  HAL_SPI_TransmitReceive(&hspi1, txData, rxData, BYTE_TRANSFER_SIZE, HAL_MAX_DELAY);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-	  uint32_t adc_value = ((rxData[1] & 0x03) << 8) | rxData[2];
-	  uint32_t compareValue = CCR_MIN + ((adc_value * (CCR_MAX - CCR_MIN)) / ADC_MAX_VAL);
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareValue);
-
-	  HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+	  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, txData, rxData, BYTE_TRANSFER_SIZE, SPI_TIMEOUT);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+	  if (status == HAL_OK) {
+		  uint32_t adc_value = ((rxData[1] & ADC_VALUE_MASK) << 8) | rxData[2];
+		  uint32_t compareValue = CCR_MIN + ((adc_value * (CCR_MAX - CCR_MIN)) / ADC_MAX_VAL);
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareValue);
+	  } else {
+		  Error_Handler();
+	  }
+
+
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
