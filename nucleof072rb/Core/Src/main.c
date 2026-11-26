@@ -36,6 +36,16 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define ADC_SPI_TIMEOUT_MS 100U
+#define ADC_POLL_DELAY_MS 10U
+#define ADC_MAX_VALUE 1023U
+#define ADC_HIGH_BITS_MASK 0x03U
+#define ADC_HIGH_BITS_SHIFT 8U
+
+#define PWM_MIN_COUNTS 3200U
+#define PWM_RANGE_COUNTS 3200U
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,43 +56,19 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+static uint8_t adcTx[] = {0x01U, 0x80U, 0x00U};
+static uint8_t adcRx[sizeof(adcTx)] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+static HAL_StatusTypeDef readAdcChannel0(uint16_t *adcValue);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static HAL_StatusTypeDef MCP3004_ReadCH0(uint16_t *adc_value)
-{
-    uint8_t tx[3] = {0x01, 0x80, 0x00};
-    uint8_t rx[3] = {0};
-
-    // Select ADC (CS = LOW)
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
-
-    // Communicate with the ADC over SPI
-    HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(
-        &hspi1, tx, rx, 3, 100
-    );
-
-    // Deselect ADC (CS = HIGH)
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-
-    if (status == HAL_OK)
-    {
-        // Extract the 10-bit ADC reading
-        *adc_value = ((uint16_t)(rx[1] & 0x03) << 8)
-                   | rx[2];
-    }
-
-    return status;
-}
 
 /* USER CODE END 0 */
 
@@ -120,44 +106,31 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1500);
-
-  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
-  {
-      Error_Handler();
+  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK) {
+    Error_Handler();
   }
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
-
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-      /* USER CODE END WHILE */
+  while (1) {
+    /* USER CODE END WHILE */
+    /* USER CODE BEGIN 3 */
 
-      /* USER CODE BEGIN 3 */
+    uint16_t adcValue = 0;
 
-      uint16_t adc_value = 0;
+    if (readAdcChannel0(&adcValue) == HAL_OK) {
+      // Convert the ADC reading into PWM timer counts
+      uint32_t pulseCounts = PWM_MIN_COUNTS + ((uint32_t)adcValue * PWM_RANGE_COUNTS) / ADC_MAX_VALUE;
 
-      if (MCP3004_ReadCH0(&adc_value) == HAL_OK)
-      {
-          // Convert 0-1023 to 1000-2000 timer counts
-          uint32_t pulse = 1000U
-              + ((uint32_t)adc_value * 1000U) / 1023U;
+      // Update the PWM output
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulseCounts);
+    }
 
-          // Update the PWM output
-          __HAL_TIM_SET_COMPARE(
-              &htim1,
-              TIM_CHANNEL_1,
-              pulse
-          );
-      }
-
-      HAL_Delay(10);
+    HAL_Delay(ADC_POLL_DELAY_MS);
   }
   /* USER CODE END 3 */
-
 }
 
 /**
@@ -201,9 +174,29 @@ void SystemClock_Config(void)
   }
 }
 
+
 /* USER CODE BEGIN 4 */
 
+static HAL_StatusTypeDef readAdcChannel0(uint16_t *adcValue) {
+  // Select the ADC by pulling CS low
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  // Send command and receive ADC data over SPI
+  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, adcTx, adcRx, sizeof(adcTx), ADC_SPI_TIMEOUT_MS);
+
+  // Deselect the ADC by pulling CS high
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+  if (status == HAL_OK) {
+    // Extract the 10-bit ADC result
+    *adcValue = ((uint16_t)(adcRx[1] & ADC_HIGH_BITS_MASK) << ADC_HIGH_BITS_SHIFT) | adcRx[2];
+  }
+
+  return status;
+}
+
 /* USER CODE END 4 */
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
